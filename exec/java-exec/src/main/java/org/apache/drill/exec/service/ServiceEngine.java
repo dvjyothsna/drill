@@ -96,10 +96,12 @@ public class ServiceEngine implements AutoCloseable {
     }
 
     final int userPort = userServer.bind(intialUserPort, allowPortHunting);
+
     DrillbitEndpoint partialEndpoint = DrillbitEndpoint.newBuilder()
         .setAddress(hostName)
         .setUserPort(userPort)
         .setVersion(DrillVersionInfo.getVersion())
+        .setStatus("Running")
         .build();
 
     partialEndpoint = controller.start(partialEndpoint, allowPortHunting);

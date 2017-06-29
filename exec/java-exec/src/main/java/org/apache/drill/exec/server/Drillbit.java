@@ -105,7 +105,7 @@ public class Drillbit implements AutoCloseable {
       isDistributedMode = true;
     }
 
-    engine = new ServiceEngine(manager, context, allowPortHunting, isDistributedMode);
+    engine = new ServiceEngine(manager, context, true, isDistributedMode);
 
     logger.info("Construction completed ({} ms).", w.elapsed(TimeUnit.MILLISECONDS));
   }

@@ -90,6 +90,7 @@ public class ZKClusterCoordinator extends ClusterCoordinator {
       zkRoot = m.group(2);
       clusterId = m.group(3);
     }
+//    System.out.println(clusterId);
 
     logger.debug("Connect {}, zkRoot {}, clusterId: " + clusterId, connect, zkRoot);
 
@@ -227,7 +228,6 @@ public class ZKClusterCoordinator extends ClusterCoordinator {
             return input.getPayload();
           }
         });
-
       // set of newly dead bits : original bits - new set of active bits.
       Set<DrillbitEndpoint> unregisteredBits = new HashSet<>(endpoints);
       unregisteredBits.removeAll(newDrillbitSet);
@@ -237,6 +237,7 @@ public class ZKClusterCoordinator extends ClusterCoordinator {
       registeredBits.removeAll(endpoints);
 
       endpoints = newDrillbitSet;
+
 
       if (logger.isDebugEnabled()) {
         StringBuilder builder = new StringBuilder();
@@ -250,8 +251,10 @@ public class ZKClusterCoordinator extends ClusterCoordinator {
           builder.append(bit.getControlPort()).append(" | ");
           builder.append(bit.getDataPort()).append(" | ");
           builder.append(bit.getVersion()).append(" |");
+          builder.append(bit.getStatus()).append(" | ");
           builder.append('\n');
         }
+//        System.out.println(builder.toString());
         logger.debug(builder.toString());
       }
 
