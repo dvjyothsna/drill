@@ -38,6 +38,8 @@ public class OptionValue implements Comparable<OptionValue> {
     BOOT, SYSTEM, SESSION, QUERY
   }
 
+
+
   public enum Kind {
     BOOLEAN, LONG, STRING, DOUBLE
   }

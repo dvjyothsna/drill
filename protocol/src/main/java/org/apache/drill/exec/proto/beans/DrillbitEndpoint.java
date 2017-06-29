@@ -53,6 +53,7 @@ public final class DrillbitEndpoint implements Externalizable, Message<DrillbitE
     private int dataPort;
     private Roles roles;
     private String version;
+    private String status;
 
     public DrillbitEndpoint()
     {
@@ -139,6 +140,19 @@ public final class DrillbitEndpoint implements Externalizable, Message<DrillbitE
         return this;
     }
 
+    // status
+
+    public String getStatus()
+    {
+        return status;
+    }
+
+    public DrillbitEndpoint setStatus(String status)
+    {
+        this.status = status;
+        return this;
+    }
+
     // java serialization
 
     public void readExternal(ObjectInput in) throws IOException
@@ -212,6 +226,9 @@ public final class DrillbitEndpoint implements Externalizable, Message<DrillbitE
                 case 6:
                     message.version = input.readString();
                     break;
+                case 7:
+                    message.status = input.readString();
+                    break;
                 default:
                     input.handleUnknownField(number, this);
             }   
@@ -239,6 +256,9 @@ public final class DrillbitEndpoint implements Externalizable, Message<DrillbitE
 
         if(message.version != null)
             output.writeString(6, message.version, false);
+
+        if(message.status != null)
+            output.writeString(7, message.status, false);
     }
 
     public String getFieldName(int number)
@@ -251,6 +271,7 @@ public final class DrillbitEndpoint implements Externalizable, Message<DrillbitE
             case 4: return "dataPort";
             case 5: return "roles";
             case 6: return "version";
+            case 7: return "status";
             default: return null;
         }
     }
@@ -270,6 +291,7 @@ public final class DrillbitEndpoint implements Externalizable, Message<DrillbitE
         __fieldMap.put("dataPort", 4);
         __fieldMap.put("roles", 5);
         __fieldMap.put("version", 6);
+        __fieldMap.put("status", 7);
     }
     
 }

@@ -18,6 +18,7 @@
 package org.apache.drill.exec.store.sys;
 
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
@@ -120,5 +121,23 @@ public class OptionIterator implements Iterator<Object> {
   @Override
   public void remove() {
     throw new UnsupportedOperationException();
+  }
+
+  public Iterator<OptionValue> mask_values(Iterator<OptionValue> options){
+    List<OptionValue> values = Lists.newArrayList(options);
+    List<OptionValue> optionValues = Lists.newArrayList();
+    OptionValue temp = null;
+    OptionValue value;
+    OptionType type;
+
+
+
+    for (int i = 0; i < values.size() ;i++ )
+    {
+      value = values.get(i);
+      optionValues.add(value);
+    }
+    return optionValues.iterator();
+
   }
 }
