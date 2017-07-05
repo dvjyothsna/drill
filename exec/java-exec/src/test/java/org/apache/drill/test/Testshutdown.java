@@ -61,10 +61,11 @@ public class Testshutdown {
 //      coord.addDrillbitStatusListener(drillbitStatusListener);
 //      client.queryBuilder().sql(sql).printCsv();
 
+
 //      cluster.close_drillbit();
 
 //      String sql = "SELECT id_i,name_s20 FROM `mock`.`employees_10000k` ORDER BY id_i";
-      String sq = "SELECT * FROM `cp`.`employee.json`" ;
+      String sq = "SELECT * FROM `cp` where product_id = 27" ;
       client.queryBuilder().sql(sq).run();
 
     }
