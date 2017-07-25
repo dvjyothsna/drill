@@ -23,12 +23,7 @@ import java.net.URL;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.drill.BaseTestQuery;
@@ -40,6 +35,7 @@ import org.apache.drill.common.logical.FormatPluginConfig;
 import org.apache.drill.exec.ExecConstants;
 import org.apache.drill.exec.ZookeeperHelper;
 import org.apache.drill.exec.client.DrillClient;
+import org.apache.drill.exec.coord.zk.ZKRegistrationHandle;
 import org.apache.drill.exec.memory.BufferAllocator;
 import org.apache.drill.exec.memory.RootAllocatorFactory;
 import org.apache.drill.exec.proto.CoordinationProtos.DrillbitEndpoint;
@@ -266,6 +262,7 @@ public class ClusterFixture extends BaseFixture implements AutoCloseable {
     Preconditions.checkArgument(builder.bitCount > 0);
     int bitCount = builder.bitCount;
     for (int i = 0; i < bitCount; i++) {
+//      System.out.println(serviceSet.getCoordinator());
       Drillbit bit = new Drillbit(config, serviceSet);
       bit.run();
 
@@ -456,12 +453,58 @@ public class ClusterFixture extends BaseFixture implements AutoCloseable {
 
 
 
-  public void close_drillbit() throws Exception {
+  public void close_drillbit(final String drillbitname) throws Exception {
     Exception ex = null;
+    System.out.println("in close ");
+//    for (Drillbit bit : drillbits()) {
+//      if(bit.equals(bits.get(drillbitname))) {
+//        bit.getContext().getClusterCoordinator().update(bit.getRegistrationHandle(), Drillbit.Status.QUIESCENT);
+//      }
+//    }
 
-    Drillbit bit = (Drillbit) drillbits().toArray()[1];
-    ex = safeClose(bit,ex);
-    bits.remove(bit);
+//    Drillbit bit = (Drillbit) drillbits().toArray()[1];
+//    int j = 0;
+//
+    for (Drillbit bit : drillbits())
+    {
+      if(bit.equals(bits.get(drillbitname))) {
+        bit.getContext().getClusterCoordinator().updateStatus(Drillbit.Status.QUIESCENT);
+      }
+    }
+    Timer timer = new Timer();
+    timer.schedule(new TimerTask() {
+      @Override
+      public void run() {
+        Exception ex = null;
+        System.out.println("**************************************");
+        int i = 0;
+        for (Drillbit bit : drillbits())
+        {
+              if (bit.equals(bits.get(drillbitname))) {
+                bit.getContext().getClusterCoordinator().update(bit.getRegistrationHandle(), Drillbit.Status.QUIESCENT);
+                System.out.println("before closing"+ ((ZKRegistrationHandle ) bit.getRegistrationHandle()).endpoint);
+
+                bit.close();
+//                Thread.sleep(10000);
+                ex = safeClose(bit, ex);
+                bits.remove(bit);
+                System.out.println("done clsoing");
+
+              }
+//            }
+//            } catch (InterruptedException e) {
+//              e.printStackTrace();
+//            }
+
+
+        }
+
+      }
+      },3000);
+
+
+
+//
     if(ex != null) {
       throw ex;
     }

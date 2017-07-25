@@ -172,6 +172,7 @@ public class Foreman implements Runnable {
     closeFuture.addListener(closeListener);
 
     queryContext = new QueryContext(connection.getSession(), drillbitContext, queryId);
+//    System.out.println("coord is " +drillbitContext.getClusterCoordinator().getAvailableEndpoints() );
     queryManager = new QueryManager(queryId, queryRequest, drillbitContext.getStoreProvider(),
         drillbitContext.getClusterCoordinator(), this);
 
@@ -444,11 +445,22 @@ public class Foreman implements Runnable {
       queryManager.markQueueWaitEndTime();
     }
 
+    Collection<DrillbitEndpoint> endpoints = queryContext.getRunningEndPoints();
     final QueryWorkUnit work = getQueryWorkUnit(plan);
     final List<PlanFragment> planFragments = work.getFragments();
     final PlanFragment rootPlanFragment = work.getRootFragment();
     assert queryId == rootPlanFragment.getHandle().getQueryId();
-
+    try {
+      Thread.sleep(150);
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
+//    System.out.println("Check for replanning purpose" + endpoints + queryContext.getRunningEndPoints());
+    for (DrillbitEndpoint endpoint : queryContext.getRunningEndPoints()) {
+      if(!endpoints.contains(endpoint)) {
+        System.out.println("replanning required");
+      }
+    }
     drillbitContext.getWorkBus().addFragmentStatusListener(queryId, queryManager.getFragmentStatusListener());
     drillbitContext.getClusterCoordinator().addDrillbitStatusListener(queryManager.getDrillbitStatusListener());
 
@@ -614,9 +626,10 @@ public class Foreman implements Runnable {
     final PhysicalOperator rootOperator = plan.getSortedOperators(false).iterator().next();
     final Fragment rootFragment = rootOperator.accept(MakeFragmentsVisitor.INSTANCE, null);
     final SimpleParallelizer parallelizer = new SimpleParallelizer(queryContext);
+//    System.out.println("all end points " + queryContext.getRunningEndPoints());
     final QueryWorkUnit queryWorkUnit = parallelizer.getFragments(
         queryContext.getOptions().getOptionList(), queryContext.getCurrentEndpoint(),
-        queryId, queryContext.getActiveEndpoints(), drillbitContext.getPlanReader(), rootFragment,
+        queryId, queryContext.getRunningEndPoints(), drillbitContext.getPlanReader(), rootFragment,
         initiatingClient.getSession(), queryContext.getQueryContextInfo());
 
     if (logger.isTraceEnabled()) {
@@ -1047,6 +1060,19 @@ public class Foreman implements Runnable {
 
   private void runSQL(final String sql) throws ExecutionSetupException {
     final Pointer<String> textPlan = new Pointer<>();
+    Collection<DrillbitEndpoint> running = queryContext.getActiveEndpoints();
+//    try {
+//      Thread.sleep(5);
+//    } catch (InterruptedException e) {
+//      e.printStackTrace();
+//    }
+    for (DrillbitEndpoint endpoint:running){
+      if(!endpoint.getStatus().equals("Running")) {
+        System.out.println("something is in quiescent mode");
+      }
+    }
+
+    System.out.println("all end points " );
     final PhysicalPlan plan = DrillSqlWorker.getPlan(queryContext, sql, textPlan);
     queryManager.setPlanText(textPlan.value);
     runPhysicalPlan(plan);

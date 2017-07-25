@@ -18,15 +18,17 @@
 package org.apache.drill.exec.coord.zk;
 
 import org.apache.drill.exec.coord.ClusterCoordinator.RegistrationHandle;
+import org.apache.drill.exec.proto.CoordinationProtos;
 
 public class ZKRegistrationHandle implements RegistrationHandle {
   static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ZKRegistrationHandle.class);
 
   public final String id;
-
-  public ZKRegistrationHandle(String id) {
+  public final CoordinationProtos.DrillbitEndpoint endpoint;
+  public ZKRegistrationHandle(String id, CoordinationProtos.DrillbitEndpoint endpoint) {
     super();
     this.id = id;
+    this.endpoint = endpoint;
   }
 
 }

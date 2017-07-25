@@ -161,6 +161,7 @@ public class SoftAffinityFragmentParallelizer implements FragmentParallelizer {
         endpoints.add(otherEPItr.next());
       }
     }
+//    System.out.println("in soft aff parall End points assigned are " + endpoints);
 
     return endpoints;
   }
