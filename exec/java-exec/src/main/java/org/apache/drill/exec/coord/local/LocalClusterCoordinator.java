@@ -17,7 +17,7 @@
  */
 package org.apache.drill.exec.coord.local;
 
-import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 import java.util.UUID;
@@ -35,6 +35,7 @@ import org.apache.drill.exec.coord.store.TransientStoreFactory;
 import org.apache.drill.exec.proto.CoordinationProtos.DrillbitEndpoint;
 
 import com.google.common.collect.Maps;
+import org.apache.drill.exec.server.Drillbit;
 
 public class LocalClusterCoordinator extends ClusterCoordinator {
   private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(LocalClusterCoordinator.class);
@@ -86,8 +87,32 @@ public class LocalClusterCoordinator extends ClusterCoordinator {
   }
 
   @Override
+  public void update(RegistrationHandle handle, Drillbit.Status status) {
+    DrillbitEndpoint endpoint = endpoints.get(handle);
+    endpoint.toBuilder().setStatus(status.toString());
+    endpoints.put(handle,endpoint);
+  }
+
+  @Override
   public Collection<DrillbitEndpoint> getAvailableEndpoints() {
     return endpoints.values();
+  }
+
+  @Override
+  public void updateStatus(Drillbit.Status status) {
+
+  }
+
+  @Override
+  public Collection<DrillbitEndpoint> getRunningEndPoints() {
+    Collection<DrillbitEndpoint> runningEndPoints = new ArrayList<>();
+    for (DrillbitEndpoint endpoint: endpoints.values()){
+      if(endpoint.getStatus().equals("Running")) {
+        runningEndPoints.add(endpoint);
+      }
+    }
+    System.out.println("running end points are " );
+    return runningEndPoints;
   }
 
   private class Handle implements RegistrationHandle {

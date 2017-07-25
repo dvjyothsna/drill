@@ -21,17 +21,19 @@ import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.Collections2.transform;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
+import java.util.Collection;
+import java.util.ArrayList;
 import java.util.Set;
+import java.util.HashSet;
+import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.google.common.collect.Lists;
+import org.apache.commons.collections.keyvalue.MultiKey;
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
@@ -56,6 +58,7 @@ import org.apache.drill.exec.coord.store.TransientStoreFactory;
 import org.apache.drill.exec.proto.CoordinationProtos.DrillbitEndpoint;
 
 import com.google.common.base.Function;
+import org.apache.drill.exec.server.Drillbit;
 
 /**
  * Manages cluster coordination utilizing zookeeper. *
@@ -70,7 +73,9 @@ public class ZKClusterCoordinator extends ClusterCoordinator {
   private final CountDownLatch initialConnection = new CountDownLatch(1);
   private final TransientStoreFactory factory;
   private ServiceCache<DrillbitEndpoint> serviceCache;
+  private DrillbitEndpoint endpoint;
 
+  private HashMap<MultiKey, DrillbitEndpoint> endpointHashMap = new HashMap();
   private static final Pattern ZK_COMPLEX_STRING = Pattern.compile("(^.*?)/(.*)/([^/]*)$");
 
   public ZKClusterCoordinator(DrillConfig config) throws IOException{
@@ -170,9 +175,10 @@ public class ZKClusterCoordinator extends ClusterCoordinator {
   @Override
   public RegistrationHandle register(DrillbitEndpoint data) {
     try {
+      this.endpoint = data;
       ServiceInstance<DrillbitEndpoint> serviceInstance = newServiceInstance(data);
       discovery.registerService(serviceInstance);
-      return new ZKRegistrationHandle(serviceInstance.getId());
+      return new ZKRegistrationHandle(serviceInstance.getId(),data);
     } catch (Exception e) {
       throw propagate(e);
     }
@@ -201,6 +207,36 @@ public class ZKClusterCoordinator extends ClusterCoordinator {
     }
   }
 
+  public void update(RegistrationHandle handle, Drillbit.Status status) {
+
+    ZKRegistrationHandle h = (ZKRegistrationHandle) handle;
+//    System.out.println("handle id " + ((ZKRegistrationHandle) handle).id);
+//    DrillbitEndpoint endpoint = h.endpoint;
+      try {
+//        System.out.println("****** " + endpoint);
+        endpoint = endpoint.toBuilder().setStatus(status.toString()).build();
+//        endpoint = h.endpoint.toBuilder().setStatus(status.toString()).build();
+        System.out.println("in update ****" + endpoint + status);
+        ServiceInstance<DrillbitEndpoint> serviceInstance = ServiceInstance.<DrillbitEndpoint>builder().name(serviceName).id(h.id).payload(endpoint).build();
+        discovery.updateService(serviceInstance);
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+
+
+  }
+  public Collection<DrillbitEndpoint> getRunningEndPoints() {
+
+    Collection<DrillbitEndpoint> runningEndPoints = new ArrayList<>();
+    for (DrillbitEndpoint endpoint: endpoints){
+      if(endpoint.getStatus().equals("Running")) {
+        runningEndPoints.add(endpoint);
+      }
+    }
+    System.out.println("running end points are " );
+    return runningEndPoints;
+  }
+
   @Override
   public Collection<DrillbitEndpoint> getAvailableEndpoints() {
     return this.endpoints;
@@ -220,6 +256,7 @@ public class ZKClusterCoordinator extends ClusterCoordinator {
 
   private synchronized void updateEndpoints() {
     try {
+      System.out.println("update endpoints **" + this);
       Collection<DrillbitEndpoint> newDrillbitSet =
       transform(discovery.queryForInstances(serviceName),
         new Function<ServiceInstance<DrillbitEndpoint>, DrillbitEndpoint>() {
@@ -229,14 +266,53 @@ public class ZKClusterCoordinator extends ClusterCoordinator {
           }
         });
       // set of newly dead bits : original bits - new set of active bits.
-      Set<DrillbitEndpoint> unregisteredBits = new HashSet<>(endpoints);
-      unregisteredBits.removeAll(newDrillbitSet);
+
+
+//      Set<DrillbitEndpoint> unregisteredBits = new HashSet<>(endpoints);
+//      unregisteredBits.removeAll(newDrillbitSet);
+
+
 
       // Set of newly live bits : new set of active bits - original bits.
-      Set<DrillbitEndpoint> registeredBits = new HashSet<>(newDrillbitSet);
-      registeredBits.removeAll(endpoints);
+//      Set<DrillbitEndpoint> registeredBits = new HashSet<>(newDrillbitSet);
+//      registeredBits.removeAll(endpoints);
+      Set<DrillbitEndpoint> unregisteredBits = new HashSet<>();
+      Set<DrillbitEndpoint> registeredBits = new HashSet<>();
 
-      endpoints = newDrillbitSet;
+      System.out.println("new drillbits "+ newDrillbitSet);
+      System.out.println("curr drillbits "+ endpointHashMap.values()) ;
+
+      HashMap<MultiKey, DrillbitEndpoint> newDrillbits = new HashMap();
+
+      for ( DrillbitEndpoint endpoint : newDrillbitSet) {
+        if (endpointHashMap.containsKey(new MultiKey(endpoint.getAddress(),endpoint.getUserPort()))) {
+          endpointHashMap.put(new MultiKey(endpoint.getAddress(),endpoint.getUserPort()),endpoint);
+//          continue;
+        }
+        else {
+          registeredBits.add(endpoint);
+          endpointHashMap.put(new MultiKey(endpoint.getAddress(),endpoint.getUserPort()),endpoint);
+        }
+      }
+
+
+      for(MultiKey key: endpointHashMap.keySet()) {
+        if(!newDrillbitSet.contains(endpointHashMap.get(key))) {
+
+            unregisteredBits.add(endpointHashMap.get(key));
+          endpointHashMap.remove(key);
+            endpoints.remove(endpointHashMap.get(key));
+        }
+      }
+
+      endpoints = endpointHashMap.values();
+
+//      for( DrillbitEndpoint endpoint : endpointHashMap.values()) {
+////        System.out.println("all endpoints " + endpoints);
+//        endpoints.add(endpoint);
+//      }
+
+      System.out.println("unregistered " + unregisteredBits);
 
 
       if (logger.isDebugEnabled()) {
@@ -254,7 +330,8 @@ public class ZKClusterCoordinator extends ClusterCoordinator {
           builder.append(bit.getStatus()).append(" | ");
           builder.append('\n');
         }
-//        System.out.println(builder.toString());
+
+        System.out.println("hey in update end points " +builder.toString());
         logger.debug(builder.toString());
       }
 
@@ -270,6 +347,29 @@ public class ZKClusterCoordinator extends ClusterCoordinator {
       logger.error("Failure while update Drillbit service location cache.", e);
     }
   }
+
+  public synchronized void updateStatus(Drillbit.Status status) {
+    Collection<DrillbitEndpoint> allEndPoints = new ArrayList<DrillbitEndpoint>() ;
+
+    System.out.println("final end points "+ endpoints);
+
+    int i = 0;
+    for(DrillbitEndpoint endpoint : endpoints)
+    {
+      if (i == 0 ) {
+        allEndPoints.add(endpoint.toBuilder().setStatus(status.toString()).build());
+      }
+      else {
+        allEndPoints.add(endpoint);
+      }
+      i++;
+    }
+    endpoints = allEndPoints;
+
+      System.out.println("final end points "+ endpoints);
+
+  }
+
 
   protected ServiceInstance<DrillbitEndpoint> newServiceInstance(DrillbitEndpoint endpoint) throws Exception {
     return ServiceInstance.<DrillbitEndpoint>builder()

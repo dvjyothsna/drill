@@ -168,12 +168,12 @@ public class WorkManager implements AutoCloseable {
   public void waitToExit() {
     synchronized(this) {
       if (queries.isEmpty() && runningFragments.isEmpty()) {
+        System.out.println("hereee");
         return;
       }
 
       exitLatch = new ExtendedLatch();
     }
-
     // Wait for at most 5 seconds or until the latch is released.
     exitLatch.awaitUninterruptibly(5000);
   }

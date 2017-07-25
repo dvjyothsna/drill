@@ -36,7 +36,7 @@ public class TestLargeQuery {
 
       String sql = "SELECT id_i,name_s20 FROM `mock`.`employees_10000k` ORDER BY id_i";
       client.queryBuilder().sql(sql).printCsv();
-      cluster.close_drillbit();
+      cluster.close_drillbit("db2");
       String sq = "SELECT id_i,name_s20 FROM `mock`.`employees_10000k` ORDER BY id_i";
       client.queryBuilder().sql(sq).printCsv();
 

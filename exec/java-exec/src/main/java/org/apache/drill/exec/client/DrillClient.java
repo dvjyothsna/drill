@@ -329,7 +329,8 @@ public class DrillClient implements Closeable, ConnectionThrottle {
           throw new RpcException("Failure setting up ZK for client.", e);
         }
       }
-      endpoints.addAll(clusterCoordinator.getAvailableEndpoints());
+      System.out.println("running endpoints" + clusterCoordinator.getRunningEndPoints());
+      endpoints.addAll(clusterCoordinator.getRunningEndPoints());
       // Make sure we have at least one endpoint in the list
       checkState(!endpoints.isEmpty(), "No active Drillbit endpoint found from ZooKeeper. Check connection parameters?");
     }
@@ -406,6 +407,8 @@ public class DrillClient implements Closeable, ConnectionThrottle {
   }
 
   public synchronized boolean reconnect() {
+    System.out.println("in reconnect");
+
     if (client.isActive()) {
       return true;
     }
@@ -414,7 +417,7 @@ public class DrillClient implements Closeable, ConnectionThrottle {
       retry--;
       try {
         Thread.sleep(this.reconnectDelay);
-        final ArrayList<DrillbitEndpoint> endpoints = new ArrayList<>(clusterCoordinator.getAvailableEndpoints());
+        final ArrayList<DrillbitEndpoint> endpoints = new ArrayList<>(clusterCoordinator.getRunningEndPoints());
         if (endpoints.isEmpty()) {
           continue;
         }
@@ -429,6 +432,7 @@ public class DrillClient implements Closeable, ConnectionThrottle {
   }
 
   private void connect(DrillbitEndpoint endpoint) throws RpcException {
+    System.out.println("foreman is " + endpoint);
     client.connect(endpoint, properties, getUserCredentials());
   }
 
@@ -807,7 +811,9 @@ public class DrillClient implements Closeable, ConnectionThrottle {
     @Override
     public void submissionFailed(UserException ex) {
       // or  !client.isActive()
+      System.out.println("in sub failed");
       if (ex.getCause() instanceof ChannelClosedException) {
+
         if (reconnect()) {
           try {
             client.submitQuery(this, query);

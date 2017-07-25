@@ -75,10 +75,19 @@ public class Drillbit implements AutoCloseable {
   private final WorkManager manager;
   private final BootStrapContext context;
   private final WebServer webServer;
+
+  public RegistrationHandle getRegistrationHandle() {
+    return registrationHandle;
+  }
+
   private RegistrationHandle registrationHandle;
   private volatile StoragePluginRegistry storageRegistry;
   private final PersistentStoreProvider profileStoreProvider;
 
+  public enum Status
+  {
+    STARTUP , ONLINE, QUIESCENT
+  };
   @VisibleForTesting
   public Drillbit(
       final DrillConfig config,
@@ -143,6 +152,13 @@ public class Drillbit implements AutoCloseable {
     logger.info("Startup completed ({} ms).", w.elapsed(TimeUnit.MILLISECONDS));
   }
 
+
+  public synchronized void close_drillbit() {
+    if (isClosed) {
+      return;
+    }
+
+  }
   @Override
   public synchronized void close() {
     // avoid complaints about double closing
@@ -154,7 +170,7 @@ public class Drillbit implements AutoCloseable {
 
     // wait for anything that is running to complete
     manager.waitToExit();
-
+    System.out.println("after wait");
     if (coord != null && registrationHandle != null) {
       coord.unregister(registrationHandle);
     }
