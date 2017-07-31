@@ -83,7 +83,7 @@ public class BaseTestQuery extends ExecTest {
   private static final Properties TEST_CONFIGURATIONS = new Properties() {
     {
       put(ExecConstants.SYS_STORE_PROVIDER_LOCAL_ENABLE_WRITE, "false");
-      put(ExecConstants.HTTP_ENABLE, "false");
+//      put(ExecConstants.HTTP_ENABLE, "false");
     }
   };
 

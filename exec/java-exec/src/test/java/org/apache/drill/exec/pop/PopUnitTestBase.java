@@ -52,7 +52,7 @@ public abstract class PopUnitTestBase  extends ExecTest{
     // configuration. They allow tests to run successfully in Eclipse.
 
     props.put(ExecConstants.SYS_STORE_PROVIDER_LOCAL_ENABLE_WRITE, "false");
-    props.put(ExecConstants.HTTP_ENABLE, "false");
+//    props.put(ExecConstants.HTTP_ENABLE, "false");
     props.put(Drillbit.SYSTEM_OPTIONS_NAME, "org.apache.drill.exec.compile.ClassTransformer.scalar_replacement=on");
     props.put(QueryTestUtil.TEST_QUERY_PRINTING_SILENT, "true");
     props.put("drill.catastrophic_to_standard_out", "true");

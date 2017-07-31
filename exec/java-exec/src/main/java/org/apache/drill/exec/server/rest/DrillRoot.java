@@ -71,6 +71,7 @@ public class DrillRoot {
       final DrillbitInfo drillbit = new DrillbitInfo(endpoint,
               currentDrillbit.equals(endpoint),
               currentVersion.equals(endpoint.getVersion()));
+      System.out.println("all bits in work manager "+ endpoint);
       if (!drillbit.isVersionMatch()) {
         mismatchedVersions.add(drillbit.getVersion());
       }
@@ -128,6 +129,9 @@ public class DrillRoot {
     private final boolean current;
     private final boolean versionMatch;
 
+
+    private final String status;
+
     @JsonCreator
     public DrillbitInfo(DrillbitEndpoint drillbit, boolean current, boolean versionMatch) {
       this.address = drillbit.getAddress();
@@ -137,6 +141,7 @@ public class DrillRoot {
       this.version = Strings.isNullOrEmpty(drillbit.getVersion()) ? "Undefined" : drillbit.getVersion();
       this.current = current;
       this.versionMatch = versionMatch;
+      this.status = String.valueOf(drillbit.getState());
     }
 
     public String getAddress() {
@@ -161,6 +166,11 @@ public class DrillRoot {
       return versionMatch;
     }
 
+    public String getStatus() {
+      return status;
+    }
+
+
     /**
      * Method used to sort drillbits. Current drillbit goes first.
      * Then drillbits with matching versions, after them drillbits with mismatching versions.
@@ -182,7 +192,13 @@ public class DrillRoot {
 
       if (this.isVersionMatch() == drillbitToCompare.isVersionMatch()) {
         if (this.version.equals(drillbitToCompare.getVersion())) {
-          return this.address.compareTo(drillbitToCompare.getAddress());
+          {
+            if(this.address.equals(drillbitToCompare.getAddress())) {
+              return (this.controlPort.compareTo(drillbitToCompare.getControlPort()));
+            }
+            return (this.address.compareTo(drillbitToCompare.getAddress()));
+          }
+//          this.controlPort.compareTo(drillbitToCompare.getControlPort()));
         }
         return this.version.compareTo(drillbitToCompare.getVersion());
       }

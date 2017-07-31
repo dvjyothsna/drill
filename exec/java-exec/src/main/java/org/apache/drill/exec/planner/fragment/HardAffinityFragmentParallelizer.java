@@ -98,9 +98,7 @@ public class HardAffinityFragmentParallelizer implements FragmentParallelizer {
 
     // 2.1 First add each endpoint from the pool once so that the mandatory assignment requirement is fulfilled.
     for(Entry<DrillbitEndpoint, EndpointAffinity> entry : endpointPool.entrySet()) {
-      if(entry.getKey().getStatus().equals("Running")) {
         endpoints.put(entry.getKey(), 1);
-      }
     }
     int totalAssigned = endpoints.size();
 

@@ -84,47 +84,47 @@ public class Testshutdown {
   @Test
   public void fourthTest() throws Exception {
 
-    for (int k = 0; k < 30; k++) {
-      String[] drillbits = {"db1", "db2", "db3"};
+    for (int k = 0; k < 1; k++) {
+//      Thread.sleep(1000);
+      String[] drillbits = {"db1" , "db2", "db3", "db4", "db5", "db6"};
+//      , "db2", "db3", "db4",};
 
       FixtureBuilder builder = ClusterFixture.builder().withBits(drillbits).withLocalZk();
 
+
       try (ClusterFixture cluster = builder.build();
            ClientFixture client = cluster.clientFixture()) {
-        for (int i = 0; i < 40; i++) {
+        for (int i = 0; i < 4000; i++) {
           setupFile(i);
         }
+//        client.queryBuilder().sql("SELECT * FROM sys.BOOT").printCsv();
 
         cluster.defineWorkspace("dfs", "data", "/tmp/drill-test", "psv");
         String sql = "SELECT * FROM dfs.`/tmp/drill-test/` ORDER BY employee_id";
-//      client.queryBuilder().sql(sql).printCsv();
-        client.queryBuilder().sql(sql).run();
+//        client.queryBuilder().sql(sql).run();
 
         System.out.println("after first query ");
-//      QueryBuilder.QuerySummaryFuture listener = client.queryBuilder().sql(sql).futureSummary();
-        int i = 0;
-        System.out.println("after async query");
-        while (i < 1) {
-          i++;
-          System.out.print("");
+        for (int i = 0; i < 30; i++) {
+          QueryBuilder.QuerySummaryFuture listener = client.queryBuilder().sql(sql).futureSummary();
+//          Thread.sleep(10000);
         }
-
-//      System.out.println("i is " + i);
-//      cluster.close_drillbit("db2");
         cluster.close_drillbit("db3");
-//      while (!listener.isDone())
-//      {
-//        System.out.print("");
-//      }
-////      Thread.sleep(1500);
-//      System.out.println("summary " + listener.get());
-//      client.queryBuilder().sql(sql).printCsv();
-        client.queryBuilder().sql(sql).run();
-        client.queryBuilder().sql(sql).run();
-        client.queryBuilder().sql(sql).run();
+        System.out.println("after shutdown ");
+        Thread.sleep(10000);
 
+
+//        System.out.println("result " + listener.get());
+        client.queryBuilder().sql(sql).run();
+//        client.queryBuilder().sql(sql).run();
+//        client.queryBuilder().sql(sql).run();
+//        client.queryBuilder().sql(sql).run();
+//        client.queryBuilder().sql(sql).run();
+//        client.queryBuilder().sql(sql).run();
+
+        System.out.println("after last query ");
 
       }
+
     }
   }
 

@@ -198,6 +198,11 @@ case $startStopStatus in
   exit $?
   ;;
 
+(graceful_stop)
+  stop_bit
+  exit $?
+  ;;
+
 (restart)
   # stop the command
   stop_bit

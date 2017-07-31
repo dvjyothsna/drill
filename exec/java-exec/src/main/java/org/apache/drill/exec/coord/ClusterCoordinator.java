@@ -24,6 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.apache.drill.exec.coord.store.TransientStore;
 import org.apache.drill.exec.coord.store.TransientStoreConfig;
 import org.apache.drill.exec.proto.CoordinationProtos.DrillbitEndpoint;
+import org.apache.drill.exec.proto.CoordinationProtos.DrillbitEndpoint.State;
 import org.apache.drill.exec.server.Drillbit;
 import org.apache.drill.exec.work.foreman.DrillbitStatusListener;
 
@@ -56,11 +57,9 @@ public abstract class ClusterCoordinator implements AutoCloseable {
    */
   public abstract Collection<DrillbitEndpoint> getAvailableEndpoints();
 
-  public abstract void updateStatus(Drillbit.Status status);
+  public abstract Collection<DrillbitEndpoint> getOnlineEndPoints();
 
-  public abstract Collection<DrillbitEndpoint> getRunningEndPoints();
-
-  public abstract void update(RegistrationHandle handle, Drillbit.Status quiescent);
+  public abstract void update(RegistrationHandle handle, State quiescent);
 
   public interface RegistrationHandle {
   }

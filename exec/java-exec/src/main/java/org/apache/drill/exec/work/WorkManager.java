@@ -40,6 +40,7 @@ import org.apache.drill.exec.rpc.control.Controller;
 import org.apache.drill.exec.rpc.control.WorkEventBus;
 import org.apache.drill.exec.rpc.data.DataConnectionCreator;
 import org.apache.drill.exec.server.BootStrapContext;
+import org.apache.drill.exec.server.Drillbit;
 import org.apache.drill.exec.server.DrillbitContext;
 import org.apache.drill.exec.store.sys.PersistentStoreProvider;
 import org.apache.drill.exec.work.batch.ControlMessageHandler;
@@ -164,9 +165,12 @@ public class WorkManager implements AutoCloseable {
    *
    * <p>This is intended to be used by {@link org.apache.drill.exec.server.Drillbit#close()}.</p>
    */
-  public void waitToExit() {
+  public void waitToExit(Drillbit bit) {
     synchronized(this) {
-      if (queries.isEmpty() && runningFragments.isEmpty()) {
+
+      System.out.println("in sync" + bit.status);
+//      bit.status.equals(Drillbit.DrillbitStatus.DRAINING) &&
+      if (   queries.isEmpty() && runningFragments.isEmpty()) {
         System.out.println("hereee");
         return;
       }
@@ -174,7 +178,7 @@ public class WorkManager implements AutoCloseable {
       exitLatch = new ExtendedLatch();
     }
     // Wait for at most 5 seconds or until the latch is released.
-    exitLatch.awaitUninterruptibly(5000);
+    exitLatch.awaitUninterruptibly(15000);
   }
 
   /**
@@ -185,6 +189,7 @@ public class WorkManager implements AutoCloseable {
     synchronized(this) {
       if (exitLatch != null) {
         if (queries.isEmpty() && runningFragments.isEmpty()) {
+          System.out.println("here in indicate");
           exitLatch.countDown();
         }
       }

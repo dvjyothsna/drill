@@ -107,16 +107,21 @@ public class WebServer implements AutoCloseable {
     this.metrics = context.getMetrics();
     this.workManager = workManager;
 
-    if (config.getBoolean(ExecConstants.HTTP_ENABLE)) {
-      embeddedJetty = new Server();
-    } else {
-      embeddedJetty = null;
-    }
+//    if(config.getString(ExecConstants.HTTP_ENABLE).equals("true")) {
+//
+//    }
+    embeddedJetty = new Server();
+//    if (config.getBoolean(ExecConstants.HTTP_ENABLE)) {
+//      embeddedJetty = new Server();
+//    } else {
+//      System.out.println("in webserver");
+//      embeddedJetty = null;
+//    }
   }
 
   private static final String BASE_STATIC_PATH = "/rest/static/";
   private static final String DRILL_ICON_RESOURCE_RELATIVE_PATH = "img/drill.ico";
-
+  static int hey = 0;
   /**
    * Start the web server including setup.
    * @throws Exception
@@ -127,13 +132,13 @@ public class WebServer implements AutoCloseable {
     }
     final boolean authEnabled = config.getBoolean(ExecConstants.USER_AUTHENTICATION_ENABLED);
     if (authEnabled && !context.getAuthProvider()
-        .containsFactory(PlainFactory.SIMPLE_NAME)) {
+            .containsFactory(PlainFactory.SIMPLE_NAME)) {
       logger.warn("Not starting web server. Currently Drill supports web authentication only through " +
-          "username/password. But PLAIN mechanism is not configured.");
+              "username/password. But PLAIN mechanism is not configured.");
       return;
     }
 
-    final ServerConnector serverConnector;
+     ServerConnector serverConnector;
     if (config.getBoolean(ExecConstants.HTTP_ENABLE_SSL)) {
       serverConnector = createHttpsConnector();
     } else {
@@ -155,23 +160,23 @@ public class WebServer implements AutoCloseable {
     servletContextHandler.addServlet(servletHolder, "/*");
 
     servletContextHandler.addServlet(
-        new ServletHolder(new MetricsServlet(metrics)), "/status/metrics");
+            new ServletHolder(new MetricsServlet(metrics)), "/status/metrics");
     servletContextHandler.addServlet(new ServletHolder(new ThreadDumpServlet()), "/status/threads");
 
     final ServletHolder staticHolder = new ServletHolder("static", DefaultServlet.class);
     // Get resource URL for Drill static assets, based on where Drill icon is located
     String drillIconResourcePath =
-        Resource.newClassPathResource(BASE_STATIC_PATH + DRILL_ICON_RESOURCE_RELATIVE_PATH).getURL().toString();
+            Resource.newClassPathResource(BASE_STATIC_PATH + DRILL_ICON_RESOURCE_RELATIVE_PATH).getURL().toString();
     staticHolder.setInitParameter(
-        "resourceBase",
-        drillIconResourcePath.substring(0,  drillIconResourcePath.length() - DRILL_ICON_RESOURCE_RELATIVE_PATH.length()));
+            "resourceBase",
+            drillIconResourcePath.substring(0, drillIconResourcePath.length() - DRILL_ICON_RESOURCE_RELATIVE_PATH.length()));
     staticHolder.setInitParameter("dirAllowed", "false");
     staticHolder.setInitParameter("pathInfoOnly", "true");
     servletContextHandler.addServlet(staticHolder, "/static/*");
 
     if (authEnabled) {
-        servletContextHandler.setSecurityHandler(createSecurityHandler());
-        servletContextHandler.setSessionHandler(createSessionHandler(servletContextHandler.getSecurityHandler()));
+      servletContextHandler.setSecurityHandler(createSecurityHandler());
+      servletContextHandler.setSessionHandler(createSessionHandler(servletContextHandler.getSecurityHandler()));
     }
 
     if (config.getBoolean(ExecConstants.HTTP_CORS_ENABLED)) {
@@ -185,13 +190,29 @@ public class WebServer implements AutoCloseable {
       holder.setInitParameter(CrossOriginFilter.ALLOW_CREDENTIALS_PARAM,
               String.valueOf(config.getBoolean(ExecConstants.HTTP_CORS_CREDENTIALS)));
 
-      for (String path: new String[] { "*.json", "/storage/*/enable/*", "/status*" }) {
+      for (String path : new String[]{"*.json", "/storage/*/enable/*", "/status*"}) {
         servletContextHandler.addFilter(holder, path, EnumSet.of(DispatcherType.REQUEST));
       }
     }
 
     embeddedJetty.setHandler(servletContextHandler);
-    embeddedJetty.start();
+    while(true) {
+      try {
+
+
+        embeddedJetty.start();
+        break;
+      }
+      catch (Exception e) {
+        System.out.println("in except");
+        serverConnector = createHttpConnector();
+        embeddedJetty.addConnector(serverConnector);
+
+        continue;
+      }
+    }
+
+
   }
 
   /**
@@ -336,12 +357,29 @@ public class WebServer implements AutoCloseable {
    * @return Initialized {@link ServerConnector} instance for HTTP connections.
    * @throws Exception
    */
+  static int port_lastused = 8047;
+  static int total_ports = 0;
   private ServerConnector createHttpConnector() throws Exception {
     logger.info("Setting up HTTP connector for web server");
     final HttpConfiguration httpConfig = new HttpConfiguration();
     final ServerConnector httpConnector = new ServerConnector(embeddedJetty, new HttpConnectionFactory(httpConfig));
-    httpConnector.setPort(config.getInt(ExecConstants.HTTP_PORT));
-
+    if(port_lastused == config.getInt(ExecConstants.HTTP_PORT)) {
+      httpConnector.setPort(config.getInt(ExecConstants.HTTP_PORT));
+      port_lastused ++;
+    }
+    else {
+      while(total_ports < 2) {
+        try {
+          httpConnector.setPort(port_lastused);
+          total_ports++;
+          System.out.println(port_lastused);
+          port_lastused++;
+          break;
+        } catch (Exception e) {
+          continue;
+        }
+      }
+    }
     return httpConnector;
   }
 

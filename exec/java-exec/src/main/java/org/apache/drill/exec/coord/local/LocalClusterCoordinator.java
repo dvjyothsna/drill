@@ -33,6 +33,8 @@ import org.apache.drill.exec.coord.store.TransientStore;
 import org.apache.drill.exec.coord.store.TransientStoreConfig;
 import org.apache.drill.exec.coord.store.TransientStoreFactory;
 import org.apache.drill.exec.proto.CoordinationProtos.DrillbitEndpoint;
+import org.apache.drill.exec.proto.CoordinationProtos.DrillbitEndpoint.State;
+
 
 import com.google.common.collect.Maps;
 import org.apache.drill.exec.server.Drillbit;
@@ -70,9 +72,10 @@ public class LocalClusterCoordinator extends ClusterCoordinator {
   }
 
   @Override
-  public RegistrationHandle register(final DrillbitEndpoint data) {
+  public RegistrationHandle register( DrillbitEndpoint data) {
     logger.debug("Endpoint registered {}.", data);
     final Handle h = new Handle();
+    data = data.toBuilder().setState(State.ONLINE).build();
     endpoints.put(h, data);
     return h;
   }
@@ -87,9 +90,9 @@ public class LocalClusterCoordinator extends ClusterCoordinator {
   }
 
   @Override
-  public void update(RegistrationHandle handle, Drillbit.Status status) {
+  public void update(RegistrationHandle handle, State state) {
     DrillbitEndpoint endpoint = endpoints.get(handle);
-    endpoint.toBuilder().setStatus(status.toString());
+    endpoint.toBuilder().setState(state);
     endpoints.put(handle,endpoint);
   }
 
@@ -98,20 +101,16 @@ public class LocalClusterCoordinator extends ClusterCoordinator {
     return endpoints.values();
   }
 
-  @Override
-  public void updateStatus(Drillbit.Status status) {
-
-  }
 
   @Override
-  public Collection<DrillbitEndpoint> getRunningEndPoints() {
+  public Collection<DrillbitEndpoint> getOnlineEndPoints() {
     Collection<DrillbitEndpoint> runningEndPoints = new ArrayList<>();
     for (DrillbitEndpoint endpoint: endpoints.values()){
-      if(endpoint.getStatus().equals("Running")) {
+      if(endpoint.getState().equals(State.ONLINE)) {
         runningEndPoints.add(endpoint);
       }
     }
-    System.out.println("running end points are " );
+    System.out.println("local running end points are local " );
     return runningEndPoints;
   }
 

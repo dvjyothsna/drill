@@ -79,6 +79,7 @@ public class BufferingQueryEventListener implements UserResultsListener
 
   @Override
   public void submissionFailed(UserException ex) {
+    System.out.println("in buff failed");
     silentPut(new QueryEvent(ex));
   }
 
