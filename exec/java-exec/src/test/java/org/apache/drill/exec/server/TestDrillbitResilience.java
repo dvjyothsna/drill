@@ -180,7 +180,7 @@ public class TestDrillbitResilience extends DrillTest {
   @BeforeClass
   public static void startSomeDrillbits() throws Exception {
     // turn off the HTTP server to avoid port conflicts between the drill bits
-    System.setProperty(ExecConstants.HTTP_ENABLE, "false");
+//    System.setProperty(ExecConstants.HTTP_ENABLE, "false");
 
     // turn on error for failure in cancelled fragments
     zkHelper = new ZookeeperHelper(true);

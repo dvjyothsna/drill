@@ -58,7 +58,7 @@ public class Bug1735ConnectionCloseTest extends JdbcTestQueryBase {
   // (TODO:  Move this to base test class and/or have Jetty try other ports.)
   @BeforeClass
   public static void setUpClass() {
-    System.setProperty( STATUS_SERVER_PROPERTY_NAME, "false" );
+    System.setProperty( STATUS_SERVER_PROPERTY_NAME, "true" );
   }
 
   @AfterClass

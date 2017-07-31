@@ -33,6 +33,36 @@ import com.dyuproject.protostuff.Schema;
 
 public final class DrillbitEndpoint implements Externalizable, Message<DrillbitEndpoint>, Schema<DrillbitEndpoint>
 {
+    public enum State implements com.dyuproject.protostuff.EnumLite<State>
+    {
+        STARTUP(0),
+        ONLINE(1),
+        QUIESCENT(2);
+        
+        public final int number;
+        
+        private State (int number)
+        {
+            this.number = number;
+        }
+        
+        public int getNumber()
+        {
+            return number;
+        }
+        
+        public static State valueOf(int number)
+        {
+            switch(number) 
+            {
+                case 0: return STARTUP;
+                case 1: return ONLINE;
+                case 2: return QUIESCENT;
+                default: return null;
+            }
+        }
+    }
+
 
     public static Schema<DrillbitEndpoint> getSchema()
     {
@@ -53,7 +83,7 @@ public final class DrillbitEndpoint implements Externalizable, Message<DrillbitE
     private int dataPort;
     private Roles roles;
     private String version;
-    private String status;
+    private State state;
 
     public DrillbitEndpoint()
     {
@@ -140,16 +170,16 @@ public final class DrillbitEndpoint implements Externalizable, Message<DrillbitE
         return this;
     }
 
-    // status
+    // state
 
-    public String getStatus()
+    public State getState()
     {
-        return status;
+        return state == null ? State.STARTUP : state;
     }
 
-    public DrillbitEndpoint setStatus(String status)
+    public DrillbitEndpoint setState(State state)
     {
-        this.status = status;
+        this.state = state;
         return this;
     }
 
@@ -227,7 +257,7 @@ public final class DrillbitEndpoint implements Externalizable, Message<DrillbitE
                     message.version = input.readString();
                     break;
                 case 7:
-                    message.status = input.readString();
+                    message.state = State.valueOf(input.readEnum());
                     break;
                 default:
                     input.handleUnknownField(number, this);
@@ -257,8 +287,8 @@ public final class DrillbitEndpoint implements Externalizable, Message<DrillbitE
         if(message.version != null)
             output.writeString(6, message.version, false);
 
-        if(message.status != null)
-            output.writeString(7, message.status, false);
+        if(message.state != null)
+             output.writeEnum(7, message.state.number, false);
     }
 
     public String getFieldName(int number)
@@ -271,7 +301,7 @@ public final class DrillbitEndpoint implements Externalizable, Message<DrillbitE
             case 4: return "dataPort";
             case 5: return "roles";
             case 6: return "version";
-            case 7: return "status";
+            case 7: return "state";
             default: return null;
         }
     }
@@ -291,7 +321,7 @@ public final class DrillbitEndpoint implements Externalizable, Message<DrillbitE
         __fieldMap.put("dataPort", 4);
         __fieldMap.put("roles", 5);
         __fieldMap.put("version", 6);
-        __fieldMap.put("status", 7);
+        __fieldMap.put("state", 7);
     }
     
 }

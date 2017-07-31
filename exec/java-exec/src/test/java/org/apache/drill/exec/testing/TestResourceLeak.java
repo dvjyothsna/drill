@@ -75,7 +75,7 @@ public class TestResourceLeak extends DrillTest {
   private static final Properties TEST_CONFIGURATIONS = new Properties() {
     {
       put(ExecConstants.SYS_STORE_PROVIDER_LOCAL_ENABLE_WRITE, "false");
-      put(ExecConstants.HTTP_ENABLE, "false");
+//      put(ExecConstants.HTTP_ENABLE, "false");
     }
   };
 

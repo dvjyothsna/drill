@@ -71,7 +71,7 @@ public class JdbcAssert {
     // plugin configurations stored in /tmp/drill.
 
     properties.setProperty(ExecConstants.SYS_STORE_PROVIDER_LOCAL_ENABLE_WRITE, "false");
-    properties.setProperty(ExecConstants.HTTP_ENABLE, "false");
+//    properties.setProperty(ExecConstants.HTTP_ENABLE, "false");
     return properties;
   }
 

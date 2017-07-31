@@ -42,6 +42,7 @@
               <th>Control Port</th>
               <th>Data Port</th>
               <th>Version</th>
+              <th>Status</th>
             </tr>
           </thead>
           <tbody>
@@ -57,12 +58,14 @@
                 <td>${drillbit.getUserPort()}</td>
                 <td>${drillbit.getControlPort()}</td>
                 <td>${drillbit.getDataPort()}</td>
+
                 <td>
                   <span class="label
                     <#if drillbit.isVersionMatch()>label-success<#else>label-danger</#if>">
                     ${drillbit.getVersion()}
                   </span>
                 </td>
+                <td>${drillbit.getStatus()}</td>
               </tr>
               <#assign i = i + 1>
             </#list>

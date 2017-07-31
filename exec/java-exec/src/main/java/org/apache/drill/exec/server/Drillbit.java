@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.drill.common.AutoCloseables;
 import org.apache.drill.common.StackTrace;
+import org.apache.drill.common.concurrent.ExtendedLatch;
 import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.common.scanner.ClassPathScanner;
 import org.apache.drill.common.scanner.persistence.ScanResult;
@@ -29,6 +30,7 @@ import org.apache.drill.exec.ExecConstants;
 import org.apache.drill.exec.coord.ClusterCoordinator;
 import org.apache.drill.exec.coord.ClusterCoordinator.RegistrationHandle;
 import org.apache.drill.exec.coord.zk.ZKClusterCoordinator;
+import org.apache.drill.exec.coord.zk.ZKRegistrationHandle;
 import org.apache.drill.exec.exception.DrillbitStartupException;
 import org.apache.drill.exec.proto.CoordinationProtos.DrillbitEndpoint;
 import org.apache.drill.exec.server.options.OptionManager;
@@ -45,7 +47,7 @@ import org.apache.drill.exec.store.sys.store.provider.LocalPersistentStoreProvid
 import org.apache.drill.exec.util.GuavaPatcher;
 import org.apache.drill.exec.work.WorkManager;
 import org.apache.zookeeper.Environment;
-
+import org.apache.drill.exec.proto.CoordinationProtos.DrillbitEndpoint.State;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Stopwatch;
 
@@ -68,6 +70,7 @@ public class Drillbit implements AutoCloseable {
   public final static String SYSTEM_OPTIONS_NAME = "org.apache.drill.exec.server.Drillbit.system_options";
 
   private boolean isClosed = false;
+  public DrillbitStatus status;
 
   private final ClusterCoordinator coord;
   private final ServiceEngine engine;
@@ -152,11 +155,63 @@ public class Drillbit implements AutoCloseable {
     logger.info("Startup completed ({} ms).", w.elapsed(TimeUnit.MILLISECONDS));
   }
 
-
-  public synchronized void close_drillbit() {
+  public void change_state() {
+    ExtendedLatch exitLatch = null; // used to wait to exit when things are still running
+    exitLatch = new ExtendedLatch();
+    exitLatch.awaitUninterruptibly(15000);
+  }
+  public synchronized void graceful_close() {
     if (isClosed) {
       return;
     }
+    status = DrillbitStatus.GRACE;
+    final Stopwatch w = Stopwatch.createStarted();
+    logger.debug("Shutdown begun.");
+    coord.update(registrationHandle, State.QUIESCENT);
+    status = DrillbitStatus.GRACE;
+//    Timer timer = new Timer();
+    change_state();
+//    timer.schedule(new TimerTask() {
+//      @Override
+//      public void run() {
+
+        status = DrillbitStatus.DRAINING;
+//      }
+//    },1000);
+
+    // wait for anything that is running to complete
+    manager.waitToExit(this);
+    System.out.println("after wait in close drillbit");
+    if (coord != null && registrationHandle != null) {
+      coord.unregister(registrationHandle);
+    }
+    try {
+      Thread.sleep(context.getConfig().getInt(ExecConstants.ZK_REFRESH) * 2);
+    } catch (final InterruptedException e) {
+      logger.warn("Interrupted while sleeping during coordination deregistration.");
+
+      // Preserve evidence that the interruption occurred so that code higher up on the call stack can learn of the
+      // interruption and respond to it if it wants to.
+      Thread.currentThread().interrupt();
+    }
+
+    try {
+      AutoCloseables.close(
+              webServer,
+              engine,
+              storeProvider,
+              coord,
+              manager,
+              storageRegistry,
+              context);
+    } catch(Exception e) {
+      logger.warn("Failure on close()", e);
+    }
+
+    logger.info("Shutdown completed ({} ms).", w.elapsed(TimeUnit.MILLISECONDS));
+    isClosed = true;
+    System.out.println("in close drill end");
+
 
   }
   @Override
@@ -165,11 +220,13 @@ public class Drillbit implements AutoCloseable {
     if (isClosed) {
       return;
     }
+    status = DrillbitStatus.DRAINING;
     final Stopwatch w = Stopwatch.createStarted();
     logger.debug("Shutdown begun.");
+    System.out.println("in actual close");
 
     // wait for anything that is running to complete
-    manager.waitToExit();
+    manager.waitToExit(this);
     System.out.println("after wait");
     if (coord != null && registrationHandle != null) {
       coord.unregister(registrationHandle);
@@ -284,7 +341,8 @@ public class Drillbit implements AutoCloseable {
          * singleton object.
          */
         synchronized(idCounter) {
-          drillbit.close();
+//          drillbit.close();
+          drillbit.graceful_close();
         }
       } catch(final Exception e) {
         throw new RuntimeException("Caught exception closing Drillbit started from\n" + stackTrace, e);

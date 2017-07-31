@@ -137,7 +137,7 @@ public class WebServer implements AutoCloseable {
       return;
     }
 
-    final ServerConnector serverConnector;
+     ServerConnector serverConnector;
     if (config.getBoolean(ExecConstants.HTTP_ENABLE_SSL)) {
       serverConnector = createHttpsConnector();
     } else {
@@ -194,7 +194,23 @@ public class WebServer implements AutoCloseable {
     }
 
     embeddedJetty.setHandler(servletContextHandler);
-    embeddedJetty.start();
+    while(true) {
+      try {
+
+
+        embeddedJetty.start();
+        break;
+      }
+      catch (Exception e) {
+        System.out.println("in except");
+        serverConnector = createHttpConnector();
+        embeddedJetty.addConnector(serverConnector);
+
+        continue;
+      }
+    }
+
+
   }
 
   /**
@@ -348,12 +364,29 @@ public class WebServer implements AutoCloseable {
    * @return Initialized {@link ServerConnector} instance for HTTP connections.
    * @throws Exception
    */
+  static int port_lastused = 8047;
+  static int total_ports = 0;
   private ServerConnector createHttpConnector() throws Exception {
     logger.info("Setting up HTTP connector for web server");
     final HttpConfiguration httpConfig = new HttpConfiguration();
     final ServerConnector httpConnector = new ServerConnector(embeddedJetty, new HttpConnectionFactory(httpConfig));
-    httpConnector.setPort(config.getInt(ExecConstants.HTTP_PORT));
-
+    if(port_lastused == config.getInt(ExecConstants.HTTP_PORT)) {
+      httpConnector.setPort(config.getInt(ExecConstants.HTTP_PORT));
+      port_lastused ++;
+    }
+    else {
+      while(total_ports < 2) {
+        try {
+          httpConnector.setPort(port_lastused);
+          total_ports++;
+          System.out.println(port_lastused);
+          port_lastused++;
+          break;
+        } catch (Exception e) {
+          continue;
+        }
+      }
+    }
     return httpConnector;
   }
 

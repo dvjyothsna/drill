@@ -329,8 +329,8 @@ public class DrillClient implements Closeable, ConnectionThrottle {
           throw new RpcException("Failure setting up ZK for client.", e);
         }
       }
-      System.out.println("running endpoints" + clusterCoordinator.getRunningEndPoints());
-      endpoints.addAll(clusterCoordinator.getRunningEndPoints());
+      System.out.println("running endpoints" + clusterCoordinator.getOnlineEndPoints());
+      endpoints.addAll(clusterCoordinator.getOnlineEndPoints());
       // Make sure we have at least one endpoint in the list
       checkState(!endpoints.isEmpty(), "No active Drillbit endpoint found from ZooKeeper. Check connection parameters?");
     }
@@ -417,7 +417,7 @@ public class DrillClient implements Closeable, ConnectionThrottle {
       retry--;
       try {
         Thread.sleep(this.reconnectDelay);
-        final ArrayList<DrillbitEndpoint> endpoints = new ArrayList<>(clusterCoordinator.getRunningEndPoints());
+        final ArrayList<DrillbitEndpoint> endpoints = new ArrayList<>(clusterCoordinator.getOnlineEndPoints());
         if (endpoints.isEmpty()) {
           continue;
         }
@@ -812,7 +812,7 @@ public class DrillClient implements Closeable, ConnectionThrottle {
     public void submissionFailed(UserException ex) {
       // or  !client.isActive()
       System.out.println("in sub failed");
-      if (ex.getCause() instanceof ChannelClosedException) {
+//      if (ex.getCause() instanceof ChannelClosedException) {
 
         if (reconnect()) {
           try {
@@ -823,9 +823,10 @@ public class DrillClient implements Closeable, ConnectionThrottle {
         } else {
           fail(ex);
         }
-      } else {
-        fail(ex);
-      }
+//      }
+//      else {
+//        fail(ex);
+//      }
     }
 
     @Override

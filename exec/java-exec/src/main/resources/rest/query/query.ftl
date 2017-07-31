@@ -19,7 +19,7 @@
   </div>
   <div id="message" class="alert alert-info alert-dismissable" style="font-family: Courier;">
     <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-    Sample SQL query: <strong>SELECT * FROM cp.`employee.json` LIMIT 20</strong>
+    Sample SQL query: <strong>SELECT * FRgvdhgfOM cp.`employee.json` LIMIT 20</strong>
   </div>
   <form role="form" action="/query" method="POST">
     <div class="form-group">
