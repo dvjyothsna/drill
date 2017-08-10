@@ -58,7 +58,7 @@ public class SoftAffinityFragmentParallelizer implements FragmentParallelizer {
     // Find the parallelization width of fragment
     final Stats stats = fragmentWrapper.getStats();
     final ParallelizationInfo parallelizationInfo = stats.getParallelizationInfo();
-
+    System.out.println("Use time " + System.currentTimeMillis() + fragment + Thread.currentThread());
     // 1. Find the parallelization based on cost. Use max cost of all operators in this fragment; this is consistent
     //    with the calculation that ExcessiveExchangeRemover uses.
     int width = (int) Math.ceil(stats.getMaxCost() / parameters.getSliceTarget());

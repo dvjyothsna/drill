@@ -166,19 +166,26 @@ public class WorkManager implements AutoCloseable {
    * <p>This is intended to be used by {@link org.apache.drill.exec.server.Drillbit#close()}.</p>
    */
   public void waitToExit(Drillbit bit) {
+    System.out.println("thread " + Thread.currentThread());
     synchronized(this) {
 
-      System.out.println("in sync" + bit.status);
-//      bit.status.equals(Drillbit.DrillbitStatus.DRAINING) &&
-      if (   queries.isEmpty() && runningFragments.isEmpty()) {
-        System.out.println("hereee");
+//      System.out.println("in sync" + bit.status);
+//
+      System.out.println("work manager thread " +  Thread.currentThread() + queries + runningFragments);
+//
+      if ( bit.status != null && bit.status.equals(Drillbit.DrillbitStatus.DRAINING) && queries.isEmpty() && runningFragments.isEmpty()) {
+//        System.out.println("hereee");
         return;
       }
 
       exitLatch = new ExtendedLatch();
     }
     // Wait for at most 5 seconds or until the latch is released.
-    exitLatch.awaitUninterruptibly(15000);
+//    while(true) {
+      exitLatch.awaitUninterruptibly();
+
+//      System.out.println("after wait in manager" + exitLatch);
+//    }
   }
 
   /**
@@ -235,7 +242,6 @@ public class WorkManager implements AutoCloseable {
         logger.warn("Couldn't find retiring Foreman for query " + queryId);
 //        throw new IllegalStateException("Couldn't find retiring Foreman for query " + queryId);
       }
-
       indicateIfSafeToExit();
     }
 

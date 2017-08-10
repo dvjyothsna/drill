@@ -18,6 +18,7 @@
 package org.apache.drill.exec.server.rest;
 
 import org.apache.drill.exec.ExecConstants;
+import org.apache.drill.exec.server.Drillbit;
 import org.apache.drill.exec.server.rest.auth.AuthDynamicFeature;
 import org.apache.drill.exec.server.rest.auth.DrillUserPrincipal;
 import org.apache.drill.exec.server.rest.auth.DrillUserPrincipal.AnonDrillUserPrincipal;
@@ -47,7 +48,7 @@ import javax.servlet.http.HttpServletRequest;
 public class DrillRestServer extends ResourceConfig {
   static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(DrillRestServer.class);
 
-  public DrillRestServer(final WorkManager workManager) {
+  public DrillRestServer(final WorkManager workManager, final Drillbit drillbit) {
     register(DrillRoot.class);
     register(StatusResources.class);
     register(StorageResources.class);
@@ -84,6 +85,7 @@ public class DrillRestServer extends ResourceConfig {
     register(new AbstractBinder() {
       @Override
       protected void configure() {
+        bind(drillbit).to(Drillbit.class);
         bind(workManager).to(WorkManager.class);
         bind(workManager.getContext().getLpPersistence().getMapper()).to(ObjectMapper.class);
         bind(workManager.getContext().getStoreProvider()).to(PersistentStoreProvider.class);

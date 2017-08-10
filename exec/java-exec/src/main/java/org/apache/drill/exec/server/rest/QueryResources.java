@@ -68,7 +68,9 @@ public class QueryResources {
     try {
       final BufferAllocator allocator = work.getContext().getAllocator();
       drillClient = principal.getDrillClient();
-      return query.run(drillClient, allocator);
+      QueryWrapper.QueryResult queryResult = query.run(drillClient, allocator);
+//      System.out.println(queryResult);
+      return queryResult;
     } finally {
       principal.recycleDrillClient(drillClient);
     }

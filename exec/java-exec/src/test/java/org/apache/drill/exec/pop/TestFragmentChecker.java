@@ -19,6 +19,7 @@ package org.apache.drill.exec.pop;
 
 import java.util.List;
 
+import org.apache.drill.exec.ops.QueryContext;
 import org.apache.drill.exec.planner.PhysicalPlanReader;
 import org.apache.drill.exec.planner.PhysicalPlanReaderTestFactory;
 import org.apache.drill.exec.planner.fragment.Fragment;

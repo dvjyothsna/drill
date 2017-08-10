@@ -25,6 +25,11 @@ public class ZKRegistrationHandle implements RegistrationHandle {
 
   public final String id;
   public final CoordinationProtos.DrillbitEndpoint endpoint;
+
+  public CoordinationProtos.DrillbitEndpoint getEndpoint() {
+    return endpoint;
+  }
+
   public ZKRegistrationHandle(String id, CoordinationProtos.DrillbitEndpoint endpoint) {
     super();
     this.id = id;

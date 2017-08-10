@@ -115,7 +115,7 @@ public final class ExecutionControls {
     }
 
     public OptionValue loadConfigDefault(DrillConfig bootConfig, String name, String configPath){
-      return OptionValue.createString(OptionType.DEFAULT, name, bootConfig.getString(name));
+      return OptionValue.createString(OptionType.SYSTEM, name, bootConfig.getString(configPath+name));
     }
   }
 

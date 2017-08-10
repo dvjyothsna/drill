@@ -237,11 +237,14 @@ public class SimpleParallelizer implements ParallelizationParameters {
     if (fragmentWrapper.isEndpointsAssignmentDone()) {
       return;
     }
+//    System.out.println("in parallelizer 240"  + Thread.currentThread());
 
     // First parallelize fragments on which this fragment depends on.
     final List<Wrapper> fragmentDependencies = fragmentWrapper.getFragmentDependencies();
+
     if (fragmentDependencies != null && fragmentDependencies.size() > 0) {
       for(Wrapper dependency : fragmentDependencies) {
+
         parallelizeFragment(dependency, planningSet, activeEndpoints);
       }
     }

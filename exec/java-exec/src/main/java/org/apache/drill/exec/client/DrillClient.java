@@ -31,11 +31,13 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 import java.util.Vector;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import com.google.common.collect.Queues;
 import org.apache.drill.common.DrillAutoCloseables;
 import org.apache.drill.common.Version;
 import org.apache.drill.common.config.DrillConfig;
@@ -329,7 +331,7 @@ public class DrillClient implements Closeable, ConnectionThrottle {
           throw new RpcException("Failure setting up ZK for client.", e);
         }
       }
-      System.out.println("running endpoints" + clusterCoordinator.getOnlineEndPoints());
+//      System.out.println("running endpoints" + clusterCoordinator.getOnlineEndPoints());
       endpoints.addAll(clusterCoordinator.getOnlineEndPoints());
       // Make sure we have at least one endpoint in the list
       checkState(!endpoints.isEmpty(), "No active Drillbit endpoint found from ZooKeeper. Check connection parameters?");

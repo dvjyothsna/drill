@@ -629,10 +629,13 @@ public class Foreman implements Runnable {
     final Fragment rootFragment = rootOperator.accept(MakeFragmentsVisitor.INSTANCE, null);
     final SimpleParallelizer parallelizer = new SimpleParallelizer(queryContext);
 //    System.out.println("all end points " + queryContext.getRunningEndPoints());
+    System.out.println("read time " + System.currentTimeMillis());
+//    System.out.println(queryContext.getRunningEndPoints());
     final QueryWorkUnit queryWorkUnit = parallelizer.getFragments(
         queryContext.getOptions().getOptionList(), queryContext.getCurrentEndpoint(),
         queryId, queryContext.getRunningEndPoints(), drillbitContext.getPlanReader(), rootFragment,
         initiatingClient.getSession(), queryContext.getQueryContextInfo());
+
 
     if (logger.isTraceEnabled()) {
       final StringBuilder sb = new StringBuilder();
@@ -1070,11 +1073,11 @@ public class Foreman implements Runnable {
 //    }
     for (DrillbitEndpoint endpoint:running){
       if(!endpoint.getState().equals(State.ONLINE)) {
-        System.out.println("something is in quiescent mode");
+//        System.out.println("something is in quiescent mode");
       }
     }
 
-    System.out.println("all end points " );
+//    System.out.println("all end points " );
     final PhysicalPlan plan = DrillSqlWorker.getPlan(queryContext, sql, textPlan);
     queryManager.setPlanText(textPlan.value);
     runPhysicalPlan(plan);

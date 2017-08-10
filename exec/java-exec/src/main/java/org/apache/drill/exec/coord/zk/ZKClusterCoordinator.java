@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.Collection;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.HashMap;
@@ -218,7 +219,8 @@ public class ZKClusterCoordinator extends ClusterCoordinator {
 //        System.out.println("****** " + endpoint);
 //        endpoint = endpoint.toBuilder().setStatus(status.toString()).build();
         endpoint = h.endpoint.toBuilder().setState(state).build();
-        System.out.println("in update ****" + endpoint + state);
+//        System.out.println("in update ****" + endpoint + System.currentTimeMillis());
+
         ServiceInstance<DrillbitEndpoint> serviceInstance = ServiceInstance.<DrillbitEndpoint>builder().name(serviceName).id(h.id).payload(endpoint).build();
         discovery.updateService(serviceInstance);
       } catch (Exception e) {
@@ -247,7 +249,9 @@ public class ZKClusterCoordinator extends ClusterCoordinator {
 
   private synchronized void updateEndpoints() {
     try {
-      System.out.println("update endpoints **" + this);
+//      System.out.println("before endpoints **" + this +Thread.currentThread() + System.currentTimeMillis());
+//      Thread.sleep(3000);
+//      System.out.println("update endpoints **" + this +Thread.currentThread() + System.currentTimeMillis());
       Collection<DrillbitEndpoint> newDrillbitSet =
       transform(discovery.queryForInstances(serviceName),
         new Function<ServiceInstance<DrillbitEndpoint>, DrillbitEndpoint>() {
@@ -257,28 +261,15 @@ public class ZKClusterCoordinator extends ClusterCoordinator {
           }
         });
       // set of newly dead bits : original bits - new set of active bits.
-
-
-//      Set<DrillbitEndpoint> unregisteredBits = new HashSet<>(endpoints);
-//      unregisteredBits.removeAll(newDrillbitSet);
-
-
-
-      // Set of newly live bits : new set of active bits - original bits.
-//      Set<DrillbitEndpoint> registeredBits = new HashSet<>(newDrillbitSet);
-//      registeredBits.removeAll(endpoints);
       Set<DrillbitEndpoint> unregisteredBits = new HashSet<>();
+      // Set of newly live bits : new set of active bits - original bits.
       Set<DrillbitEndpoint> registeredBits = new HashSet<>();
-
-//      System.out.println("new drillbits "+ newDrillbitSet);
-//      System.out.println("curr drillbits "+ endpointsMap.values()) ;
 
       HashMap<MultiKey, DrillbitEndpoint> newDrillbits = new HashMap();
 
       for ( DrillbitEndpoint endpoint : newDrillbitSet) {
         if (endpointsMap.containsKey(new MultiKey(endpoint.getAddress(),endpoint.getUserPort()))) {
           endpointsMap.put(new MultiKey(endpoint.getAddress(),endpoint.getUserPort()),endpoint);
-//          continue;
         }
         else {
           registeredBits.add(endpoint);
@@ -286,16 +277,22 @@ public class ZKClusterCoordinator extends ClusterCoordinator {
         }
       }
 
-
-      for(MultiKey key: endpointsMap.keySet()) {
+      Iterator<MultiKey> iterator = endpointsMap.keySet().iterator() ;
+      while(iterator.hasNext()) {
+        MultiKey key = iterator.next();
         if(!newDrillbitSet.contains(endpointsMap.get(key))) {
-
-            unregisteredBits.add(endpointsMap.get(key));
-          endpointsMap.remove(key);
-            endpoints.remove(endpointsMap.get(key));
+          unregisteredBits.add(endpointsMap.get(key));
+          iterator.remove();
         }
       }
 
+//      for(MultiKey key: endpointsMap.keySet()) {
+//        if(!newDrillbitSet.contains(endpointsMap.get(key))) {
+//            unregisteredBits.add(endpointsMap.get(key));
+//            endpointsMap.put(key,null);
+//        }
+//      }
+//
       endpoints = endpointsMap.values();
 
       if (logger.isDebugEnabled()) {
@@ -314,7 +311,7 @@ public class ZKClusterCoordinator extends ClusterCoordinator {
           builder.append('\n');
         }
 
-        System.out.println("hey in update end points " +builder.toString());
+//        System.out.println(" in update end points " +builder.toString());
         logger.debug(builder.toString());
       }
 
@@ -331,31 +328,6 @@ public class ZKClusterCoordinator extends ClusterCoordinator {
     }
   }
 
-  public synchronized void updateStatus(State state) {
-    Collection<DrillbitEndpoint> allEndPoints = new ArrayList<DrillbitEndpoint>() ;
-
-
-
-    System.out.println("final end points "+ endpoints);
-
-    int i = 0;
-    for(DrillbitEndpoint endpoint : endpoints)
-    {
-      if (i == 0 ) {
-        allEndPoints.add(endpoint.toBuilder().setState(state).build());
-      }
-      else {
-        allEndPoints.add(endpoint);
-      }
-      i++;
-    }
-    endpoints = allEndPoints;
-
-      System.out.println("final end points "+ endpoints);
-
-  }
-
-
   @Override
   public Collection<DrillbitEndpoint> getOnlineEndPoints() {
 
@@ -363,6 +335,7 @@ public class ZKClusterCoordinator extends ClusterCoordinator {
     for (DrillbitEndpoint endpoint: endpoints){
 //      System.out.println("drillbits are " +  endpoints);
       if(endpoint.getState().equals(State.ONLINE)) {
+
         runningEndPoints.add(endpoint);
       }
     }

@@ -86,6 +86,8 @@ public class QueryWrapper {
       listener.results.add(Maps.<String, String>newHashMap());
     }
 
+    System.out.println(listener.columns);
+    System.out.println(listener.results);
     final Map<String, String> first = listener.results.get(0);
     for (String columnName : listener.columns) {
       if (!first.containsKey(columnName)) {

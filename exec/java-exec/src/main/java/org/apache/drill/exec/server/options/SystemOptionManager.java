@@ -378,6 +378,8 @@ public class SystemOptionManager extends BaseOptionManager implements OptionMana
         tmp.put(name, validator);
       } catch (ConfigException.Missing e) {
         logger.error(e.getMessage(), e);
+        System.out.println(name);
+
         validator.setDefaultValue(validator.getDefault());
         tmp.put(name, validator);
       }

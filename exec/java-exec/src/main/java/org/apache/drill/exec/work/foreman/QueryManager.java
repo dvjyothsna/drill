@@ -565,7 +565,6 @@ public class QueryManager implements AutoCloseable {
 
       for (final DrillbitEndpoint ep : unregisteredDrillbits) {
         final NodeTracker tracker = nodeMap.get(ep);
-        System.out.println("in unregister Query manager" + ep);
         if (tracker == null) {
           continue; // fragments were not assigned to this Drillbit
         }
@@ -577,6 +576,7 @@ public class QueryManager implements AutoCloseable {
 
         // fragments were running on the Drillbit, capture node name for exception or logging message
         if (atLeastOneFailure) {
+          System.out.println("failed unregister endpoint" + ep);
           failedNodeList.append(", ");
         } else {
           atLeastOneFailure = true;
