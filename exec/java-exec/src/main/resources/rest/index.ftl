@@ -66,6 +66,11 @@
                   </span>
                 </td>
                 <td>${drillbit.getStatus()}</td>
+                <td>
+                <form action="http://${drillbit.getAddress()}:8047/shutdown" method="post">
+                    <button name="address" value=${drillbit.getAddress()}>Shutdown</button>
+                </form>
+                </td>
               </tr>
               <#assign i = i + 1>
             </#list>

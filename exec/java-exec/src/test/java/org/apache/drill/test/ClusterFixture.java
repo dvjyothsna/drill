@@ -42,7 +42,6 @@ import org.apache.drill.common.logical.FormatPluginConfig;
 import org.apache.drill.exec.ExecConstants;
 import org.apache.drill.exec.ZookeeperHelper;
 import org.apache.drill.exec.client.DrillClient;
-import org.apache.drill.exec.coord.zk.ZKRegistrationHandle;
 import org.apache.drill.exec.memory.BufferAllocator;
 import org.apache.drill.exec.memory.RootAllocatorFactory;
 import org.apache.drill.exec.proto.CoordinationProtos.DrillbitEndpoint;
@@ -415,6 +414,7 @@ public class ClusterFixture extends BaseFixture implements AutoCloseable {
 
     for (Drillbit bit : drillbits()) {
       ex = safeClose(bit, ex);
+
     }
     bits.clear();
     ex = safeClose(serviceSet, ex);
@@ -466,7 +466,8 @@ public class ClusterFixture extends BaseFixture implements AutoCloseable {
     for (Drillbit bit : drillbits())
     {
       if(bit.equals(bits.get(drillbitname))) {
-        bit.graceful_close();
+//        System.out.println("in close");
+        bit.close();
       }
     }
   }

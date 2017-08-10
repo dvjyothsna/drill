@@ -108,7 +108,7 @@ public class Drillbit implements AutoCloseable {
     context = new BootStrapContext(config, classpathScan);
     manager = new WorkManager(context);
 
-    webServer = new WebServer(context, manager);
+    webServer = new WebServer(context, manager, this);
     boolean isDistributedMode = false;
     if (serviceSet != null) {
       coord = serviceSet.getCoordinator();
@@ -160,28 +160,31 @@ public class Drillbit implements AutoCloseable {
     exitLatch = new ExtendedLatch();
     exitLatch.awaitUninterruptibly(15000);
   }
-  public synchronized void graceful_close() {
+  @Override
+  public synchronized void close() {
     if (isClosed) {
       return;
     }
+//    try {
+//      Thread.sleep(1500);
+//    } catch (InterruptedException e) {
+//      e.printStackTrace();
+//    }
+    System.out.println("in close begin" + Thread.currentThread() + System.currentTimeMillis());
     status = DrillbitStatus.GRACE;
     final Stopwatch w = Stopwatch.createStarted();
-    logger.debug("Shutdown begun.");
+    logger.debug("Shutdown begun." + ((ZKRegistrationHandle)this.getRegistrationHandle()).getEndpoint());
+
     coord.update(registrationHandle, State.QUIESCENT);
     status = DrillbitStatus.GRACE;
-//    Timer timer = new Timer();
-    change_state();
-//    timer.schedule(new TimerTask() {
-//      @Override
-//      public void run() {
-
-        status = DrillbitStatus.DRAINING;
-//      }
-//    },1000);
-
+//    change_state();
+    ExtendedLatch exitLatch = null; // used to wait to exit when things are still running
+    exitLatch = new ExtendedLatch();
+    exitLatch.awaitUninterruptibly(2500);
+    status = DrillbitStatus.DRAINING;
     // wait for anything that is running to complete
     manager.waitToExit(this);
-    System.out.println("after wait in close drillbit");
+//    System.out.println("after wait in close drillbit");
     if (coord != null && registrationHandle != null) {
       coord.unregister(registrationHandle);
     }
@@ -202,66 +205,60 @@ public class Drillbit implements AutoCloseable {
               storeProvider,
               coord,
               manager,
-              storageRegistry,
-              context);
+              storageRegistry );
+//              context);
     } catch(Exception e) {
       logger.warn("Failure on close()", e);
     }
-
-    logger.info("Shutdown completed ({} ms).", w.elapsed(TimeUnit.MILLISECONDS));
+    System.out.println("Thread id " + Thread.currentThread() + System.currentTimeMillis());
+    logger.info("Shutdown completed ({} ms).", w.elapsed(TimeUnit.MILLISECONDS) );
     isClosed = true;
-    System.out.println("in close drill end");
+//    System.out.println("in close drill end");
 
 
   }
-  @Override
-  public synchronized void close() {
-    // avoid complaints about double closing
-    if (isClosed) {
-      return;
-    }
-    status = DrillbitStatus.DRAINING;
-    final Stopwatch w = Stopwatch.createStarted();
-    logger.debug("Shutdown begun.");
-    System.out.println("in actual close");
-
-    // wait for anything that is running to complete
-    manager.waitToExit(this);
-    System.out.println("after wait");
-    if (coord != null && registrationHandle != null) {
-      coord.unregister(registrationHandle);
-    }
-    try {
-      Thread.sleep(context.getConfig().getInt(ExecConstants.ZK_REFRESH) * 2);
-    } catch (final InterruptedException e) {
-      logger.warn("Interrupted while sleeping during coordination deregistration.");
-
-      // Preserve evidence that the interruption occurred so that code higher up on the call stack can learn of the
-      // interruption and respond to it if it wants to.
-      Thread.currentThread().interrupt();
-    }
-
-    try {
-      AutoCloseables.close(
-          webServer,
-          engine,
-          storeProvider,
-          coord,
-          manager,
-          storageRegistry,
-          context);
-
-      //Closing the profile store provider if distinct
-      if (storeProvider != profileStoreProvider) {
-        AutoCloseables.close(profileStoreProvider);
-      }
-    } catch(Exception e) {
-      logger.warn("Failure on close()", e);
-    }
-
-    logger.info("Shutdown completed ({} ms).", w.elapsed(TimeUnit.MILLISECONDS));
-    isClosed = true;
-  }
+//  @Override
+//  public synchronized void close() {
+//    // avoid complaints about double closing
+//    if (isClosed) {
+//      return;
+//    }
+//
+//    final Stopwatch w = Stopwatch.createStarted();
+//    logger.debug("Shutdown begun.");
+//
+//    // wait for anything that is running to complete
+//    manager.waitToExit(this);
+//    if (coord != null && registrationHandle != null) {
+//      coord.unregister(registrationHandle);
+//    }
+//    try {
+//      Thread.sleep(context.getConfig().getInt(ExecConstants.ZK_REFRESH) * 2);
+//    } catch (final InterruptedException e) {
+//      logger.warn("Interrupted while sleeping during coordination deregistration.");
+//
+//      // Preserve evidence that the interruption occurred so that code higher up on the call stack can learn of the
+//      // interruption and respond to it if it wants to.
+//      Thread.currentThread().interrupt();
+//    }
+//
+//    try {
+//      AutoCloseables.close(
+//          webServer,
+//          engine,
+//          storeProvider,
+//          coord,
+//          manager,
+//          storageRegistry
+////          context
+//      );
+//    } catch(Exception e) {
+//      logger.warn("Failure on close()", e);
+//    }
+//
+//    logger.info("Shutdown completed ({} ms).", w.elapsed(TimeUnit.MILLISECONDS));
+//    isClosed = true;
+//  }
 
   private void javaPropertiesToSystemOptions() {
     // get the system options property
@@ -342,7 +339,7 @@ public class Drillbit implements AutoCloseable {
          */
         synchronized(idCounter) {
 //          drillbit.close();
-          drillbit.graceful_close();
+          drillbit.close();
         }
       } catch(final Exception e) {
         throw new RuntimeException("Caught exception closing Drillbit started from\n" + stackTrace, e);

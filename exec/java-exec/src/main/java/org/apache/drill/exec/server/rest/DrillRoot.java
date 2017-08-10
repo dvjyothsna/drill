@@ -20,7 +20,9 @@ package org.apache.drill.exec.server.rest;
 import java.util.Collection;
 import javax.annotation.security.PermitAll;
 import javax.inject.Inject;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
@@ -31,7 +33,10 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Sets;
 import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.exec.ExecConstants;
+import org.apache.drill.exec.client.DrillClient;
+import org.apache.drill.exec.memory.BufferAllocator;
 import org.apache.drill.exec.proto.CoordinationProtos.DrillbitEndpoint;
+import org.apache.drill.exec.server.Drillbit;
 import org.apache.drill.exec.server.rest.DrillRestServer.UserAuthEnabled;
 import org.apache.drill.exec.work.WorkManager;
 import org.glassfish.jersey.server.mvc.Viewable;
@@ -46,11 +51,32 @@ public class DrillRoot {
   @Inject UserAuthEnabled authEnabled;
   @Inject WorkManager work;
   @Inject SecurityContext sc;
+  @Inject Drillbit drillbit;
 
   @GET
   @Produces(MediaType.TEXT_HTML)
   public Viewable getClusterInfo() {
+    System.out.println(" in here ***************");
     return ViewableWithPermissions.create(authEnabled.get(), "/rest/index.ftl", sc, getClusterInfoJSON());
+  }
+
+
+
+  @POST
+  @Path("/shutdown")
+  @Produces(MediaType.APPLICATION_JSON)
+  public String shutdownDrillbit() throws Exception {
+    System.out.println("in shutdown get");
+    new Thread(new Runnable() {
+      public void run() {
+        try {
+         drillbit.close();
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
+      }
+    }).start();
+    return "Shutdown request is triggered";
   }
 
   @GET

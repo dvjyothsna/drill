@@ -18,24 +18,166 @@
 
 package org.apache.drill.test;
 
+import ch.qos.logback.classic.Level;
 import org.apache.drill.exec.ExecConstants;
 import org.apache.drill.exec.coord.ClusterCoordinator;
 import org.apache.drill.exec.coord.zk.ZKClusterCoordinator;
 import org.apache.drill.exec.proto.CoordinationProtos;
 import org.apache.drill.exec.work.foreman.DrillbitStatusListener;
-import org.junit.Rule;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.Collection;
 import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.fail;
 
 public class Testshutdown {
+
+  @Test
+  public void testOnlineEndPoints() throws  Exception {
+
+    String[] drillbits = {"db1" ,"db2","db3", "db4", "db5", "db6"};
+    FixtureBuilder builder = ClusterFixture.builder().withBits(drillbits).withLocalZk();
+
+
+    try ( ClusterFixture cluster = builder.build();
+          ClientFixture client = cluster.clientFixture()) {
+
+      Drillbit drillbit = cluster.drillbit("db2");
+      DrillbitEndpoint drillbitEndpoint = ((ZKRegistrationHandle) drillbit.getRegistrationHandle()).getEndpoint();
+      new Thread(new Runnable() {
+        public void run() {
+          try {
+            cluster.close_drillbit("db2");
+          } catch (Exception e) {
+            e.printStackTrace();
+          }
+        }
+      }).start();
+      Thread.sleep(50);
+      Collection<DrillbitEndpoint> drillbitEndpoints = cluster.drillbit().getContext()
+                                                              .getClusterCoordinator()
+                                                              .getOnlineEndPoints();
+      Assert.assertFalse(drillbitEndpoints.contains(drillbitEndpoint));
+    }
+  }
+  @Test
+  public void testStateChange() throws  Exception {
+
+    String[] drillbits = {"db1" ,"db2", "db3", "db4", "db5", "db6"};
+    FixtureBuilder builder = ClusterFixture.builder().withBits(drillbits).withLocalZk();
+      try ( ClusterFixture cluster = builder.build();
+           ClientFixture client = cluster.clientFixture()) {
+        Drillbit drillbit = cluster.drillbit("db2");
+        DrillbitEndpoint drillbitEndpoint = ((ZKRegistrationHandle) drillbit.getRegistrationHandle()).getEndpoint();
+        new Thread(new Runnable() {
+          public void run() {
+            try {
+              cluster.close_drillbit("db2");
+            } catch (Exception e) {
+              e.printStackTrace();
+            }
+          }
+        }).start();
+        Thread.sleep(50);
+        Collection<DrillbitEndpoint> drillbitEndpoints = cluster.drillbit().getContext()
+                                                                .getClusterCoordinator()
+                                                                .getAvailableEndpoints();
+        for (DrillbitEndpoint dbEndpoint : drillbitEndpoints) {
+          if(drillbitEndpoint.getAddress().equals(dbEndpoint.getAddress()) && drillbitEndpoint.getUserPort() == dbEndpoint.getUserPort()) {
+            assertNotEquals(dbEndpoint.getState(),DrillbitEndpoint.State.ONLINE);
+          }
+        }
+      }
+  }
+
+  @Test
+  public void testRestApi() throws Exception {
+
+    FixtureBuilder builder = ClusterFixture.builder().clusterSize(6).withLocalZk();
+    int i = 8047;
+    final String sql = "SELECT * FROM dfs.`/tmp/drill-test/` ORDER BY employee_id";
+    try ( ClusterFixture cluster = builder.build();
+          final ClientFixture client = cluster.clientFixture()) {
+      new Thread(new Runnable() {
+        public void run() {
+          try {
+            final QueryBuilder.QuerySummary querySummary = client.queryBuilder().sql(sql).run();
+            Assert.assertEquals(querySummary.finalState(), QueryState.COMPLETED);
+          } catch (Exception e) {
+            e.printStackTrace();
+          }
+        }
+      }).start();
+
+      while( i < 8052) {
+
+        URL url = new URL("http://localhost:"+i+"/shutdown");
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestMethod("POST");
+
+        if (conn.getResponseCode() != 200) {
+          throw new RuntimeException("Failed : HTTP error code : "
+                  + conn.getResponseCode());
+        }
+        i++;
+      }
+      Thread.sleep(10000);
+      Collection<DrillbitEndpoint> drillbitEndpoints = cluster.drillbit().getContext()
+              .getClusterCoordinator()
+              .getOnlineEndPoints();
+      Assert.assertEquals(drillbitEndpoints.size(), 1);
+    }
+  }
+
+  @Test
+  public void testShutdown() throws Exception {
+
+
+    String[] drillbits = {"db1" ,"db2", "db3", "db4", "db5", "db6"};
+    FixtureBuilder builder = ClusterFixture.builder().withBits(drillbits).withLocalZk();
+    final String sql = "SELECT * FROM dfs.`/tmp/drill-test/` ORDER BY employee_id";
+
+    try (ClusterFixture cluster = builder.build();
+         final ClientFixture client = cluster.clientFixture()) {
+
+      cluster.defineWorkspace("dfs", "data", "/tmp/drill-test", "psv");
+
+      new Thread(new Runnable() {
+        public void run() {
+          try {
+            final QueryBuilder.QuerySummary querySummary = client.queryBuilder().sql(sql).run();
+             Assert.assertEquals(querySummary.finalState(), QueryState.COMPLETED);
+             System.out.println("after assert " + System.currentTimeMillis());
+          } catch (Exception e) {
+            e.printStackTrace();
+          }
+        }
+      }).start();
+      Thread.sleep(1000);
+      shutdown(cluster,"db2");
+      shutdown(cluster,"db3");
+      shutdown(cluster,"db4");
+      shutdown(cluster,"db5");
+      shutdown(cluster,"db1");
+//      shutdown(cluster,"db6");
+      Thread.sleep(200);
+//      cluster.close_drillbit("db6");
+      System.out.println(cluster.drillbit().getContext().getClusterCoordinator().getAvailableEndpoints());
+      Thread.sleep(10000);
+      System.out.println("in end" + System.currentTimeMillis());
+    }
+  }
+
   @Test
   public void debugShutDown() throws Exception {
     FixtureBuilder builder = ClusterFixture.builder().clusterSize(3).withLocalZk();
@@ -54,72 +196,85 @@ public class Testshutdown {
 //      System.out.println(coord.getAvailableEndpoints());
       DrillbitStatusListener drillbitStatusListener = new DrillbitStatusListener() {
         @Override
-        public void drillbitUnregistered(Set<CoordinationProtos.DrillbitEndpoint> unregisteredDrillbits) {
+        public void drillbitUnregistered(Set<DrillbitEndpoint> unregisteredDrillbits) {
           System.out.println("unregistered successfully");
         }
 
         @Override
-        public void drillbitRegistered(Set<CoordinationProtos.DrillbitEndpoint> registeredDrillbits) {
+        public void drillbitRegistered(Set<DrillbitEndpoint> registeredDrillbits) {
           System.out.println("registered successfully");
         }
       };
 //      coord.addDrillbitStatusListener(drillbitStatusListener);
 //      client.queryBuilder().sql(sql).printCsv();
 
+
 //      cluster.close_drillbit();
 
 //      String sql = "SELECT id_i,name_s20 FROM `mock`.`employees_10000k` ORDER BY id_i";
-      String sq = "SELECT * FROM `cp`.`employee.json`" ;
+      String sq = "SELECT * FROM `cp`.`employee.json` where product_id = 27" ;
       client.queryBuilder().sql(sq).run();
 
     }
   }
 
 
+
+
+
+
+
+
+
   @Test
   public void fourthTest() throws Exception {
 
     for (int k = 0; k < 1; k++) {
-//      Thread.sleep(1000);
-      String[] drillbits = {"db1" , "db2", "db3", "db4", "db5", "db6"};
-//      , "db2", "db3", "db4",};
+      String[] drillbits = {"db1" ,"db2", "db3", "db4", "db5", "db6"};
+
+
+      LogFixture.LogFixtureBuilder logBuilder = LogFixture.builder()
+              // Log to the console for debugging convenience
+              .toConsole()
+              .logger("org.apache.drill.exec.server", Level.TRACE)
+//              .logger("org.apache.drill.exec.work.foreman",Level.TRACE)
+              ;
 
       FixtureBuilder builder = ClusterFixture.builder().withBits(drillbits).withLocalZk();
 
 
-      try (ClusterFixture cluster = builder.build();
+      try (LogFixture logs = logBuilder.build();
+              ClusterFixture cluster = builder.build();
            ClientFixture client = cluster.clientFixture()) {
-        for (int i = 0; i < 4000; i++) {
-          setupFile(i);
+        Thread.sleep(10);
+//        String sql = "select * from sys.version";
+        cluster.defineWorkspace("dfs", "data", "/tmp/drill-test", "psv");
+//        final String sql = "SELECT * FROM dfs.`/tmp/drill-test/` ORDER BY employee_id";
+//        client.queryBuilder().sql(sql).run();
+
+        for (int i = 0; i < 400; i++) {
+//          setupFile(i);
         }
-//        client.queryBuilder().sql("SELECT * FROM sys.BOOT").printCsv();
 
         cluster.defineWorkspace("dfs", "data", "/tmp/drill-test", "psv");
         String sql = "SELECT * FROM dfs.`/tmp/drill-test/` ORDER BY employee_id";
-//        client.queryBuilder().sql(sql).run();
-
+        QueryBuilder.QuerySummaryFuture[] listener = new QueryBuilder.QuerySummaryFuture[1000];
+        System.out.println("test thread" +Thread.currentThread());
         System.out.println("after first query ");
-        for (int i = 0; i < 30; i++) {
-          QueryBuilder.QuerySummaryFuture listener = client.queryBuilder().sql(sql).futureSummary();
-//          Thread.sleep(10000);
-        }
-        cluster.close_drillbit("db3");
-        System.out.println("after shutdown ");
-        Thread.sleep(10000);
-
-
-//        System.out.println("result " + listener.get());
-        client.queryBuilder().sql(sql).run();
-//        client.queryBuilder().sql(sql).run();
-//        client.queryBuilder().sql(sql).run();
-//        client.queryBuilder().sql(sql).run();
-//        client.queryBuilder().sql(sql).run();
+        for (int i = 0; i < 1000; i++) {
+         listener[i] = client.queryBuilder().sql(sql).futureSummary();
+          }
 //        client.queryBuilder().sql(sql).run();
 
+//        cluster.close_drillbit("db1");
         System.out.println("after last query ");
-
+        Thread.sleep(15000);
+//        for(int i = 0; i < 1000; i++ ) {
+//          while( !listener[i].isDone() ) {
+//            System.out.print("");
+//          }
+//        }
       }
-
     }
   }
 
@@ -148,7 +303,38 @@ public class Testshutdown {
       fail(e.getMessage());
     }
   }
-}
+  public void shutdown(final ClusterFixture cluster, final String db) {
+    new Thread(new Runnable() {
+      public void run() {
+      try {
+        Thread.currentThread().setName( db);
+        cluster.close_drillbit(db);
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+      }
+    }).start();
+  }
+
+
+  @Test
+  public void test() {
+    String[] drillbits = {"db1", "db2", "db3", "db4", "db5", "db6"};
+    FixtureBuilder builder = ClusterFixture.builder().withBits(drillbits).withLocalZk();
+    final String sql = "SELECT * FROM dfs.`/tmp/drill-test/` ORDER BY employee_id";
+
+    try (ClusterFixture cluster = builder.build();
+         final ClientFixture client = cluster.clientFixture()) {
+
+      cluster.defineWorkspace("dfs", "data", "/tmp/drill-test", "psv");
+      client.queryBuilder().sql(sql).run();
+
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+
+  }
 
 
 

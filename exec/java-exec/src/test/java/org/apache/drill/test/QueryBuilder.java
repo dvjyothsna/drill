@@ -519,6 +519,7 @@ public class QueryBuilder {
         state = event.state;
         break loop;
       case ERROR:
+        System.out.println("in eroor");
         throw event.error;
       case QUERY_ID:
         queryId = event.queryId;

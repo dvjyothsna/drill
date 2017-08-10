@@ -28,6 +28,7 @@ import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.exec.ExecConstants;
 import org.apache.drill.exec.rpc.security.plain.PlainFactory;
 import org.apache.drill.exec.server.BootStrapContext;
+import org.apache.drill.exec.server.Drillbit;
 import org.apache.drill.exec.server.rest.auth.DrillRestLoginService;
 import org.apache.drill.exec.work.WorkManager;
 import org.bouncycastle.asn1.x500.X500NameBuilder;
@@ -98,6 +99,7 @@ public class WebServer implements AutoCloseable {
   private final Server embeddedJetty;
 
   private final BootStrapContext context;
+  private final Drillbit drillbit;
 
   /**
    * Create Jetty based web server.
@@ -105,11 +107,13 @@ public class WebServer implements AutoCloseable {
    * @param context Bootstrap context.
    * @param workManager WorkManager instance.
    */
-  public WebServer(final BootStrapContext context, final WorkManager workManager) {
+  public WebServer(final BootStrapContext context, final WorkManager workManager, final Drillbit drillbit) {
     this.context = context;
     this.config = context.getConfig();
     this.metrics = context.getMetrics();
     this.workManager = workManager;
+    this.drillbit = drillbit;
+
 
     if (config.getBoolean(ExecConstants.HTTP_ENABLE)) {
       embeddedJetty = new Server();
@@ -154,7 +158,7 @@ public class WebServer implements AutoCloseable {
     servletContextHandler.setErrorHandler(errorHandler);
     servletContextHandler.setContextPath("/");
 
-    final ServletHolder servletHolder = new ServletHolder(new ServletContainer(new DrillRestServer(workManager)));
+    final ServletHolder servletHolder = new ServletHolder(new ServletContainer(new DrillRestServer(workManager, drillbit)));
     servletHolder.setInitOrder(1);
     servletContextHandler.addServlet(servletHolder, "/*");
 
@@ -196,16 +200,15 @@ public class WebServer implements AutoCloseable {
     embeddedJetty.setHandler(servletContextHandler);
     while(true) {
       try {
-
-
         embeddedJetty.start();
         break;
       }
       catch (Exception e) {
         System.out.println("in except");
+        embeddedJetty.removeConnector(serverConnector);
         serverConnector = createHttpConnector();
         embeddedJetty.addConnector(serverConnector);
-
+        embeddedJetty.setHandler(servletContextHandler);
         continue;
       }
     }
@@ -375,14 +378,14 @@ public class WebServer implements AutoCloseable {
       port_lastused ++;
     }
     else {
-      while(total_ports < 2) {
+      while(true) {
         try {
           httpConnector.setPort(port_lastused);
           total_ports++;
-          System.out.println(port_lastused);
           port_lastused++;
           break;
         } catch (Exception e) {
+
           continue;
         }
       }
