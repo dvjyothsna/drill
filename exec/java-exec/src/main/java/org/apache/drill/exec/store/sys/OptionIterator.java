@@ -56,11 +56,9 @@ public class OptionIterator implements Iterator<Object> {
     default:
       optionList = Iterators.concat(configOptions.iterator(), fragmentOptions.iterator());
     }
-
     List<OptionValue> values = Lists.newArrayList(optionList);
     Collections.sort(values);
     mergedOptions = values.iterator();
-
   }
 
   @Override

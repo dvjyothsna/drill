@@ -17,6 +17,7 @@
  */
 package org.apache.drill.exec.server.options;
 
+import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.common.exceptions.UserException;
 import org.apache.drill.exec.server.options.OptionValue.Kind;
 
@@ -105,5 +106,17 @@ public abstract class OptionValidator {
    * @return kind of this option value
    */
   public abstract Kind getKind();
+
+  /**
+   * Gets the default result option value for this validator.
+   *
+   * @return result default option value
+   */
+  public abstract OptionValue loadConfigDefault(DrillConfig bootConfig, String name, String configPath);
+
+  /**
+   * Sets the default result option value for this validator.
+   */
+  public abstract void setDefaultValue(OptionValue defaultValue);
 
 }

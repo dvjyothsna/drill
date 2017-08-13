@@ -27,7 +27,6 @@ import org.apache.drill.exec.coord.zk.ZKRegistrationHandle;
 import org.apache.drill.exec.proto.CoordinationProtos.DrillbitEndpoint;
 import org.apache.drill.exec.proto.UserBitShared.QueryResult.QueryState;
 import org.apache.drill.exec.server.Drillbit;
-import org.apache.drill.exec.store.sys.store.provider.ZookeeperPersistentStoreProvider;
 import org.apache.drill.exec.work.foreman.DrillbitStatusListener;
 import org.junit.Assert;
 import org.junit.Test;

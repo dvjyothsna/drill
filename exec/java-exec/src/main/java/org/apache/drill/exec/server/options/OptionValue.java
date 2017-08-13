@@ -23,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Preconditions;
+import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.exec.store.sys.PersistentStore;
 
 /**
@@ -35,7 +36,7 @@ import org.apache.drill.exec.store.sys.PersistentStore;
 public class OptionValue implements Comparable<OptionValue> {
 
   public enum OptionType {
-    BOOT, SYSTEM, SESSION, QUERY
+    BOOT, DEFAULT, SYSTEM, SESSION, QUERY,
   }
 
 
@@ -206,4 +207,5 @@ public class OptionValue implements Comparable<OptionValue> {
   public String toString() {
     return "OptionValue [ type=" + type + ", name=" + name + ", value=" + getValue() + " ]";
   }
+
 }
