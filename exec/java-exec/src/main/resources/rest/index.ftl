@@ -31,7 +31,7 @@
 
   <div class="row">
     <div class="col-md-12">
-      <h3>Drillbits <span class="label label-primary">${model.getDrillbits()?size}</span></h3>
+      <h3>Drillbits <span class="label label-primary" id="size" >${model.getDrillbits()?size}</span></h3>
       <div class="table-responsive">
         <table class="table table-hover">
           <thead>
@@ -48,14 +48,13 @@
           <tbody>
             <#assign i = 1>
             <#list model.getDrillbits() as drillbit>
-              <tr>
+              <tr id="row-${i}">
                 <td>${i}</td>
-                <td>${drillbit.getAddress()}
-                  <#if drillbit.isCurrent()>
+                <td id="address" >${drillbit.getAddress()}<#if drillbit.isCurrent()>
                     <span class="label label-info">Current</span>
                   </#if>
                 </td>
-                <td>${drillbit.getUserPort()}</td>
+                <td id="port" >${drillbit.getUserPort()}</td>
                 <td>${drillbit.getControlPort()}</td>
                 <td>${drillbit.getDataPort()}</td>
 
@@ -65,11 +64,9 @@
                     ${drillbit.getVersion()}
                   </span>
                 </td>
-                <td>${drillbit.getStatus()}</td>
+                <td id="status" >${drillbit.getStatus()}</td>
                 <td>
-                <form action="http://${drillbit.getAddress()}:8047/shutdown" method="post">
-                    <button name="address" value=${drillbit.getAddress()}>Shutdown</button>
-                </form>
+                    <button type="button" id="shutdown" onClick="shutdown('${drillbit.getAddress()}',${i},$(this));"> SHUTDOWN </button>
                 </td>
               </tr>
               <#assign i = i + 1>
@@ -99,6 +96,53 @@
         </div>
       </div>
   </div>
+  <script charset="utf-8">
+
+      var timeout = setTimeout(reloadStatus, 2000);
+      var size = $("#size").html();
+      function reloadStatus () {
+          var result = $.ajax({
+                      type: 'GET',
+                      url: '/status',
+                      dataType: "json",
+                      complete: function(data) {
+                            console.log(typeof(data));
+                            fillStatus(data,size);
+                      }
+                });
+          timeout = setTimeout(reloadStatus, 2000);
+      }
+
+      function fillStatus(data,size) {
+          var status_map = (data.responseJSON);
+          for (i = 1; i <= size; i++) {
+            var address = $("#row-"+i).find("#address").contents().get(0).nodeValue;
+            address = address.trim();
+            var port = $("#row-"+i).find("#port").html();
+            var key = address+"-"+port;
+            if (status_map[key] == null) {
+                $("#row-"+i).find("#status").text("OFFLINE");
+            }
+            else {
+                $("#row-"+i).find("#status").text(status_map[key]);
+            }
+          }
+      }
+
+      function shutdown(address,port,button) {
+          port_num = 8046 + port;
+          url = "http://"+address+":"+port_num+"/shutdown";
+          var result = $.ajax({
+                type: 'POST',
+                url: url,
+                crossDomain : true,
+                complete: function() {
+                    alert("Shutdown request triggered");
+                    button.prop('disabled',true).css('opacity',0.5);
+                }
+          });
+      }
+    </script>
 </#macro>
 
 <@page_html/>

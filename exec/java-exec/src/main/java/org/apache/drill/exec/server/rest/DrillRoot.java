@@ -18,6 +18,8 @@
 package org.apache.drill.exec.server.rest;
 
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import javax.annotation.security.PermitAll;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -58,6 +60,19 @@ public class DrillRoot {
   public Viewable getClusterInfo() {
     System.out.println(" in here ***************");
     return ViewableWithPermissions.create(authEnabled.get(), "/rest/index.ftl", sc, getClusterInfoJSON());
+  }
+
+
+  @GET
+  @Path("/status")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Map<String, String> getDrillbitStatus(){
+    Collection<DrillbitInfo> drillbits = getClusterInfoJSON().getDrillbits();
+    Map<String, String> drillStatusMap = new HashMap<String ,String>();
+    for (DrillbitInfo drillbit : drillbits) {
+      drillStatusMap.put(drillbit.getAddress()+"-"+drillbit.getUserPort(),drillbit.getStatus());
+    }
+    return drillStatusMap;
   }
 
 
