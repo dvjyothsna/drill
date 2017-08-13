@@ -112,7 +112,6 @@ public class DrillRoot {
       final DrillbitInfo drillbit = new DrillbitInfo(endpoint,
               currentDrillbit.equals(endpoint),
               currentVersion.equals(endpoint.getVersion()));
-      System.out.println("all bits in work manager "+ endpoint);
       if (!drillbit.isVersionMatch()) {
         mismatchedVersions.add(drillbit.getVersion());
       }

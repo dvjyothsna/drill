@@ -258,17 +258,17 @@ public class Testshutdown {
 
         cluster.defineWorkspace("dfs", "data", "/tmp/drill-test", "psv");
         String sql = "SELECT * FROM dfs.`/tmp/drill-test/` ORDER BY employee_id";
-        QueryBuilder.QuerySummaryFuture[] listener = new QueryBuilder.QuerySummaryFuture[1000];
+        QueryBuilder.QuerySummaryFuture[] listener = new QueryBuilder.QuerySummaryFuture[5];
         System.out.println("test thread" +Thread.currentThread());
         System.out.println("after first query ");
-        for (int i = 0; i < 1000; i++) {
+        for (int i = 0; i < 5; i++) {
          listener[i] = client.queryBuilder().sql(sql).futureSummary();
           }
 //        client.queryBuilder().sql(sql).run();
 
 //        cluster.close_drillbit("db1");
         System.out.println("after last query ");
-        Thread.sleep(15000);
+        Thread.sleep(150);
 //        for(int i = 0; i < 1000; i++ ) {
 //          while( !listener[i].isDone() ) {
 //            System.out.print("");
@@ -319,7 +319,8 @@ public class Testshutdown {
 
   @Test
   public void test() {
-    String[] drillbits = {"db1", "db2", "db3", "db4", "db5", "db6"};
+    String[] drillbits = {"db1", "db2" };
+//    , "db3", "db4", "db5", "db6"};
     FixtureBuilder builder = ClusterFixture.builder().withBits(drillbits).withLocalZk();
     final String sql = "SELECT * FROM dfs.`/tmp/drill-test/` ORDER BY employee_id";
 
@@ -328,6 +329,7 @@ public class Testshutdown {
 
       cluster.defineWorkspace("dfs", "data", "/tmp/drill-test", "psv");
       client.queryBuilder().sql(sql).run();
+//      Thread.sleep(100000);
 
     } catch (Exception e) {
       e.printStackTrace();

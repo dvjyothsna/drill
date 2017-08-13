@@ -249,9 +249,6 @@ public class ZKClusterCoordinator extends ClusterCoordinator {
 
   private synchronized void updateEndpoints() {
     try {
-//      System.out.println("before endpoints **" + this +Thread.currentThread() + System.currentTimeMillis());
-//      Thread.sleep(3000);
-//      System.out.println("update endpoints **" + this +Thread.currentThread() + System.currentTimeMillis());
       Collection<DrillbitEndpoint> newDrillbitSet =
       transform(discovery.queryForInstances(serviceName),
         new Function<ServiceInstance<DrillbitEndpoint>, DrillbitEndpoint>() {
