@@ -169,7 +169,7 @@ public class Drillbit implements AutoCloseable {
 //    change_state();
     ExtendedLatch exitLatch = null; // used to wait to exit when things are still running
     exitLatch = new ExtendedLatch();
-    exitLatch.awaitUninterruptibly(2500);
+    exitLatch.awaitUninterruptibly(3500);
     status = DrillbitStatus.DRAINING;
     // wait for anything that is running to complete
     manager.waitToExit(this);
