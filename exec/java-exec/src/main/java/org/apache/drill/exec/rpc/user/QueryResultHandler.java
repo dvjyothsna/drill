@@ -251,7 +251,6 @@ public class QueryResultHandler {
 
     @Override
     public void submissionFailed(UserException ex) {
-      System.out.println("in query result handler failed");
       assert queryState == null;
       // there is one case when submissionFailed() is called even though the query didn't fail on the server side
       // it happens when UserResultsListener.batchArrived() throws an exception that will be passed to
