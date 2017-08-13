@@ -154,11 +154,6 @@ public class Drillbit implements AutoCloseable {
     if (isClosed) {
       return;
     }
-//    try {
-//      Thread.sleep(1500);
-//    } catch (InterruptedException e) {
-//      e.printStackTrace();
-//    }
     System.out.println("in close begin" + Thread.currentThread() + System.currentTimeMillis());
     status = DrillbitStatus.GRACE;
     final Stopwatch w = Stopwatch.createStarted();

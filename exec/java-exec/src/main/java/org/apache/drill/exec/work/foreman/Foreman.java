@@ -452,17 +452,7 @@ public class Foreman implements Runnable {
     final List<PlanFragment> planFragments = work.getFragments();
     final PlanFragment rootPlanFragment = work.getRootFragment();
     assert queryId == rootPlanFragment.getHandle().getQueryId();
-    try {
-      Thread.sleep(150);
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    }
-//    System.out.println("Check for replanning purpose" + endpoints + queryContext.getRunningEndPoints());
-    for (DrillbitEndpoint endpoint : queryContext.getRunningEndPoints()) {
-      if(!endpoints.contains(endpoint)) {
-        System.out.println("replanning required");
-      }
-    }
+
     drillbitContext.getWorkBus().addFragmentStatusListener(queryId, queryManager.getFragmentStatusListener());
     drillbitContext.getClusterCoordinator().addDrillbitStatusListener(queryManager.getDrillbitStatusListener());
 
@@ -629,7 +619,7 @@ public class Foreman implements Runnable {
     final Fragment rootFragment = rootOperator.accept(MakeFragmentsVisitor.INSTANCE, null);
     final SimpleParallelizer parallelizer = new SimpleParallelizer(queryContext);
 //    System.out.println("all end points " + queryContext.getRunningEndPoints());
-    System.out.println("read time " + System.currentTimeMillis());
+//    System.out.println("read time " + System.currentTimeMillis());
 //    System.out.println(queryContext.getRunningEndPoints());
     final QueryWorkUnit queryWorkUnit = parallelizer.getFragments(
         queryContext.getOptions().getOptionList(), queryContext.getCurrentEndpoint(),
@@ -1066,22 +1056,10 @@ public class Foreman implements Runnable {
   private void runSQL(final String sql) throws ExecutionSetupException {
     final Pointer<String> textPlan = new Pointer<>();
     Collection<DrillbitEndpoint> running = queryContext.getActiveEndpoints();
-//    try {
-//      Thread.sleep(5);
-//    } catch (InterruptedException e) {
-//      e.printStackTrace();
-//    }
-    for (DrillbitEndpoint endpoint:running){
-      if(!endpoint.getState().equals(State.ONLINE)) {
-//        System.out.println("something is in quiescent mode");
-      }
-    }
-
-//    System.out.println("all end points " );
     final PhysicalPlan plan = DrillSqlWorker.getPlan(queryContext, sql, textPlan);
     queryManager.setPlanText(textPlan.value);
     runPhysicalPlan(plan);
-    System.out.println("done with physical plan");
+//    System.out.println("done with physical plan");
   }
 
   private PhysicalPlan convert(final LogicalPlan plan) throws OptimizerException {
