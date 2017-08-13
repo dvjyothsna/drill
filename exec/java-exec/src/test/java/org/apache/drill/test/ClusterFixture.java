@@ -91,7 +91,7 @@ public class ClusterFixture extends BaseFixture implements AutoCloseable {
       // set the default temporary workspace to dfs_test.tmp.
 
       put(ExecConstants.DEFAULT_TEMPORARY_WORKSPACE, BaseTestQuery.TEMP_SCHEMA);
-//      put(ExecConstants.HTTP_ENABLE, false);
+      put(ExecConstants.HTTP_ENABLE, false);
       put(QueryTestUtil.TEST_QUERY_PRINTING_SILENT, true);
       put("drill.catastrophic_to_standard_out", true);
 

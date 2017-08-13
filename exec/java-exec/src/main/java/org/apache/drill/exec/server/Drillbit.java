@@ -87,10 +87,9 @@ public class Drillbit implements AutoCloseable {
   private volatile StoragePluginRegistry storageRegistry;
   private final PersistentStoreProvider profileStoreProvider;
 
-  public enum Status
-  {
-    STARTUP , ONLINE, QUIESCENT
-  };
+  public enum DrillbitStatus {
+    STARTUP, GRACE, DRAINING, SHUTDOWN
+  }
   @VisibleForTesting
   public Drillbit(
       final DrillConfig config,
@@ -127,7 +126,7 @@ public class Drillbit implements AutoCloseable {
       profileStoreProvider = storeProvider;
     }
 
-    engine = new ServiceEngine(manager, context, allowPortHunting, isDistributedMode);
+    engine = new ServiceEngine(manager, context, true, isDistributedMode);
 
     logger.info("Construction completed ({} ms).", w.elapsed(TimeUnit.MILLISECONDS));
   }
