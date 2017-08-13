@@ -42,6 +42,7 @@ public class DrillResultSetTest extends DrillTest {
   // TODO: Move Jetty status server disabling to DrillTest.
   private static final String STATUS_SERVER_PROPERTY_NAME =
       ExecConstants.HTTP_ENABLE;
+
   private static final String origStatusServerPropValue =
       System.getProperty( STATUS_SERVER_PROPERTY_NAME, "true" );
 

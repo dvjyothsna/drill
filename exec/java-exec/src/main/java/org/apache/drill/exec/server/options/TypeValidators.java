@@ -20,7 +20,6 @@ package org.apache.drill.exec.server.options;
 import java.util.Set;
 
 import com.google.common.collect.Sets;
-import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.common.exceptions.UserException;
 import org.apache.drill.exec.server.options.OptionValue.Kind;
 import org.apache.drill.exec.server.options.OptionValue.OptionType;
@@ -140,10 +139,6 @@ public class TypeValidators {
     public BooleanValidator(String name, boolean def, boolean isAdminOption) {
       super(name, Kind.BOOLEAN, OptionValue.createBoolean(OptionType.SYSTEM, name, def), isAdminOption);
     }
-
-    public OptionValue loadConfigDefault(DrillConfig bootConfig, String name, String configPath){
-      return OptionValue.createBoolean(OptionType.SYSTEM, name, bootConfig.getBoolean(configPath+name));
-    }
   }
 
   public static class StringValidator extends TypeValidator {
@@ -153,10 +148,6 @@ public class TypeValidators {
 
     public StringValidator(String name, String def, boolean isAdminOption) {
       super(name, Kind.STRING, OptionValue.createString(OptionType.SYSTEM, name, def), isAdminOption);
-    }
-
-    public OptionValue loadConfigDefault(DrillConfig bootConfig, String name, String configPath){
-      return OptionValue.createString(OptionType.SYSTEM, name, bootConfig.getString(configPath+name));
     }
   }
 
@@ -168,10 +159,6 @@ public class TypeValidators {
     public LongValidator(String name, long def, boolean isAdminOption) {
       super(name, Kind.LONG, OptionValue.createLong(OptionType.SYSTEM, name, def), isAdminOption);
     }
-
-    public OptionValue loadConfigDefault(DrillConfig bootConfig, String name, String configPath){
-      return OptionValue.createLong(OptionType.SYSTEM, name, bootConfig.getLong(configPath+name));
-    }
   }
 
   public static class DoubleValidator extends TypeValidator {
@@ -181,10 +168,6 @@ public class TypeValidators {
 
     public DoubleValidator(String name, double def, boolean isAdminOption) {
       super(name, Kind.DOUBLE, OptionValue.createDouble(OptionType.SYSTEM, name, def), isAdminOption);
-    }
-
-    public OptionValue loadConfigDefault(DrillConfig bootConfig, String name, String configPath){
-      return OptionValue.createDouble(OptionType.SYSTEM, name, bootConfig.getDouble(configPath+name));
     }
   }
 
@@ -236,13 +219,11 @@ public class TypeValidators {
 
   public static abstract class TypeValidator extends OptionValidator {
     private final Kind kind;
-    private OptionValue defaultValue;
+    private final OptionValue defaultValue;
 
     public TypeValidator(final String name, final Kind kind, final OptionValue defValue) {
       this(name, kind, defValue, false);
     }
-
-
 
     public TypeValidator(final String name, final Kind kind, final OptionValue defValue, final boolean isAdminOption) {
       super(name, isAdminOption);
@@ -275,11 +256,5 @@ public class TypeValidators {
     public Kind getKind() {
       return kind;
     }
-
-    public void setDefaultValue(OptionValue defaultValue) {
-      this.defaultValue = defaultValue;
-    }
-
-
   }
 }

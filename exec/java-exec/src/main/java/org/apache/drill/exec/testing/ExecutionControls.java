@@ -22,7 +22,6 @@ import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.common.exceptions.DrillRuntimeException;
 import org.apache.drill.common.exceptions.UserException;
 import org.apache.drill.exec.ExecConstants;
@@ -112,10 +111,6 @@ public final class ExecutionControls {
             .message(String.format("Invalid controls option string (%s) due to %s.", jsonString, e.getMessage()))
             .build(logger);
       }
-    }
-
-    public OptionValue loadConfigDefault(DrillConfig bootConfig, String name, String configPath){
-      return OptionValue.createString(OptionType.SYSTEM, name, bootConfig.getString(configPath+name));
     }
   }
 

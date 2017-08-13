@@ -68,7 +68,6 @@ public class VersionIterator implements Iterator<Object>{
     if(!beforeFirst){
       throw new IllegalStateException();
     }
-    System.out.println("in format");
     beforeFirst = false;
     return new VersionInfo();
   }

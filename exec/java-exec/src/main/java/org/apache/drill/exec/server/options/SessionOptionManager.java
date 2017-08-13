@@ -42,6 +42,7 @@ public class SessionOptionManager extends InMemoryOptionManager {
 //  private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(SessionOptionManager.class);
 
   private final UserSession session;
+
   /**
    * Map of short lived options. Key: option name, Value: [ start, end )
    */

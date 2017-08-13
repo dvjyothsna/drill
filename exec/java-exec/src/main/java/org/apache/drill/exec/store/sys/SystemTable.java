@@ -21,8 +21,6 @@ import java.util.Iterator;
 
 import org.apache.drill.exec.ops.FragmentContext;
 import org.apache.drill.exec.store.sys.OptionIterator.OptionValueWrapper;
-import org.apache.drill.exec.store.sys.ExtendedOptionIterator.ExtendedOptionValueWrapper;
-
 
 /**
  * An enumeration of all tables in Drill's system ("sys") schema.
@@ -39,14 +37,6 @@ public enum SystemTable {
     public Iterator<Object> getIterator(final FragmentContext context) {
       return new OptionIterator(context, OptionIterator.Mode.SYS_SESS);
     }
-  },
-
-  OPTION2("options2", false,ExtendedOptionIterator.ExtendedOptionValueWrapper.class ) {
-    @Override
-    public Iterator<Object> getIterator(final FragmentContext context) {
-      return new ExtendedOptionIterator(context);
-    }
-
   },
 
   BOOT("boot", false, OptionValueWrapper.class) {
