@@ -99,7 +99,10 @@ public class WebServer implements AutoCloseable {
   private final Server embeddedJetty;
 
   private final BootStrapContext context;
+
   private final Drillbit drillbit;
+
+  private int port;
 
   /**
    * Create Jetty based web server.
@@ -198,20 +201,26 @@ public class WebServer implements AutoCloseable {
     }
 
     embeddedJetty.setHandler(servletContextHandler);
-    while(true) {
-      try {
+//    while(true) {
+//      System.out.println("in port " + config.getBoolean(ExecConstants.ENABLE_HTTP_PORT_HUNTING));
+//      try {
         embeddedJetty.start();
-        break;
-      }
-      catch (Exception e) {
-        System.out.println("in except");
-        embeddedJetty.removeConnector(serverConnector);
-        serverConnector = createHttpConnector();
-        embeddedJetty.addConnector(serverConnector);
-        embeddedJetty.setHandler(servletContextHandler);
-        continue;
-      }
-    }
+//        break;
+//      }
+//      catch (Exception e) {
+//        System.out.println("in except");
+//        if (config.getBoolean(ExecConstants.ENABLE_HTTP_PORT_HUNTING)) {
+//          embeddedJetty.removeConnector(serverConnector);
+//          serverConnector = createHttpConnector();
+//          embeddedJetty.addConnector(serverConnector);
+//          embeddedJetty.setHandler(servletContextHandler);
+//          continue;
+//        }
+//        else {
+//          break;
+//        }
+//      }
+//    }
 
 
   }
@@ -373,25 +382,32 @@ public class WebServer implements AutoCloseable {
     logger.info("Setting up HTTP connector for web server");
     final HttpConfiguration httpConfig = new HttpConfiguration();
     final ServerConnector httpConnector = new ServerConnector(embeddedJetty, new HttpConnectionFactory(httpConfig));
-    if(port_lastused == config.getInt(ExecConstants.HTTP_PORT)) {
-      httpConnector.setPort(config.getInt(ExecConstants.HTTP_PORT));
-      port_lastused ++;
-    }
-    else {
-      while(true) {
-        try {
-          httpConnector.setPort(port_lastused);
-          total_ports++;
-          port_lastused++;
-          break;
-        } catch (Exception e) {
 
-          continue;
+      if (port_lastused == config.getInt(ExecConstants.HTTP_PORT)) {
+        System.out.println("in if");
+        port = config.getInt(ExecConstants.HTTP_PORT);
+        httpConnector.setPort(port);
+        port_lastused++;
+      }
+      else {
+        System.out.println("in else");
+        if (config.getBoolean(ExecConstants.ENABLE_HTTP_PORT_HUNTING)) {
+          while (true) {
+            try {
+              port = port_lastused;
+              httpConnector.setPort(port);
+              total_ports++;
+              port_lastused++;
+              break;
+            } catch (Exception e) {
+              continue;
+            }
+          }
         }
       }
-    }
     return httpConnector;
   }
+
 
   @Override
   public void close() throws Exception {

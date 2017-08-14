@@ -201,6 +201,11 @@ public class Drillbit implements AutoCloseable {
               manager,
               storageRegistry );
 //              context);
+
+      //Closing the profile store provider if distinct
+      if (storeProvider != profileStoreProvider) {
+        AutoCloseables.close(profileStoreProvider);
+      }
     } catch(Exception e) {
       logger.warn("Failure on close()", e);
     }

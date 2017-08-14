@@ -31,13 +31,11 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 import java.util.Vector;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import com.google.common.collect.Queues;
 import org.apache.drill.common.DrillAutoCloseables;
 import org.apache.drill.common.Version;
 import org.apache.drill.common.config.DrillConfig;
@@ -813,9 +811,7 @@ public class DrillClient implements Closeable, ConnectionThrottle {
     @Override
     public void submissionFailed(UserException ex) {
       // or  !client.isActive()
-      System.out.println("in sub failed");
-//      if (ex.getCause() instanceof ChannelClosedException) {
-
+      if (ex.getCause() instanceof ChannelClosedException) {
         if (reconnect()) {
           try {
             client.submitQuery(this, query);
@@ -825,10 +821,9 @@ public class DrillClient implements Closeable, ConnectionThrottle {
         } else {
           fail(ex);
         }
-//      }
-//      else {
-//        fail(ex);
-//      }
+      } else {
+        fail(ex);
+      }
     }
 
     @Override

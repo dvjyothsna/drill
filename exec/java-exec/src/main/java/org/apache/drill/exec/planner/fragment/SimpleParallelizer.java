@@ -72,9 +72,7 @@ public class SimpleParallelizer implements ParallelizationParameters {
     OptionManager optionManager = context.getOptions();
     long sliceTarget = optionManager.getOption(ExecConstants.SLICE_TARGET).num_val;
     this.parallelizationThreshold = sliceTarget > 0 ? sliceTarget : 1;
-    long maxWidth = optionManager.getOption(ExecConstants.MAX_WIDTH_PER_NODE_KEY).num_val.intValue();
-    Double cpu_load_average = optionManager.getOption(ExecConstants.CPU_LOAD_AVERAGE_KEY).float_val;
-    this.maxWidthPerNode = (int) (maxWidth != 0 ? maxWidth : (long) Math.ceil(Runtime.getRuntime().availableProcessors() * cpu_load_average));
+    this.maxWidthPerNode = optionManager.getOption(ExecConstants.MAX_WIDTH_PER_NODE_KEY).num_val.intValue();
     this.maxGlobalWidth = optionManager.getOption(ExecConstants.MAX_WIDTH_GLOBAL_KEY).num_val.intValue();
     this.affinityFactor = optionManager.getOption(ExecConstants.AFFINITY_FACTOR_KEY).float_val.intValue();
   }
@@ -237,14 +235,11 @@ public class SimpleParallelizer implements ParallelizationParameters {
     if (fragmentWrapper.isEndpointsAssignmentDone()) {
       return;
     }
-//    System.out.println("in parallelizer 240"  + Thread.currentThread());
 
     // First parallelize fragments on which this fragment depends on.
     final List<Wrapper> fragmentDependencies = fragmentWrapper.getFragmentDependencies();
-
     if (fragmentDependencies != null && fragmentDependencies.size() > 0) {
       for(Wrapper dependency : fragmentDependencies) {
-
         parallelizeFragment(dependency, planningSet, activeEndpoints);
       }
     }

@@ -125,6 +125,8 @@ public class Testshutdown {
     FixtureBuilder builder = ClusterFixture.bareBuilder().clusterSize(6).withLocalZk();
     builder = enableWebServer(builder);
     int i = 8047;
+
+    Thread.sleep(15000);
     final String sql = "SELECT * FROM dfs.`/tmp/drill-test/` ORDER BY employee_id";
     try ( ClusterFixture cluster = builder.build();
           final ClientFixture client = cluster.clientFixture()) {
@@ -348,7 +350,7 @@ public class Testshutdown {
 
       cluster.defineWorkspace("dfs", "data", "/tmp/drill-test", "psv");
       client.queryBuilder().sql(sql).run();
-      Thread.sleep(15000);
+      Thread.sleep(150);
     } catch (Exception e) {
       e.printStackTrace();
     }

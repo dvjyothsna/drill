@@ -211,23 +211,14 @@ public class ZKClusterCoordinator extends ClusterCoordinator {
   }
 
   public void update(RegistrationHandle handle, State state) {
-
     ZKRegistrationHandle h = (ZKRegistrationHandle) handle;
-//    System.out.println("handle id " + ((ZKRegistrationHandle) handle).id);
-//    DrillbitEndpoint endpoint = h.endpoint;
       try {
-//        System.out.println("****** " + endpoint);
-//        endpoint = endpoint.toBuilder().setStatus(status.toString()).build();
         endpoint = h.endpoint.toBuilder().setState(state).build();
-//        System.out.println("in update ****" + endpoint + System.currentTimeMillis());
-
         ServiceInstance<DrillbitEndpoint> serviceInstance = ServiceInstance.<DrillbitEndpoint>builder().name(serviceName).id(h.id).payload(endpoint).build();
         discovery.updateService(serviceInstance);
       } catch (Exception e) {
         e.printStackTrace();
       }
-
-
   }
 
   @Override
@@ -273,7 +264,6 @@ public class ZKClusterCoordinator extends ClusterCoordinator {
           endpointsMap.put(new MultiKey(endpoint.getAddress(),endpoint.getUserPort()),endpoint);
         }
       }
-
       Iterator<MultiKey> iterator = endpointsMap.keySet().iterator() ;
       while(iterator.hasNext()) {
         MultiKey key = iterator.next();
@@ -282,14 +272,6 @@ public class ZKClusterCoordinator extends ClusterCoordinator {
           iterator.remove();
         }
       }
-
-//      for(MultiKey key: endpointsMap.keySet()) {
-//        if(!newDrillbitSet.contains(endpointsMap.get(key))) {
-//            unregisteredBits.add(endpointsMap.get(key));
-//            endpointsMap.put(key,null);
-//        }
-//      }
-//
       endpoints = endpointsMap.values();
 
       if (logger.isDebugEnabled()) {

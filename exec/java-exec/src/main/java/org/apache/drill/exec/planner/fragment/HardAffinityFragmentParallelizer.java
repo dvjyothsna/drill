@@ -98,7 +98,7 @@ public class HardAffinityFragmentParallelizer implements FragmentParallelizer {
 
     // 2.1 First add each endpoint from the pool once so that the mandatory assignment requirement is fulfilled.
     for(Entry<DrillbitEndpoint, EndpointAffinity> entry : endpointPool.entrySet()) {
-        endpoints.put(entry.getKey(), 1);
+      endpoints.put(entry.getKey(), 1);
     }
     int totalAssigned = endpoints.size();
 
@@ -106,10 +106,8 @@ public class HardAffinityFragmentParallelizer implements FragmentParallelizer {
     int remainingSlots = width - endpoints.size();
     while (remainingSlots > 0) {
       for(EndpointAffinity epAf : endpointPool.values()) {
-        final int moreAllocation = (int) Math.ceil(1 * remainingSlots);
-
-        int currentAssignments = 0;
-
+        final int moreAllocation = (int) Math.ceil(epAf.getAffinity() * remainingSlots);
+        int currentAssignments = endpoints.get(epAf.getEndpoint());
         for(int i=0;
             i < moreAllocation &&
                 totalAssigned < width &&

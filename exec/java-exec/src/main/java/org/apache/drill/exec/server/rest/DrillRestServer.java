@@ -81,7 +81,8 @@ public class DrillRestServer extends ResourceConfig {
     }
 
     //disable moxy so it doesn't conflict with jackson.
-    final String disableMoxy = PropertiesHelper.getPropertyNameForRuntime(CommonProperties.MOXY_JSON_FEATURE_DISABLE, getConfiguration().getRuntimeType());
+    final String disableMoxy = PropertiesHelper.getPropertyNameForRuntime(CommonProperties.MOXY_JSON_FEATURE_DISABLE,
+        getConfiguration().getRuntimeType());
     property(disableMoxy, true);
 
     register(JsonParseExceptionMapper.class);

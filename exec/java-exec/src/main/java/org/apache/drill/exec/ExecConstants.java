@@ -519,4 +519,10 @@ public interface ExecConstants {
    * <tt>-ea -Ddrill.exec.debug.validate_vectors=true</tt>
    */
   String ENABLE_VECTOR_VALIDATION = "drill.exec.debug.validate_vectors";
+
+  /**
+   * Boot-time config option to enable port hunting for the webserver. Primarily
+   * used for starting multiple drillbits(webservers) on a single machine.
+   */
+  String ENABLE_HTTP_PORT_HUNTING = "drill.exec.http.port_hunting";
 }

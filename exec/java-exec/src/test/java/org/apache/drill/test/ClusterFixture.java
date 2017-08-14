@@ -203,7 +203,6 @@ public class ClusterFixture extends BaseFixture implements AutoCloseable {
       if (builder.configBuilder().hasResource()) {
         throw new IllegalArgumentException("Cannot specify a local ZK while using an external config file.");
       }
-//      System.out.println("in zk new "+zkConnect);
       builder.configProperty(ExecConstants.ZK_CONNECTION, zkConnect);
 
       // Forced to disable this, because currently we leak memory which is a known issue for query cancellations.
@@ -268,7 +267,6 @@ public class ClusterFixture extends BaseFixture implements AutoCloseable {
     Preconditions.checkArgument(builder.bitCount > 0);
     int bitCount = builder.bitCount;
     for (int i = 0; i < bitCount; i++) {
-//      System.out.println(serviceSet.getCoordinator());
       Drillbit bit = new Drillbit(config, serviceSet);
       bit.run();
 
@@ -457,16 +455,12 @@ public class ClusterFixture extends BaseFixture implements AutoCloseable {
     }
   }
 
-
-
-
   public void close_drillbit(final String drillbitname) throws Exception {
     Exception ex = null;
 
     for (Drillbit bit : drillbits())
     {
       if(bit.equals(bits.get(drillbitname))) {
-//        System.out.println("in close");
         bit.close();
       }
     }

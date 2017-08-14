@@ -560,7 +560,6 @@ public class QueryManager implements AutoCloseable {
 
         // fragments were running on the Drillbit, capture node name for exception or logging message
         if (atLeastOneFailure) {
-          System.out.println("failed unregister endpoint" + ep);
           failedNodeList.append(", ");
         } else {
           atLeastOneFailure = true;

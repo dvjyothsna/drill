@@ -59,7 +59,7 @@ public abstract class ClusterCoordinator implements AutoCloseable {
 
   public abstract Collection<DrillbitEndpoint> getOnlineEndPoints();
 
-  public abstract void update(RegistrationHandle handle, State quiescent);
+  public abstract void update(RegistrationHandle handle, State state);
 
   public interface RegistrationHandle {
   }
