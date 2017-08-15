@@ -66,7 +66,7 @@
                 </td>
                 <td id="status" >${drillbit.getStatus()}</td>
                 <td>
-                    <button type="button" id="shutdown" onClick="shutdown('${drillbit.getAddress()}',${i},$(this));"> SHUTDOWN </button>
+                    <button type="button" id="shutdown" onClick="shutdown('${drillbit.getAddress()}',$(this));"> SHUTDOWN </button>
                 </td>
               </tr>
               <#assign i = i + 1>
@@ -97,10 +97,24 @@
       </div>
   </div>
   <script charset="utf-8">
-
-      var timeout = setTimeout(reloadStatus, 2000);
+      var refreshTime = 2000;
+      var refresh = getRefreshTime();
+      var timeout;
       var size = $("#size").html();
+
+      function getRefreshTime() {
+          var refresh = $.ajax({
+                          type: 'GET',
+                          url: '/graceperiod',
+                          dataType: "json",
+                          complete: function(data) {
+                                refreshTime = data.responseJSON["graceperiod"];
+                                timeout = setTimeout(reloadStatus,refreshTime );
+                                }
+                          });
+      }
       function reloadStatus () {
+          console.log(refreshTime);
           var result = $.ajax({
                       type: 'GET',
                       url: '/status',
@@ -108,9 +122,9 @@
                       complete: function(data) {
                             console.log(typeof(data));
                             fillStatus(data,size);
-                      }
-                });
-          timeout = setTimeout(reloadStatus, 2000);
+                            }
+                      });
+          timeout = setTimeout(reloadStatus, refreshTime);
       }
 
       function fillStatus(data,size) {
@@ -129,8 +143,8 @@
           }
       }
 
-      function shutdown(address,port,button) {
-          port_num = 8046 + port;
+      function shutdown(address,button) {
+          port_num = 8047
           url = "http://"+address+":"+port_num+"/shutdown";
           var result = $.ajax({
                 type: 'POST',

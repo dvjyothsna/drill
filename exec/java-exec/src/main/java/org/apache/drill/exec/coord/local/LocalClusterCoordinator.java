@@ -74,7 +74,7 @@ public class LocalClusterCoordinator extends ClusterCoordinator {
   @Override
   public RegistrationHandle register( DrillbitEndpoint data) {
     logger.debug("Endpoint registered {}.", data);
-    final Handle h = new Handle();
+    final Handle h = new Handle(data);
     data = data.toBuilder().setState(State.ONLINE).build();
     endpoints.put(h, data);
     return h;
@@ -85,7 +85,6 @@ public class LocalClusterCoordinator extends ClusterCoordinator {
     if (handle == null) {
       return;
     }
-
     endpoints.remove(handle);
   }
 
@@ -110,12 +109,20 @@ public class LocalClusterCoordinator extends ClusterCoordinator {
         runningEndPoints.add(endpoint);
       }
     }
-    System.out.println("local running end points are local " );
     return runningEndPoints;
   }
 
   private class Handle implements RegistrationHandle {
     private final UUID id = UUID.randomUUID();
+    private final DrillbitEndpoint drillbitEndpoint;
+
+    public DrillbitEndpoint getEndPoint() {
+      return drillbitEndpoint;
+    }
+
+    private Handle(DrillbitEndpoint data) {
+      drillbitEndpoint = data;
+    }
 
     @Override
     public int hashCode() {

@@ -22,7 +22,6 @@ import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.security.PermitAll;
 import javax.inject.Inject;
-import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -35,8 +34,6 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Sets;
 import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.exec.ExecConstants;
-import org.apache.drill.exec.client.DrillClient;
-import org.apache.drill.exec.memory.BufferAllocator;
 import org.apache.drill.exec.proto.CoordinationProtos.DrillbitEndpoint;
 import org.apache.drill.exec.server.Drillbit;
 import org.apache.drill.exec.server.rest.DrillRestServer.UserAuthEnabled;
@@ -75,7 +72,17 @@ public class DrillRoot {
     return drillStatusMap;
   }
 
+  @GET
+  @Path("/graceperiod")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Map<String, Integer> getGracePeriod(){
 
+    final DrillConfig config = work.getContext().getConfig();
+    final int gracePeriod = config.getInt(ExecConstants.GRACE_PERIOD);
+    Map<String, Integer> gracePeriodMap = new HashMap<String, Integer>();
+    gracePeriodMap.put("graceperiod",gracePeriod);
+    return gracePeriodMap;
+  }
 
   @POST
   @Path("/shutdown")
@@ -108,6 +115,7 @@ public class DrillRoot {
     final boolean userEncryptionEnabled = config.getBoolean(ExecConstants.USER_ENCRYPTION_SASL_ENABLED);
     final boolean bitEncryptionEnabled = config.getBoolean(ExecConstants.BIT_ENCRYPTION_SASL_ENABLED);
 
+
     for (DrillbitEndpoint endpoint : work.getContext().getBits()) {
       final DrillbitInfo drillbit = new DrillbitInfo(endpoint,
               currentDrillbit.equals(endpoint),
@@ -135,7 +143,7 @@ public class DrillRoot {
                        String currentVersion,
                        Collection<String> mismatchedVersions,
                        boolean userEncryption,
-                       boolean bitEncryption) {
+                       boolean bitEncryption ) {
       this.drillbits = Sets.newTreeSet(drillbits);
       this.currentVersion = currentVersion;
       this.mismatchedVersions = Sets.newTreeSet(mismatchedVersions);
@@ -158,6 +166,7 @@ public class DrillRoot {
     public boolean isUserEncryptionEnabled() { return userEncryptionEnabled; }
 
     public boolean isBitEncryptionEnabled() { return bitEncryptionEnabled; }
+
   }
 
   public static class DrillbitInfo implements Comparable<DrillbitInfo> {

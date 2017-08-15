@@ -525,4 +525,10 @@ public interface ExecConstants {
    * used for starting multiple drillbits(webservers) on a single machine.
    */
   String ENABLE_HTTP_PORT_HUNTING = "drill.exec.http.port_hunting";
+  /**
+   * Boot-time config option to modify grace period. Grace period is the amount of
+   * time the drillbit waits to avoid race conditions caused due to zookeeper delay.
+   */
+  String GRACE_PERIOD = "drill.exec.grace_period";
+
 }

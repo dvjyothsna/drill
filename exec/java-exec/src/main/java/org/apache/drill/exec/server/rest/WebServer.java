@@ -201,26 +201,24 @@ public class WebServer implements AutoCloseable {
     }
 
     embeddedJetty.setHandler(servletContextHandler);
-//    while(true) {
-//      System.out.println("in port " + config.getBoolean(ExecConstants.ENABLE_HTTP_PORT_HUNTING));
-//      try {
+    while(true) {
+      try {
         embeddedJetty.start();
-//        break;
-//      }
-//      catch (Exception e) {
-//        System.out.println("in except");
-//        if (config.getBoolean(ExecConstants.ENABLE_HTTP_PORT_HUNTING)) {
-//          embeddedJetty.removeConnector(serverConnector);
-//          serverConnector = createHttpConnector();
-//          embeddedJetty.addConnector(serverConnector);
-//          embeddedJetty.setHandler(servletContextHandler);
-//          continue;
-//        }
-//        else {
-//          break;
-//        }
-//      }
-//    }
+        break;
+      }
+      catch (Exception e) {
+        if (config.getBoolean(ExecConstants.ENABLE_HTTP_PORT_HUNTING)) {
+          embeddedJetty.removeConnector(serverConnector);
+          serverConnector = createHttpConnector();
+          embeddedJetty.addConnector(serverConnector);
+          embeddedJetty.setHandler(servletContextHandler);
+          continue;
+        }
+        else {
+          throw new IllegalStateException(e);
+        }
+      }
+    }
 
 
   }
@@ -384,13 +382,11 @@ public class WebServer implements AutoCloseable {
     final ServerConnector httpConnector = new ServerConnector(embeddedJetty, new HttpConnectionFactory(httpConfig));
 
       if (port_lastused == config.getInt(ExecConstants.HTTP_PORT)) {
-        System.out.println("in if");
         port = config.getInt(ExecConstants.HTTP_PORT);
         httpConnector.setPort(port);
         port_lastused++;
       }
       else {
-        System.out.println("in else");
         if (config.getBoolean(ExecConstants.ENABLE_HTTP_PORT_HUNTING)) {
           while (true) {
             try {

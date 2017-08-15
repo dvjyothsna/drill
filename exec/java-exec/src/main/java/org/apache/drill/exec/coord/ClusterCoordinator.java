@@ -62,6 +62,7 @@ public abstract class ClusterCoordinator implements AutoCloseable {
   public abstract void update(RegistrationHandle handle, State state);
 
   public interface RegistrationHandle {
+    public abstract DrillbitEndpoint getEndPoint();
   }
 
   public abstract DistributedSemaphore getSemaphore(String name, int maximumLeases);

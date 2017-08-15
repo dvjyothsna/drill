@@ -42,6 +42,7 @@ import org.apache.drill.exec.rpc.data.DataConnectionCreator;
 import org.apache.drill.exec.server.BootStrapContext;
 import org.apache.drill.exec.server.Drillbit;
 import org.apache.drill.exec.server.DrillbitContext;
+import org.apache.drill.exec.server.DrillbitStateManager;
 import org.apache.drill.exec.store.sys.PersistentStoreProvider;
 import org.apache.drill.exec.work.batch.ControlMessageHandler;
 import org.apache.drill.exec.work.foreman.Foreman;
@@ -80,6 +81,8 @@ public class WorkManager implements AutoCloseable {
   private final WorkEventBus workBus;
   private final Executor executor;
   private final StatusThread statusThread;
+  private long numOfQueries;
+  private long numOfRunningFragments;
 
   /**
    * How often the StatusThread collects statistics about running fragments.
@@ -167,26 +170,17 @@ public class WorkManager implements AutoCloseable {
    * <p>This is intended to be used by {@link org.apache.drill.exec.server.Drillbit#close()}.</p>
    */
   public void waitToExit(Drillbit bit) {
-    System.out.println("thread " + Thread.currentThread());
     synchronized(this) {
-
-//      System.out.println("in sync" + bit.status);
-//
+      numOfQueries = queries.size();
+      numOfRunningFragments = runningFragments.size();
       System.out.println("work manager thread " +  Thread.currentThread() + queries + runningFragments);
-//
-      if ( bit.status != null && bit.status.equals(Drillbit.DrillbitStatus.DRAINING) && queries.isEmpty() && runningFragments.isEmpty()) {
-//        System.out.println("hereee");
+      if ( queries.isEmpty() && runningFragments.isEmpty()) {
         return;
       }
-
       exitLatch = new ExtendedLatch();
     }
-    // Wait for at most 5 seconds or until the latch is released.
-//    while(true) {
+    // Wait uninterruptibly until the latch is released.
       exitLatch.awaitUninterruptibly();
-
-//      System.out.println("after wait in manager" + exitLatch);
-//    }
   }
 
   /**
@@ -196,6 +190,11 @@ public class WorkManager implements AutoCloseable {
   private void indicateIfSafeToExit() {
     synchronized(this) {
       if (exitLatch != null) {
+        logger.info("Waiting for "+ runningFragments.size() +"running fragments to complete before shutting down");
+        if(runningFragments.size() > numOfRunningFragments|| queries.size() > numOfQueries) {
+          logger.info("New Fragments or queries are added while drillbit is Shutting down");
+          System.out.println("New Fragments or queries are added while shuttingdown" + numOfRunningFragments + runningFragments.size());
+        }
         if (queries.isEmpty() && runningFragments.isEmpty()) {
           System.out.println("here in indicate");
           exitLatch.countDown();
