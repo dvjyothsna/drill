@@ -17,6 +17,7 @@
  */
 package org.apache.drill.exec.coord;
 
+import java.io.Closeable;
 import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -50,18 +51,30 @@ public abstract class ClusterCoordinator implements AutoCloseable {
   public abstract void unregister(RegistrationHandle handle);
 
   /**
-   * Get a collection of avialable Drillbit endpoints, Thread-safe.
+   * Get a collection of available Drillbit endpoints, Thread-safe.
    * Could be slightly out of date depending on refresh policy.
    *
    * @return A collection of available endpoints.
    */
   public abstract Collection<DrillbitEndpoint> getAvailableEndpoints();
 
+  /**
+   * Get a collection of ONLINE Drillbit endpoints by excluding the drillbits
+   * that are in QUIESCENT state (drillbits shutting down). Primarily used by the planner
+   * to plan queries only on ONLINE drillbits and used by the client during initial connection
+   * to connect to a drillbit (foreman)
+   * @return A collection of ONLINE endpoints
+   */
+
   public abstract Collection<DrillbitEndpoint> getOnlineEndPoints();
 
   public abstract void update(RegistrationHandle handle, State state);
 
   public interface RegistrationHandle {
+    /**
+     * Get the drillbit endpoint associated with the registration handle
+     * @return drillbit endpoint
+     */
     public abstract DrillbitEndpoint getEndPoint();
   }
 

@@ -55,7 +55,6 @@ public class DrillRoot {
   @GET
   @Produces(MediaType.TEXT_HTML)
   public Viewable getClusterInfo() {
-    System.out.println(" in here ***************");
     return ViewableWithPermissions.create(authEnabled.get(), "/rest/index.ftl", sc, getClusterInfoJSON());
   }
 
@@ -82,6 +81,15 @@ public class DrillRoot {
     Map<String, Integer> gracePeriodMap = new HashMap<String, Integer>();
     gracePeriodMap.put("graceperiod",gracePeriod);
     return gracePeriodMap;
+  }
+
+  @GET
+  @Path("/queriesCount")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Map<String, Integer> getRemainingQueries() {
+    Map<String, Integer> queriesInfo = new HashMap<String, Integer>();
+    queriesInfo = work.getRemainingQueries();
+    return queriesInfo;
   }
 
   @POST
@@ -115,7 +123,6 @@ public class DrillRoot {
     final boolean userEncryptionEnabled = config.getBoolean(ExecConstants.USER_ENCRYPTION_SASL_ENABLED);
     final boolean bitEncryptionEnabled = config.getBoolean(ExecConstants.BIT_ENCRYPTION_SASL_ENABLED);
 
-
     for (DrillbitEndpoint endpoint : work.getContext().getBits()) {
       final DrillbitInfo drillbit = new DrillbitInfo(endpoint,
               currentDrillbit.equals(endpoint),
@@ -143,7 +150,7 @@ public class DrillRoot {
                        String currentVersion,
                        Collection<String> mismatchedVersions,
                        boolean userEncryption,
-                       boolean bitEncryption ) {
+                       boolean bitEncryption) {
       this.drillbits = Sets.newTreeSet(drillbits);
       this.currentVersion = currentVersion;
       this.mismatchedVersions = Sets.newTreeSet(mismatchedVersions);
@@ -177,9 +184,7 @@ public class DrillRoot {
     private final String version;
     private final boolean current;
     private final boolean versionMatch;
-
-
-    private final String status;
+    private final String state;
 
     @JsonCreator
     public DrillbitInfo(DrillbitEndpoint drillbit, boolean current, boolean versionMatch) {
@@ -190,7 +195,7 @@ public class DrillRoot {
       this.version = Strings.isNullOrEmpty(drillbit.getVersion()) ? "Undefined" : drillbit.getVersion();
       this.current = current;
       this.versionMatch = versionMatch;
-      this.status = String.valueOf(drillbit.getState());
+      this.state = String.valueOf(drillbit.getState());
     }
 
     public String getAddress() {
@@ -216,9 +221,8 @@ public class DrillRoot {
     }
 
     public String getStatus() {
-      return status;
+      return state;
     }
-
 
     /**
      * Method used to sort drillbits. Current drillbit goes first.
@@ -247,7 +251,6 @@ public class DrillRoot {
             }
             return (this.address.compareTo(drillbitToCompare.getAddress()));
           }
-//          this.controlPort.compareTo(drillbitToCompare.getControlPort()));
         }
         return this.version.compareTo(drillbitToCompare.getVersion());
       }

@@ -39,6 +39,7 @@ import java.util.concurrent.ThreadLocalRandom;
  * factors endpoints which have no affinity can be assigned to run the fragments.
  */
 public class SoftAffinityFragmentParallelizer implements FragmentParallelizer {
+  private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(SoftAffinityFragmentParallelizer.class);
   public static final SoftAffinityFragmentParallelizer INSTANCE = new SoftAffinityFragmentParallelizer();
 
   private static final Ordering<EndpointAffinity> ENDPOINT_AFFINITY_ORDERING =
@@ -58,7 +59,6 @@ public class SoftAffinityFragmentParallelizer implements FragmentParallelizer {
     // Find the parallelization width of fragment
     final Stats stats = fragmentWrapper.getStats();
     final ParallelizationInfo parallelizationInfo = stats.getParallelizationInfo();
-//    System.out.println("Use time " + System.currentTimeMillis() + fragment + Thread.currentThread());
     // 1. Find the parallelization based on cost. Use max cost of all operators in this fragment; this is consistent
     //    with the calculation that ExcessiveExchangeRemover uses.
     int width = (int) Math.ceil(stats.getMaxCost() / parameters.getSliceTarget());
@@ -161,8 +161,7 @@ public class SoftAffinityFragmentParallelizer implements FragmentParallelizer {
         endpoints.add(otherEPItr.next());
       }
     }
-//    System.out.println("in soft aff parall End points assigned are " + endpoints);
-
+    logger.debug("Endpoints assigned are {}", endpoints);
     return endpoints;
   }
 }

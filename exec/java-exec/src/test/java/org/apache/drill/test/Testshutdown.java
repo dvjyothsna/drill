@@ -31,6 +31,7 @@ import org.apache.drill.exec.work.foreman.DrillbitStatusListener;
 import org.junit.Assert;
 import org.junit.Test;
 
+import javax.validation.constraints.AssertTrue;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -129,16 +130,8 @@ public class Testshutdown {
     try ( ClusterFixture cluster = builder.build();
           final ClientFixture client = cluster.clientFixture()) {
       Thread.sleep(1500);
-      new Thread(new Runnable() {
-        public void run() {
-          try {
-            final QueryBuilder.QuerySummary querySummary = client.queryBuilder().sql(sql).run();
-            Assert.assertEquals(querySummary.finalState(), QueryState.COMPLETED);
-          } catch (Exception e) {
-            e.printStackTrace();
-          }
-        }
-      }).start();
+      final QueryBuilder.QuerySummaryFuture listener =  client.queryBuilder().sql(sql).futureSummary();
+      Thread.sleep(50000);
 
       while( i < 8052) {
 
@@ -156,6 +149,10 @@ public class Testshutdown {
       Collection<DrillbitEndpoint> drillbitEndpoints = cluster.drillbit().getContext()
               .getClusterCoordinator()
               .getOnlineEndPoints();
+      while(!listener.isDone()) {
+
+      }
+      Assert.assertTrue(listener.isDone());
       Assert.assertEquals(drillbitEndpoints.size(), 1);
     }
   }
@@ -253,13 +250,11 @@ public class Testshutdown {
 
     try (ClusterFixture cluster = builder.build();
          final ClientFixture client = cluster.clientFixture()) {
-
       cluster.defineWorkspace("dfs", "data", "/tmp/drill-test", "psv");
       client.queryBuilder().sql(sql).printCsv();
-      Thread.sleep(150);
+      Thread.sleep(10);
     } catch (Exception e) {
       e.printStackTrace();
     }
   }
-
 }

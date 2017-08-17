@@ -30,7 +30,6 @@ import org.apache.drill.exec.ExecConstants;
 import org.apache.drill.exec.coord.ClusterCoordinator;
 import org.apache.drill.exec.coord.ClusterCoordinator.RegistrationHandle;
 import org.apache.drill.exec.coord.zk.ZKClusterCoordinator;
-import org.apache.drill.exec.coord.zk.ZKRegistrationHandle;
 import org.apache.drill.exec.exception.DrillbitStartupException;
 import org.apache.drill.exec.proto.CoordinationProtos.DrillbitEndpoint;
 import org.apache.drill.exec.server.DrillbitStateManager.DrillbitState;
@@ -70,7 +69,6 @@ public class Drillbit implements AutoCloseable {
 
   public final static String SYSTEM_OPTIONS_NAME = "org.apache.drill.exec.server.Drillbit.system_options";
 
-  private boolean isClosed = false;
   private final ClusterCoordinator coord;
   private final ServiceEngine engine;
   private final PersistentStoreProvider storeProvider;
@@ -105,6 +103,7 @@ public class Drillbit implements AutoCloseable {
     final boolean allowPortHunting = serviceSet != null;
     context = new BootStrapContext(config, classpathScan);
     manager = new WorkManager(context);
+
     webServer = new WebServer(context, manager, this);
     boolean isDistributedMode = false;
     if (serviceSet != null) {
@@ -189,13 +188,13 @@ public class Drillbit implements AutoCloseable {
 
     try {
       AutoCloseables.close(
-              webServer,
-              engine,
-              storeProvider,
-              coord,
-              manager,
-              storageRegistry ,
-              context);
+            webServer,
+            engine,
+            storeProvider,
+            coord,
+            manager,
+            storageRegistry ,
+            context);
 
       //Closing the profile store provider if distinct
       if (storeProvider != profileStoreProvider) {
@@ -206,7 +205,6 @@ public class Drillbit implements AutoCloseable {
     }
     System.out.println("Thread id " + Thread.currentThread() + System.currentTimeMillis());
     logger.info("Shutdown completed ({} ms).", w.elapsed(TimeUnit.MILLISECONDS) );
-    //
     stateManager.setState(DrillbitState.SHUTDOWN);
   }
 
@@ -288,7 +286,6 @@ public class Drillbit implements AutoCloseable {
          * singleton object.
          */
         synchronized(idCounter) {
-//          drillbit.close();
           drillbit.close();
         }
       } catch(final Exception e) {

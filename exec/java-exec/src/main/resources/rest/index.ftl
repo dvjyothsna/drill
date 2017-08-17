@@ -68,6 +68,8 @@
                 <td>
                     <button type="button" id="shutdown" onClick="shutdown('${drillbit.getAddress()}',$(this));"> SHUTDOWN </button>
                 </td>
+                <td id="queriesCount">
+                </td>
               </tr>
               <#assign i = i + 1>
             </#list>
@@ -109,6 +111,7 @@
                           dataType: "json",
                           complete: function(data) {
                                 refreshTime = data.responseJSON["graceperiod"];
+                                refreshTime = refreshTime/3;
                                 timeout = setTimeout(reloadStatus,refreshTime );
                                 }
                           });
@@ -134,14 +137,35 @@
             address = address.trim();
             var port = $("#row-"+i).find("#port").html();
             var key = address+"-"+port;
+
             if (status_map[key] == null) {
                 $("#row-"+i).find("#status").text("OFFLINE");
+                $("#row-"+i).find("#shutdown").prop('disabled',true).css('opacity',0.5);
             }
             else {
-                $("#row-"+i).find("#status").text(status_map[key]);
+                if( status_map[key] == "ONLINE") {
+                    $("#row-"+i).find("#status").text(status_map[key]);
+                }
+                else {
+                    fillQueryCount(address,i);
+                    $("#row-"+i).find("#status").text(status_map[key]);
+                }
             }
           }
       }
+      function fillQueryCount(address,row_id) {
+          var result = $.ajax({
+                        type: 'GET',
+                        url: '/queriesCount',
+                        dataType: "json",
+                        complete: function(data) {
+                              queries = data.responseJSON["queriesCount"];
+                              fragments = data.responseJSON["fragmentsCount"];
+                              $("#row-"+i).find("#queriesCount").text(queries+" queries and "+fragments+" fragments remaining");
+                              }
+                        });
+      }
+
 
       function shutdown(address,button) {
           port_num = 8047

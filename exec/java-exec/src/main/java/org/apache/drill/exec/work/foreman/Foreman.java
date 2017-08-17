@@ -60,7 +60,6 @@ import org.apache.drill.exec.planner.sql.DrillSqlWorker;
 import org.apache.drill.exec.proto.BitControl.InitializeFragments;
 import org.apache.drill.exec.proto.BitControl.PlanFragment;
 import org.apache.drill.exec.proto.CoordinationProtos.DrillbitEndpoint;
-import org.apache.drill.exec.proto.CoordinationProtos.DrillbitEndpoint.State;
 import org.apache.drill.exec.proto.ExecProtos.FragmentHandle;
 import org.apache.drill.exec.proto.ExecProtos.ServerPreparedStatementState;
 import org.apache.drill.exec.proto.GeneralRPCProtos.Ack;
@@ -75,7 +74,6 @@ import org.apache.drill.exec.rpc.RpcException;
 import org.apache.drill.exec.rpc.control.ControlTunnel;
 import org.apache.drill.exec.rpc.control.Controller;
 import org.apache.drill.exec.rpc.UserClientConnection;
-import org.apache.drill.exec.server.Drillbit;
 import org.apache.drill.exec.server.DrillbitContext;
 import org.apache.drill.exec.server.options.OptionManager;
 import org.apache.drill.exec.testing.ControlsInjector;
@@ -174,7 +172,6 @@ public class Foreman implements Runnable {
     closeFuture.addListener(closeListener);
 
     queryContext = new QueryContext(connection.getSession(), drillbitContext, queryId);
-//    System.out.println("coord is " +drillbitContext.getClusterCoordinator().getAvailableEndpoints() );
     queryManager = new QueryManager(queryId, queryRequest, drillbitContext.getStoreProvider(),
         drillbitContext.getClusterCoordinator(), this);
 
@@ -447,7 +444,6 @@ public class Foreman implements Runnable {
       queryManager.markQueueWaitEndTime();
     }
 
-    Collection<DrillbitEndpoint> endpoints = queryContext.getRunningEndPoints();
     final QueryWorkUnit work = getQueryWorkUnit(plan);
     final List<PlanFragment> planFragments = work.getFragments();
     final PlanFragment rootPlanFragment = work.getRootFragment();
@@ -618,14 +614,12 @@ public class Foreman implements Runnable {
     final PhysicalOperator rootOperator = plan.getSortedOperators(false).iterator().next();
     final Fragment rootFragment = rootOperator.accept(MakeFragmentsVisitor.INSTANCE, null);
     final SimpleParallelizer parallelizer = new SimpleParallelizer(queryContext);
-//    System.out.println("all end points " + queryContext.getRunningEndPoints());
-//    System.out.println("read time " + System.currentTimeMillis());
-//    System.out.println(queryContext.getRunningEndPoints());
+    // Plan the query using only the ONLINE drillbit endpoints. Exclude the endpoints
+    // that are shutting down to reduce the chances of query failure.
     final QueryWorkUnit queryWorkUnit = parallelizer.getFragments(
         queryContext.getOptions().getOptionList(), queryContext.getCurrentEndpoint(),
-        queryId, queryContext.getRunningEndPoints(), drillbitContext.getPlanReader(), rootFragment,
+        queryId, queryContext.getOnlineEndpoints(), drillbitContext.getPlanReader(), rootFragment,
         initiatingClient.getSession(), queryContext.getQueryContextInfo());
-
 
     if (logger.isTraceEnabled()) {
       final StringBuilder sb = new StringBuilder();
@@ -1055,7 +1049,6 @@ public class Foreman implements Runnable {
 
   private void runSQL(final String sql) throws ExecutionSetupException {
     final Pointer<String> textPlan = new Pointer<>();
-    Collection<DrillbitEndpoint> running = queryContext.getActiveEndpoints();
     final PhysicalPlan plan = DrillSqlWorker.getPlan(queryContext, sql, textPlan);
     queryManager.setPlanText(textPlan.value);
     runPhysicalPlan(plan);

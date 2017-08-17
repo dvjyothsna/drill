@@ -134,6 +134,7 @@ public class WebServer implements AutoCloseable {
    * @throws Exception
    */
   public void start() throws Exception {
+    port_lastused = config.getInt(ExecConstants.HTTP_PORT);
     if (embeddedJetty == null) {
       return;
     }
@@ -374,7 +375,7 @@ public class WebServer implements AutoCloseable {
    * @return Initialized {@link ServerConnector} instance for HTTP connections.
    * @throws Exception
    */
-  static int port_lastused = 8047;
+  static int port_lastused ;
   static int total_ports = 0;
   private ServerConnector createHttpConnector() throws Exception {
     logger.info("Setting up HTTP connector for web server");

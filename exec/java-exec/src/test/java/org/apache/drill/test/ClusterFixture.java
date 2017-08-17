@@ -30,8 +30,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-
-
 import org.apache.commons.io.FileUtils;
 import org.apache.drill.BaseTestQuery;
 import org.apache.drill.DrillTestWrapper.TestServices;
@@ -91,7 +89,7 @@ public class ClusterFixture extends BaseFixture implements AutoCloseable {
       // set the default temporary workspace to dfs_test.tmp.
 
       put(ExecConstants.DEFAULT_TEMPORARY_WORKSPACE, BaseTestQuery.TEMP_SCHEMA);
-//      put(ExecConstants.HTTP_ENABLE, false);
+      put(ExecConstants.HTTP_ENABLE, false);
       put(QueryTestUtil.TEST_QUERY_PRINTING_SILENT, true);
       put("drill.catastrophic_to_standard_out", true);
 
@@ -412,7 +410,6 @@ public class ClusterFixture extends BaseFixture implements AutoCloseable {
 
     for (Drillbit bit : drillbits()) {
       ex = safeClose(bit, ex);
-
     }
     bits.clear();
     ex = safeClose(serviceSet, ex);
@@ -455,14 +452,19 @@ public class ClusterFixture extends BaseFixture implements AutoCloseable {
     }
   }
 
+  /**
+   * Shutdown the drillbit given the name of the drillbit.
+   */
   public void close_drillbit(final String drillbitname) throws Exception {
     Exception ex = null;
-
     for (Drillbit bit : drillbits())
     {
       if(bit.equals(bits.get(drillbitname))) {
         bit.close();
       }
+    }
+    if(ex != null) {
+      throw ex;
     }
   }
 

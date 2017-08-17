@@ -329,7 +329,9 @@ public class DrillClient implements Closeable, ConnectionThrottle {
           throw new RpcException("Failure setting up ZK for client.", e);
         }
       }
-//      System.out.println("running endpoints" + clusterCoordinator.getOnlineEndPoints());
+      // Gets the drillbit endpoints that are ONLINE and excludes the drillbits that are
+      // in QUIESCENT state. This avoids the clients connecting to drillbits that are
+      // shutting down thereby reducing the chances of query failures.
       endpoints.addAll(clusterCoordinator.getOnlineEndPoints());
       // Make sure we have at least one endpoint in the list
       checkState(!endpoints.isEmpty(), "No active Drillbit endpoint found from ZooKeeper. Check connection parameters?");
@@ -407,8 +409,6 @@ public class DrillClient implements Closeable, ConnectionThrottle {
   }
 
   public synchronized boolean reconnect() {
-    System.out.println("in reconnect");
-
     if (client.isActive()) {
       return true;
     }
@@ -417,6 +417,9 @@ public class DrillClient implements Closeable, ConnectionThrottle {
       retry--;
       try {
         Thread.sleep(this.reconnectDelay);
+        // Gets the drillbit endpoints that are ONLINE and excludes the drillbits that are
+        // in QUIESCENT state. This avoids the clients connecting to drillbits that are
+        // shutting down thereby reducing the chances of query failures.
         final ArrayList<DrillbitEndpoint> endpoints = new ArrayList<>(clusterCoordinator.getOnlineEndPoints());
         if (endpoints.isEmpty()) {
           continue;
@@ -432,8 +435,9 @@ public class DrillClient implements Closeable, ConnectionThrottle {
   }
 
   private void connect(DrillbitEndpoint endpoint) throws RpcException {
-    System.out.println("foreman is " + endpoint);
     client.connect(endpoint, properties, getUserCredentials());
+    logger.info("Connecting to drillbit" + endpoint.getAddress() +
+                ". This will act as Foreman");
   }
 
   public BufferAllocator getAllocator() {

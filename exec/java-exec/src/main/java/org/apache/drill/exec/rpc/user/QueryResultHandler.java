@@ -251,7 +251,7 @@ public class QueryResultHandler {
 
     @Override
     public void submissionFailed(UserException ex) {
-        assert queryState == null;
+      assert queryState == null;
       // there is one case when submissionFailed() is called even though the query didn't fail on the server side
       // it happens when UserResultsListener.batchArrived() throws an exception that will be passed to
       // submissionFailed() by QueryResultHandler.dataArrived()

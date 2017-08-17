@@ -17,6 +17,7 @@
  */
 package org.apache.drill.exec.work;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -173,34 +174,51 @@ public class WorkManager implements AutoCloseable {
     synchronized(this) {
       numOfQueries = queries.size();
       numOfRunningFragments = runningFragments.size();
-      System.out.println("work manager thread " +  Thread.currentThread() + queries + runningFragments);
       if ( queries.isEmpty() && runningFragments.isEmpty()) {
         return;
       }
+      logger.info("Draining " + queries +" queries and "+ runningFragments+" fragments.");
       exitLatch = new ExtendedLatch();
     }
-    // Wait uninterruptibly until the latch is released.
+    // Wait uninterruptibly until all the queries and running fragments on that drillbit go down
+    // to zero
       exitLatch.awaitUninterruptibly();
   }
 
   /**
    * If it is safe to exit, and the exitLatch is in use, signals it so that waitToExit() will
-   * unblock.
+   * unblock. Logs the number of pending fragments and queries that are running on that
+   * drillbit to track the progress of shutdown process.
    */
   private void indicateIfSafeToExit() {
     synchronized(this) {
       if (exitLatch != null) {
-        logger.info("Waiting for "+ runningFragments.size() +"running fragments to complete before shutting down");
+        logger.info("Waiting for "+ queries.size() +" queries to complete before shutting down");
+        logger.info("Waiting for "+ runningFragments.size() +" running fragments to complete before shutting down");
         if(runningFragments.size() > numOfRunningFragments|| queries.size() > numOfQueries) {
           logger.info("New Fragments or queries are added while drillbit is Shutting down");
           System.out.println("New Fragments or queries are added while shuttingdown" + numOfRunningFragments + runningFragments.size());
         }
         if (queries.isEmpty() && runningFragments.isEmpty()) {
-          System.out.println("here in indicate");
+          // Both Queries and Running fragments are empty.
+          // So its safe for the drillbit to exit.
           exitLatch.countDown();
         }
       }
     }
+  }
+  /**
+   *  Get the number of queries that are running on a drillbit.
+   *  Primarily used to monitor the number of running queries after a
+   *  shutdown request is triggered.
+   */
+  public Map<String, Integer> getRemainingQueries() {
+    synchronized (this) {
+        Map<String, Integer> queriesInfo = new HashMap<String, Integer>();
+        queriesInfo.put("queriesCount", queries.size());
+        queriesInfo.put("fragmentsCount", runningFragments.size());
+        return queriesInfo;
+      }
   }
 
   /**
@@ -242,6 +260,7 @@ public class WorkManager implements AutoCloseable {
         logger.warn("Couldn't find retiring Foreman for query " + queryId);
 //        throw new IllegalStateException("Couldn't find retiring Foreman for query " + queryId);
       }
+
       indicateIfSafeToExit();
     }
 

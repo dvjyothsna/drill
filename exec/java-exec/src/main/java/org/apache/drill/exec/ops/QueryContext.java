@@ -206,7 +206,7 @@ public class QueryContext implements AutoCloseable, OptimizerRulesContext, Schem
     return drillbitContext.getBits();
   }
 
-  public Collection<DrillbitEndpoint> getRunningEndPoints() {
+  public Collection<DrillbitEndpoint> getOnlineEndpoints() {
     return drillbitContext.getAllBits();
   }
 

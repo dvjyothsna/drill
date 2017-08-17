@@ -42,7 +42,6 @@ import org.apache.drill.exec.rpc.control.ControllerImpl;
 import org.apache.drill.exec.rpc.data.DataConnectionCreator;
 import org.apache.drill.exec.rpc.user.UserServer;
 import org.apache.drill.exec.server.BootStrapContext;
-import org.apache.drill.exec.server.Drillbit;
 import org.apache.drill.exec.work.WorkManager;
 
 import com.google.common.base.Stopwatch;
@@ -98,7 +97,6 @@ public class ServiceEngine implements AutoCloseable {
     }
 
     final int userPort = userServer.bind(intialUserPort, allowPortHunting);
-
     DrillbitEndpoint partialEndpoint = DrillbitEndpoint.newBuilder()
         .setAddress(hostName)
         .setUserPort(userPort)

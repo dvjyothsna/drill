@@ -17,6 +17,7 @@
  */
 package org.apache.drill.exec.coord.local;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
@@ -35,9 +36,7 @@ import org.apache.drill.exec.coord.store.TransientStoreFactory;
 import org.apache.drill.exec.proto.CoordinationProtos.DrillbitEndpoint;
 import org.apache.drill.exec.proto.CoordinationProtos.DrillbitEndpoint.State;
 
-
 import com.google.common.collect.Maps;
-import org.apache.drill.exec.server.Drillbit;
 
 public class LocalClusterCoordinator extends ClusterCoordinator {
   private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(LocalClusterCoordinator.class);
@@ -85,9 +84,16 @@ public class LocalClusterCoordinator extends ClusterCoordinator {
     if (handle == null) {
       return;
     }
+
     endpoints.remove(handle);
   }
 
+  /**
+   * Update drillbit endpoint state. Drillbit advertises its
+   * state when a shutdown request of drillbit is triggered.
+   * State information is used during planning and initial client
+   * connection phases.
+   */
   @Override
   public void update(RegistrationHandle handle, State state) {
     DrillbitEndpoint endpoint = endpoints.get(handle);
@@ -100,7 +106,13 @@ public class LocalClusterCoordinator extends ClusterCoordinator {
     return endpoints.values();
   }
 
-
+  /**
+   * Get a collection of ONLINE Drillbit endpoints by excluding the drillbits
+   * that are in QUIESCENT state (drillbits shutting down). Primarily used by the planner
+   * to plan queries only on ONLINE drillbits and used by the client during initial connection
+   * to connect to a drillbit (foreman)
+   * @return A collection of ONLINE endpoints
+   */
   @Override
   public Collection<DrillbitEndpoint> getOnlineEndPoints() {
     Collection<DrillbitEndpoint> runningEndPoints = new ArrayList<>();
@@ -116,6 +128,10 @@ public class LocalClusterCoordinator extends ClusterCoordinator {
     private final UUID id = UUID.randomUUID();
     private final DrillbitEndpoint drillbitEndpoint;
 
+    /**
+     * Get the drillbit endpoint associated with the registration handle
+     * @return drillbit endpoint
+     */
     public DrillbitEndpoint getEndPoint() {
       return drillbitEndpoint;
     }
