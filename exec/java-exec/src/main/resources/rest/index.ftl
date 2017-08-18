@@ -68,8 +68,7 @@
                 <td>
                     <button type="button" id="shutdown" onClick="shutdown('${drillbit.getAddress()}',$(this));"> SHUTDOWN </button>
                 </td>
-                <td id="queriesCount">
-                </td>
+                <td id="queriesCount">  </td>
               </tr>
               <#assign i = i + 1>
             </#list>
@@ -123,7 +122,6 @@
                       url: '/status',
                       dataType: "json",
                       complete: function(data) {
-                            console.log(typeof(data));
                             fillStatus(data,size);
                             }
                       });
@@ -141,6 +139,7 @@
             if (status_map[key] == null) {
                 $("#row-"+i).find("#status").text("OFFLINE");
                 $("#row-"+i).find("#shutdown").prop('disabled',true).css('opacity',0.5);
+                $("#row-"+i).find("#queriesCount").text("");
             }
             else {
                 if( status_map[key] == "ONLINE") {
@@ -161,7 +160,7 @@
                         complete: function(data) {
                               queries = data.responseJSON["queriesCount"];
                               fragments = data.responseJSON["fragmentsCount"];
-                              $("#row-"+i).find("#queriesCount").text(queries+" queries and "+fragments+" fragments remaining");
+                              $("#row-"+row_id).find("#queriesCount").text(queries+" queries and "+fragments+" fragments remaining before shutting down");
                               }
                         });
       }
@@ -174,8 +173,8 @@
                 type: 'POST',
                 url: url,
                 crossDomain : true,
-                complete: function() {
-                    alert("Shutdown request triggered");
+                complete: function(data) {
+                    alert("Shutdown request is triggered");
                     button.prop('disabled',true).css('opacity',0.5);
                 }
           });

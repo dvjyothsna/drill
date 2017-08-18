@@ -95,18 +95,27 @@ public class DrillRoot {
   @POST
   @Path("/shutdown")
   @Produces(MediaType.APPLICATION_JSON)
-  public String shutdownDrillbit() throws Exception {
-    System.out.println("in shutdown get");
-    new Thread(new Runnable() {
-      public void run() {
-        try {
-         drillbit.close();
-        } catch (Exception e) {
-          e.printStackTrace();
+  public Map<String, String> shutdownDrillbit() throws Exception {
+    Map<String, String> shutdownInfo = new HashMap<String, String>();
+    try {
+      new Thread(new Runnable() {
+        public void run() {
+          try {
+            drillbit.close();
+          } catch (Exception e) {
+            e.printStackTrace();
+          }
         }
-      }
-    }).start();
-    return "Shutdown request is triggered";
+      }).start();
+      System.out.println(shutdownInfo);
+      shutdownInfo.put("response", "Shutdown request is triggered");
+      return shutdownInfo;
+    }
+    catch (Exception e) {
+      logger.debug("Exception in triggering shutdown request",e);
+      shutdownInfo.put("response", "Error in triggering shutdown request");
+      return shutdownInfo;
+    }
   }
 
   @GET
