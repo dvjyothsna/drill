@@ -75,8 +75,8 @@ public class ZKClusterCoordinator extends ClusterCoordinator {
   private final TransientStoreFactory factory;
   private ServiceCache<DrillbitEndpoint> serviceCache;
   private DrillbitEndpoint endpoint;
-
-  private ConcurrentHashMap<MultiKey, DrillbitEndpoint> endpointsMap = new ConcurrentHashMap<MultiKey,DrillbitEndpoint>();
+private HashMap<MultiKey, DrillbitEndpoint> endpointsMap = new HashMap<MultiKey, DrillbitEndpoint>();
+//  private ConcurrentHashMap<MultiKey, DrillbitEndpoint> endpointsMap = new ConcurrentHashMap<MultiKey,DrillbitEndpoint>();
   private static final Pattern ZK_COMPLEX_STRING = Pattern.compile("(^.*?)/(.*)/([^/]*)$");
 
   public ZKClusterCoordinator(DrillConfig config) throws IOException{
@@ -287,14 +287,23 @@ public class ZKClusterCoordinator extends ClusterCoordinator {
           endpointsMap.put(new MultiKey(endpoint.getAddress(),endpoint.getUserPort()),endpoint);
         }
       }
-      // Remove all the endpoints that are newly dead
-      for ( MultiKey key: endpointsMap.keySet())
-      {
+      Iterator<MultiKey> iterator = endpointsMap.keySet().iterator() ;
+      while(iterator.hasNext()) {
+        MultiKey key = iterator.next();
         if(!newDrillbitSet.contains(endpointsMap.get(key))) {
           unregisteredBits.add(endpointsMap.get(key));
-          endpointsMap.remove(key);
+          iterator.remove();
         }
       }
+
+      // Remove all the endpoints that are newly dead
+//      for ( MultiKey key: endpointsMap.keySet())
+//      {
+//        if(!newDrillbitSet.contains(endpointsMap.get(key))) {
+//          unregisteredBits.add(endpointsMap.get(key));
+//          endpointsMap.remove(key);
+//        }
+//      }
       endpoints = endpointsMap.values();
 
       if (logger.isDebugEnabled()) {
