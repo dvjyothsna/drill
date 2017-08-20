@@ -240,6 +240,7 @@ private HashMap<MultiKey, DrillbitEndpoint> endpointsMap = new HashMap<MultiKey,
   public Collection<DrillbitEndpoint> getOnlineEndPoints() {
 
     Collection<DrillbitEndpoint> runningEndPoints = new ArrayList<>();
+    logger.info("Available endpoints are ",endpoints);
     for (DrillbitEndpoint endpoint: endpoints){
       if(endpoint.getState().equals(State.ONLINE)) {
         runningEndPoints.add(endpoint);
@@ -306,7 +307,7 @@ private HashMap<MultiKey, DrillbitEndpoint> endpointsMap = new HashMap<MultiKey,
 //        }
 //      }
       endpoints = endpointsMap.values();
-
+      logger.info("Updated endpoints are " + endpointsMap.values());
       if (logger.isDebugEnabled()) {
         StringBuilder builder = new StringBuilder();
         builder.append("Active drillbit set changed.  Now includes ");
