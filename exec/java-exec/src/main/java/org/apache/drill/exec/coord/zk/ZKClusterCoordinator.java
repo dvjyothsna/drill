@@ -240,13 +240,19 @@ private HashMap<MultiKey, DrillbitEndpoint> endpointsMap = new HashMap<MultiKey,
   public Collection<DrillbitEndpoint> getOnlineEndPoints() {
 
     Collection<DrillbitEndpoint> runningEndPoints = new ArrayList<>();
-    logger.info("Available endpoints are ",endpoints);
+    if(logger.isTraceEnabled()) {
+      logger.trace("Available endpoints are"+endpoints);
+    }
+    logger.debug("Available endpoints are ",endpoints);
     for (DrillbitEndpoint endpoint: endpoints){
       if(endpoint.getState().equals(State.ONLINE)) {
         runningEndPoints.add(endpoint);
       }
     }
-    logger.info("Online endpoints in ZK cluster coord",runningEndPoints);
+    if(logger.isTraceEnabled()) {
+      logger.trace("Online endpoints in ZK cluster coord"+runningEndPoints);
+    }
+    logger.debug("Online endpoints in ZK cluster coord",runningEndPoints);
     return runningEndPoints;
   }
 
