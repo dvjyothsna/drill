@@ -241,18 +241,18 @@ private HashMap<MultiKey, DrillbitEndpoint> endpointsMap = new HashMap<MultiKey,
 
     Collection<DrillbitEndpoint> runningEndPoints = new ArrayList<>();
     if(logger.isTraceEnabled()) {
-      logger.trace("Available endpoints are"+endpoints);
+      logger.trace("Available endpoints are"+endpoints.toString());
     }
-    logger.debug("Available endpoints are ",endpoints);
+    logger.debug("Available endpoints are "+endpoints.toString());
     for (DrillbitEndpoint endpoint: endpoints){
       if(endpoint.getState().equals(State.ONLINE)) {
         runningEndPoints.add(endpoint);
       }
     }
     if(logger.isTraceEnabled()) {
-      logger.trace("Online endpoints in ZK cluster coord"+runningEndPoints);
+      logger.trace("Online endpoints in ZK cluster coord"+runningEndPoints.toString());
     }
-    logger.debug("Online endpoints in ZK cluster coord",runningEndPoints);
+    logger.debug("Online endpoints in ZK cluster coord"+runningEndPoints.toString());
     return runningEndPoints;
   }
 

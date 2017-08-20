@@ -617,7 +617,7 @@ public class Foreman implements Runnable {
     // Plan the query using only the ONLINE drillbit endpoints. Exclude the endpoints
     // that are shutting down to reduce the chances of query failure.
     if(logger.isTraceEnabled()) {
-      logger.trace("Endpoints from zk in foreman are "+queryContext.getOnlineEndpoints());
+      logger.trace("Endpoints from zk in foreman are "+queryContext.getOnlineEndpoints().toString());
     }
 
     final QueryWorkUnit queryWorkUnit = parallelizer.getFragments(
