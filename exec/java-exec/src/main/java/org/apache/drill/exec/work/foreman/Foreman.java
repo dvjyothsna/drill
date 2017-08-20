@@ -616,6 +616,7 @@ public class Foreman implements Runnable {
     final SimpleParallelizer parallelizer = new SimpleParallelizer(queryContext);
     // Plan the query using only the ONLINE drillbit endpoints. Exclude the endpoints
     // that are shutting down to reduce the chances of query failure.
+    logger.info("Endpoints from zk in foreman are ",queryContext.getOnlineEndpoints());
     final QueryWorkUnit queryWorkUnit = parallelizer.getFragments(
         queryContext.getOptions().getOptionList(), queryContext.getCurrentEndpoint(),
         queryId, queryContext.getOnlineEndpoints(), drillbitContext.getPlanReader(), rootFragment,

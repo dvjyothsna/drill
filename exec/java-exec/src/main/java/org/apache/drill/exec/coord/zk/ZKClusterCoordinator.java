@@ -245,6 +245,7 @@ private HashMap<MultiKey, DrillbitEndpoint> endpointsMap = new HashMap<MultiKey,
         runningEndPoints.add(endpoint);
       }
     }
+    logger.info("Online endpoints in ZK cluster coord",runningEndPoints);
     return runningEndPoints;
   }
 
