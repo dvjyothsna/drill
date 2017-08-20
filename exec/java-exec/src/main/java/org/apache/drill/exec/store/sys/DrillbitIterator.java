@@ -29,7 +29,7 @@ public class DrillbitIterator implements Iterator<Object> {
   private DrillbitEndpoint current;
 
   public DrillbitIterator(FragmentContext c) {
-    this.endpoints = c.getDrillbitContext().getBits().iterator();
+    this.endpoints = c.getDrillbitContext().getAvailableBits().iterator();
     this.current = c.getIdentity();
   }
 

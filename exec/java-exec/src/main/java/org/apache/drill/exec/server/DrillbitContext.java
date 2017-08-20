@@ -143,8 +143,11 @@ public class DrillbitContext implements AutoCloseable {
     return context.getConfig();
   }
 
-  public Collection<DrillbitEndpoint> getBits() {
+  public Collection<DrillbitEndpoint> getAvailableBits() {
     return coord.getAvailableEndpoints();
+  }
+  public Collection<DrillbitEndpoint> getBits() {
+    return coord.getOnlineEndPoints();
   }
   public Collection<DrillbitEndpoint> getAllBits() {
     return coord.getOnlineEndPoints();
