@@ -153,9 +153,11 @@
           }
       }
       function fillQueryCount(address,row_id) {
+          port_num = 8047
+          url = "http://"+address+":"+port_num+"/queriesCount";
           var result = $.ajax({
                         type: 'GET',
-                        url: '/queriesCount',
+                        url: url,
                         dataType: "json",
                         complete: function(data) {
                               queries = data.responseJSON["queriesCount"];
