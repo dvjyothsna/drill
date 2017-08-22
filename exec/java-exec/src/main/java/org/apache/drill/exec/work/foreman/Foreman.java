@@ -259,7 +259,7 @@ public class Foreman implements Runnable {
     try {
       checkForemanState();
     } catch (ForemanException e) {
-      throw new IllegalStateException("Query submission failed. Trying to submit work to Foreman that is shutting down ?");
+      addToEventQueue(QueryState.FAILED, new ForemanException("Query submission failed. Trying to submit work to Foreman that is shutting down ?"));
     }
     // track how long the query takes
     queryManager.markStartTime();
