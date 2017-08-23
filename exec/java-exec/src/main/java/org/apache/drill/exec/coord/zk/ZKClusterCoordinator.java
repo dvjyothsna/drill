@@ -75,8 +75,8 @@ public class ZKClusterCoordinator extends ClusterCoordinator {
   private final TransientStoreFactory factory;
   private ServiceCache<DrillbitEndpoint> serviceCache;
   private DrillbitEndpoint endpoint;
-private HashMap<MultiKey, DrillbitEndpoint> endpointsMap = new HashMap<MultiKey, DrillbitEndpoint>();
-//  private ConcurrentHashMap<MultiKey, DrillbitEndpoint> endpointsMap = new ConcurrentHashMap<MultiKey,DrillbitEndpoint>();
+//private HashMap<MultiKey, DrillbitEndpoint> endpointsMap = new HashMap<MultiKey, DrillbitEndpoint>();
+  private ConcurrentHashMap<MultiKey, DrillbitEndpoint> endpointsMap = new ConcurrentHashMap<MultiKey,DrillbitEndpoint>();
   private static final Pattern ZK_COMPLEX_STRING = Pattern.compile("(^.*?)/(.*)/([^/]*)$");
 
   public ZKClusterCoordinator(DrillConfig config) throws IOException{
@@ -233,7 +233,7 @@ private HashMap<MultiKey, DrillbitEndpoint> endpointsMap = new HashMap<MultiKey,
    * Get a collection of ONLINE Drillbit endpoints by excluding the drillbits
    * that are in QUIESCENT state (drillbits shutting down). Primarily used by the planner
    * to plan queries only on ONLINE drillbits and used by the client during initial connection
-   * to connect to a drillbit (foreman)
+   * phase to connect to a drillbit (foreman)
    * @return A collection of ONLINE endpoints
    */
   @Override
@@ -295,23 +295,23 @@ private HashMap<MultiKey, DrillbitEndpoint> endpointsMap = new HashMap<MultiKey,
           endpointsMap.put(new MultiKey(endpoint.getAddress(),endpoint.getUserPort()),endpoint);
         }
       }
-      Iterator<MultiKey> iterator = endpointsMap.keySet().iterator() ;
-      while(iterator.hasNext()) {
-        MultiKey key = iterator.next();
-        if(!newDrillbitSet.contains(endpointsMap.get(key))) {
-          unregisteredBits.add(endpointsMap.get(key));
-          iterator.remove();
-        }
-      }
-
-      // Remove all the endpoints that are newly dead
-//      for ( MultiKey key: endpointsMap.keySet())
-//      {
+//      Iterator<MultiKey> iterator = endpointsMap.keySet().iterator() ;
+//      while(iterator.hasNext()) {
+//        MultiKey key = iterator.next();
 //        if(!newDrillbitSet.contains(endpointsMap.get(key))) {
 //          unregisteredBits.add(endpointsMap.get(key));
-//          endpointsMap.remove(key);
+//          iterator.remove();
 //        }
 //      }
+
+//       Remove all the endpoints that are newly dead
+      for ( MultiKey key: endpointsMap.keySet())
+      {
+        if(!newDrillbitSet.contains(endpointsMap.get(key))) {
+          unregisteredBits.add(endpointsMap.get(key));
+          endpointsMap.remove(key);
+        }
+      }
       endpoints = endpointsMap.values();
       logger.info("Updated endpoints are " + endpointsMap.values());
       if (logger.isDebugEnabled()) {

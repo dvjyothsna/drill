@@ -331,7 +331,7 @@ public class DrillClient implements Closeable, ConnectionThrottle {
       }
       // Gets the drillbit endpoints that are ONLINE and excludes the drillbits that are
       // in QUIESCENT state. This avoids the clients connecting to drillbits that are
-      // shutting down thereby reducing the chances of query failures.
+      // shutting down thereby avoiding reducing the chances of query failures.
       endpoints.addAll(clusterCoordinator.getOnlineEndPoints());
       // Make sure we have at least one endpoint in the list
       checkState(!endpoints.isEmpty(), "No active Drillbit endpoint found from ZooKeeper. Check connection parameters?");
@@ -436,8 +436,7 @@ public class DrillClient implements Closeable, ConnectionThrottle {
 
   private void connect(DrillbitEndpoint endpoint) throws RpcException {
     client.connect(endpoint, properties, getUserCredentials());
-    logger.info("Connecting to drillbit" + endpoint.getAddress() +
-                ". This will act as Foreman");
+    logger.info("Foreman drillbit is" + endpoint.getAddress());
   }
 
   public BufferAllocator getAllocator() {

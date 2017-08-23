@@ -59,10 +59,10 @@ public abstract class ClusterCoordinator implements AutoCloseable {
   public abstract Collection<DrillbitEndpoint> getAvailableEndpoints();
 
   /**
-   * Get a collection of ONLINE Drillbit endpoints by excluding the drillbits
-   * that are in QUIESCENT state (drillbits shutting down). Primarily used by the planner
+   * Get a collection of ONLINE drillbit endpoints by excluding the drillbits
+   * that are in QUIESCENT state (drillbits that are shutting down). Primarily used by the planner
    * to plan queries only on ONLINE drillbits and used by the client during initial connection
-   * to connect to a drillbit (foreman)
+   * phase to connect to a drillbit (foreman)
    * @return A collection of ONLINE endpoints
    */
 

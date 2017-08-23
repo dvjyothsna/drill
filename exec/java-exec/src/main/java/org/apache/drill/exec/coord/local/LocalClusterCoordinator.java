@@ -90,9 +90,8 @@ public class LocalClusterCoordinator extends ClusterCoordinator {
 
   /**
    * Update drillbit endpoint state. Drillbit advertises its
-   * state when a shutdown request of drillbit is triggered.
-   * State information is used during planning and initial client
-   * connection phases.
+   * state. State information is used during planning and initial
+   * client connection phases.
    */
   @Override
   public void update(RegistrationHandle handle, State state) {
@@ -110,7 +109,7 @@ public class LocalClusterCoordinator extends ClusterCoordinator {
    * Get a collection of ONLINE Drillbit endpoints by excluding the drillbits
    * that are in QUIESCENT state (drillbits shutting down). Primarily used by the planner
    * to plan queries only on ONLINE drillbits and used by the client during initial connection
-   * to connect to a drillbit (foreman)
+   * phase to connect to a drillbit (foreman)
    * @return A collection of ONLINE endpoints
    */
   @Override
