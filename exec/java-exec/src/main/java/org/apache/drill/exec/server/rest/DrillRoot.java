@@ -60,7 +60,7 @@ public class DrillRoot {
 
 
   @GET
-  @Path("/status")
+  @Path("/state")
   @Produces(MediaType.APPLICATION_JSON)
   public Map<String, String> getDrillbitStatus(){
     Collection<DrillbitInfo> drillbits = getClusterInfoJSON().getDrillbits();

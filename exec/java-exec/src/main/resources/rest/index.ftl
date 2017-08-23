@@ -119,7 +119,7 @@
           console.log(refreshTime);
           var result = $.ajax({
                       type: 'GET',
-                      url: '/status',
+                      url: '/state',
                       dataType: "json",
                       complete: function(data) {
                             fillStatus(data,size);

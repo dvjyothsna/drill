@@ -159,7 +159,10 @@ public class Drillbit implements AutoCloseable {
     exitLatch = new ExtendedLatch();
     exitLatch.awaitUninterruptibly(gracePeriod);
   }
-
+ /*
+  The drillbit is moved into Quiescent state and the drillbit waits for grace period amount of time.
+  Then drillbit moves into draining state and waits for all the queries and fragments to complete.
+  */
   @Override
   public synchronized void close() {
     if ( !stateManager.getState().equals(DrillbitState.STARTUP)) {
