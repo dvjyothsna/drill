@@ -117,7 +117,6 @@ public class WebServer implements AutoCloseable {
     this.workManager = workManager;
     this.drillbit = drillbit;
 
-
     if (config.getBoolean(ExecConstants.HTTP_ENABLE)) {
       embeddedJetty = new Server();
     } else {
@@ -220,8 +219,6 @@ public class WebServer implements AutoCloseable {
         }
       }
     }
-
-
   }
 
   /**
@@ -376,7 +373,6 @@ public class WebServer implements AutoCloseable {
    * @throws Exception
    */
   static int port_lastused ;
-  static int total_ports = 0;
   private ServerConnector createHttpConnector() throws Exception {
     logger.info("Setting up HTTP connector for web server");
     final HttpConfiguration httpConfig = new HttpConfiguration();
@@ -393,7 +389,6 @@ public class WebServer implements AutoCloseable {
             try {
               port = port_lastused;
               httpConnector.setPort(port);
-              total_ports++;
               port_lastused++;
               break;
             } catch (Exception e) {

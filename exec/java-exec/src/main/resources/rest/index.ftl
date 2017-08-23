@@ -159,6 +159,15 @@
                         type: 'GET',
                         url: url,
                         dataType: "json",
+                        xhrFields: {
+                            // The 'xhrFields' property sets additional fields on the XMLHttpRequest.
+                            // This can be used to set the 'withCredentials' property.
+                            // Set the value to 'true' if you'd like to pass cookies to the server.
+                            // If this is enabled, your server must respond with the header
+                            // 'Access-Control-Allow-Credentials: true'.
+                            withCredentials: true
+                          },
+
                         complete: function(data) {
                               queries = data.responseJSON["queriesCount"];
                               fragments = data.responseJSON["fragmentsCount"];
@@ -166,15 +175,29 @@
                               }
                         });
       }
-
-
       function shutdown(address,button) {
-          port_num = 8047
+          var port_num = 8047
           url = "http://"+address+":"+port_num+"/shutdown";
           var result = $.ajax({
                 type: 'POST',
                 url: url,
                 crossDomain : true,
+                 xhrFields: {
+                            // The 'xhrFields' property sets additional fields on the XMLHttpRequest.
+                            // This can be used to set the 'withCredentials' property.
+                            // Set the value to 'true' if you'd like to pass cookies to the server.
+                            // If this is enabled, your server must respond with the header
+                            // 'Access-Control-Allow-Credentials: true'.
+                            withCredentials: false
+                          },
+                headers: {
+                    // Set any custom headers here.
+                    // If you set any non-simple headers, your server must include these
+                    // headers in the 'Access-Control-Allow-Headers' response header.
+                    'Access-Control-Allow-Origin' : '*',
+                 //   'Access-Control-Allow-Origin' : 'http://10.250.56.121:8047',
+                    'Access-Control-Allow-Credentials': false
+                  },
                 complete: function(data) {
                     alert("Shutdown request is triggered");
                     button.prop('disabled',true).css('opacity',0.5);

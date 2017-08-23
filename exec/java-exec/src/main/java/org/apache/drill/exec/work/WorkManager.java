@@ -24,7 +24,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executor;
 
-import com.codahale.metrics.Counter;
 import org.apache.drill.common.SelfCleaningRunnable;
 import org.apache.drill.common.concurrent.ExtendedLatch;
 import org.apache.drill.exec.coord.ClusterCoordinator;
@@ -43,7 +42,6 @@ import org.apache.drill.exec.rpc.data.DataConnectionCreator;
 import org.apache.drill.exec.server.BootStrapContext;
 import org.apache.drill.exec.server.Drillbit;
 import org.apache.drill.exec.server.DrillbitContext;
-import org.apache.drill.exec.server.DrillbitStateManager;
 import org.apache.drill.exec.store.sys.PersistentStoreProvider;
 import org.apache.drill.exec.work.batch.ControlMessageHandler;
 import org.apache.drill.exec.work.foreman.Foreman;
@@ -82,7 +80,7 @@ public class WorkManager implements AutoCloseable {
   private final WorkEventBus workBus;
   private final Executor executor;
   private final StatusThread statusThread;
-  private long numOfQueries;
+  private long numOfRunningQueries;
   private long numOfRunningFragments;
 
   /**
@@ -172,7 +170,7 @@ public class WorkManager implements AutoCloseable {
    */
   public void waitToExit(Drillbit bit) {
     synchronized(this) {
-      numOfQueries = queries.size();
+      numOfRunningQueries = queries.size();
       numOfRunningFragments = runningFragments.size();
       if ( queries.isEmpty() && runningFragments.isEmpty()) {
         return;
@@ -180,7 +178,7 @@ public class WorkManager implements AutoCloseable {
       logger.info("Draining " + queries +" queries and "+ runningFragments+" fragments.");
       exitLatch = new ExtendedLatch();
     }
-    // Wait uninterruptibly until all the queries and running fragments on that drillbit go down
+    // Wait uninterruptibly until all the queries and running fragments on that drillbit goes down
     // to zero
       exitLatch.awaitUninterruptibly();
   }
@@ -195,9 +193,8 @@ public class WorkManager implements AutoCloseable {
       if (exitLatch != null) {
         logger.info("Waiting for "+ queries.size() +" queries to complete before shutting down");
         logger.info("Waiting for "+ runningFragments.size() +" running fragments to complete before shutting down");
-        if(runningFragments.size() > numOfRunningFragments|| queries.size() > numOfQueries) {
+        if(runningFragments.size() > numOfRunningFragments|| queries.size() > numOfRunningQueries) {
           logger.info("New Fragments or queries are added while drillbit is Shutting down");
-          System.out.println("New Fragments or queries are added while shuttingdown" + numOfRunningFragments + runningFragments.size());
         }
         if (queries.isEmpty() && runningFragments.isEmpty()) {
           // Both Queries and Running fragments are empty.

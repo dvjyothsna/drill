@@ -17,7 +17,6 @@
  */
 package org.apache.drill.exec.coord.local;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
@@ -94,10 +93,12 @@ public class LocalClusterCoordinator extends ClusterCoordinator {
    * client connection phases.
    */
   @Override
-  public void update(RegistrationHandle handle, State state) {
+  public RegistrationHandle update(RegistrationHandle handle, State state) {
     DrillbitEndpoint endpoint = endpoints.get(handle);
     endpoint.toBuilder().setState(state);
+    handle.setEndPoint(endpoint);
     endpoints.put(handle,endpoint);
+    return handle;
   }
 
   @Override
@@ -125,7 +126,7 @@ public class LocalClusterCoordinator extends ClusterCoordinator {
 
   private class Handle implements RegistrationHandle {
     private final UUID id = UUID.randomUUID();
-    private final DrillbitEndpoint drillbitEndpoint;
+    private DrillbitEndpoint drillbitEndpoint;
 
     /**
      * Get the drillbit endpoint associated with the registration handle
@@ -133,6 +134,10 @@ public class LocalClusterCoordinator extends ClusterCoordinator {
      */
     public DrillbitEndpoint getEndPoint() {
       return drillbitEndpoint;
+    }
+
+    public void setEndPoint( DrillbitEndpoint endpoint) {
+      this.drillbitEndpoint = endpoint;
     }
 
     private Handle(DrillbitEndpoint data) {

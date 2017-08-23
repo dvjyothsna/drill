@@ -66,7 +66,7 @@ public class DrillRoot {
     Collection<DrillbitInfo> drillbits = getClusterInfoJSON().getDrillbits();
     Map<String, String> drillStatusMap = new HashMap<String ,String>();
     for (DrillbitInfo drillbit : drillbits) {
-      drillStatusMap.put(drillbit.getAddress()+"-"+drillbit.getUserPort(),drillbit.getStatus());
+      drillStatusMap.put(drillbit.getAddress()+"-"+drillbit.getUserPort(),drillbit.getState());
     }
     return drillStatusMap;
   }
@@ -107,7 +107,6 @@ public class DrillRoot {
           }
         }
       }).start();
-      System.out.println(shutdownInfo);
       shutdownInfo.put("response", "Shutdown request is triggered");
       return shutdownInfo;
     }
@@ -182,7 +181,6 @@ public class DrillRoot {
     public boolean isUserEncryptionEnabled() { return userEncryptionEnabled; }
 
     public boolean isBitEncryptionEnabled() { return bitEncryptionEnabled; }
-
   }
 
   public static class DrillbitInfo implements Comparable<DrillbitInfo> {
@@ -229,7 +227,7 @@ public class DrillRoot {
       return versionMatch;
     }
 
-    public String getStatus() {
+    public String getState() {
       return state;
     }
 

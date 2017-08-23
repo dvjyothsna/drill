@@ -259,7 +259,7 @@ public class Foreman implements Runnable {
     try {
       checkForemanState();
     } catch (ForemanException e) {
-      addToEventQueue(QueryState.FAILED, new ForemanException("Query submission failed. Trying to submit work to Foreman that is shutting down ?"));
+      addToEventQueue(QueryState.FAILED, new ForemanException("Query submission failed. Trying to submit work to Foreman that is shutting down?"));
     }
     // track how long the query takes
     queryManager.markStartTime();
@@ -634,10 +634,6 @@ public class Foreman implements Runnable {
     final SimpleParallelizer parallelizer = new SimpleParallelizer(queryContext);
     // Plan the query using only the ONLINE drillbit endpoints. Exclude the endpoints
     // that are shutting down to reduce the chances of query failure.
-    if(logger.isTraceEnabled()) {
-      logger.trace("Endpoints from zk in foreman are "+queryContext.getOnlineEndpoints().toString());
-    }
-
     final QueryWorkUnit queryWorkUnit = parallelizer.getFragments(
         queryContext.getOptions().getOptionList(), queryContext.getCurrentEndpoint(),
         queryId, queryContext.getOnlineEndpoints(), drillbitContext.getPlanReader(), rootFragment,

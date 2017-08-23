@@ -80,9 +80,6 @@ public class SoftAffinityFragmentParallelizer implements FragmentParallelizer {
 
     fragmentWrapper.setWidth(width);
 
-    if (logger.isTraceEnabled()) {
-      logger.trace("Endpoint affinity map "+parallelizationInfo.getEndpointAffinityMap().toString());
-    }
     final List<DrillbitEndpoint> assignedEndpoints = findEndpoints(activeEndpoints,
         parallelizationInfo.getEndpointAffinityMap(), fragmentWrapper.getWidth(), parameters);
 
@@ -164,7 +161,7 @@ public class SoftAffinityFragmentParallelizer implements FragmentParallelizer {
         endpoints.add(otherEPItr.next());
       }
     }
-    logger.debug("Endpoints assigned are {}", endpoints);
+    logger.info("Endpoints assigned are :{}", endpoints);
     return endpoints;
   }
 }

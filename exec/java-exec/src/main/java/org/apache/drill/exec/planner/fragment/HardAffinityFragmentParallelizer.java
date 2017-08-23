@@ -54,9 +54,6 @@ public class HardAffinityFragmentParallelizer implements FragmentParallelizer {
     // Go through the affinity map and extract the endpoints that have mandatory assignment requirement
     final Map<DrillbitEndpoint, EndpointAffinity> endpointPool = Maps.newHashMap();
 
-    if( logger.isTraceEnabled()) {
-      logger.trace("in hardaff parallelizer" + pInfo.getEndpointAffinityMap().entrySet().toString());
-    }
     for(Entry<DrillbitEndpoint, EndpointAffinity> entry : pInfo.getEndpointAffinityMap().entrySet()) {
       if (entry.getValue().isAssignmentRequired()) {
         endpointPool.put(entry.getKey(), entry.getValue());
@@ -104,9 +101,6 @@ public class HardAffinityFragmentParallelizer implements FragmentParallelizer {
     for(Entry<DrillbitEndpoint, EndpointAffinity> entry : endpointPool.entrySet()) {
       endpoints.put(entry.getKey(), 1);
     }
-    if( logger.isTraceEnabled()) {
-      logger.trace("Endpoints added in hard" + endpoints.toString());
-    }
     int totalAssigned = endpoints.size();
 
     // 2.2 Assign the remaining slots to endpoints proportional to the affinity of each endpoint
@@ -142,9 +136,7 @@ public class HardAffinityFragmentParallelizer implements FragmentParallelizer {
         assignedEndpoints.add(entry.getKey());
       }
     }
-    if( logger.isTraceEnabled()) {
-      logger.trace("Endpoints assigned in hard" + assignedEndpoints.toString());
-    }
+    logger.info("Endpoints assigned are : {}" , assignedEndpoints);
     fragmentWrapper.setWidth(width);
     fragmentWrapper.assignEndpoints(assignedEndpoints);
   }

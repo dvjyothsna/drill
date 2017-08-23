@@ -149,9 +149,6 @@ public class DrillbitContext implements AutoCloseable {
   public Collection<DrillbitEndpoint> getBits() {
     return coord.getOnlineEndPoints();
   }
-  public Collection<DrillbitEndpoint> getAllBits() {
-    return coord.getOnlineEndPoints();
-  }
 
   public BufferAllocator getAllocator() {
     return context.getAllocator();

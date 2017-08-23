@@ -17,9 +17,9 @@
  */
 
 package org.apache.drill.exec.server;
-import org.apache.drill.exec.proto.CoordinationProtos.DrillbitEndpoint.State;
-
-
+/*
+  State manager to manage the state of drillbit.
+ */
 public class DrillbitStateManager {
 
 
@@ -28,7 +28,7 @@ public class DrillbitStateManager {
   }
 
   public enum DrillbitState {
-    STARTUP, GRACE, DRAINING, OFFLINE, SHUTDOWN
+    STARTUP, ONLINE, GRACE, DRAINING, OFFLINE, SHUTDOWN
   }
 
   public DrillbitState getState() {
@@ -38,8 +38,15 @@ public class DrillbitStateManager {
   private DrillbitState currentState;
   public void setState(DrillbitState state) {
     switch (state) {
-      case GRACE:
+      case ONLINE:
         if (currentState == DrillbitState.STARTUP) {
+          currentState = state;
+        } else {
+          throw new IllegalStateException("Cannot set drillbit to" + state + "from" + currentState);
+        }
+        break;
+      case GRACE:
+        if (currentState == DrillbitState.ONLINE) {
           currentState = state;
         } else {
           throw new IllegalStateException("Cannot set drillbit to" + state + "from" + currentState);

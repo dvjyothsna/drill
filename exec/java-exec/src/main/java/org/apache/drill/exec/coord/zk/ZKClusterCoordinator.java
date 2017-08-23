@@ -24,10 +24,8 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.Set;
 import java.util.HashSet;
-import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -213,7 +211,7 @@ public class ZKClusterCoordinator extends ClusterCoordinator {
    * triggered. State information is used during planning and
    * initial client connection phases.
    */
-  public void update(RegistrationHandle handle, State state) {
+  public RegistrationHandle update(RegistrationHandle handle, State state) {
     ZKRegistrationHandle h = (ZKRegistrationHandle) handle;
       try {
         endpoint = h.endpoint.toBuilder().setState(state).build();
@@ -222,6 +220,7 @@ public class ZKClusterCoordinator extends ClusterCoordinator {
       } catch (Exception e) {
         e.printStackTrace();
       }
+      return handle;
   }
 
   @Override
@@ -240,19 +239,12 @@ public class ZKClusterCoordinator extends ClusterCoordinator {
   public Collection<DrillbitEndpoint> getOnlineEndPoints() {
 
     Collection<DrillbitEndpoint> runningEndPoints = new ArrayList<>();
-    if(logger.isTraceEnabled()) {
-      logger.trace("Available endpoints are"+endpoints.toString());
-    }
-    logger.debug("Available endpoints are "+endpoints.toString());
     for (DrillbitEndpoint endpoint: endpoints){
       if(endpoint.getState().equals(State.ONLINE)) {
         runningEndPoints.add(endpoint);
       }
     }
-    if(logger.isTraceEnabled()) {
-      logger.trace("Online endpoints in ZK cluster coord"+runningEndPoints.toString());
-    }
-    logger.debug("Online endpoints in ZK cluster coord"+runningEndPoints.toString());
+    logger.debug("Online endpoints in ZK are"+runningEndPoints.toString());
     return runningEndPoints;
   }
 
@@ -313,7 +305,6 @@ public class ZKClusterCoordinator extends ClusterCoordinator {
         }
       }
       endpoints = endpointsMap.values();
-      logger.info("Updated endpoints are " + endpointsMap.values());
       if (logger.isDebugEnabled()) {
         StringBuilder builder = new StringBuilder();
         builder.append("Active drillbit set changed.  Now includes ");

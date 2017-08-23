@@ -124,7 +124,7 @@ public class Drillbit implements AutoCloseable {
     }
 
     engine = new ServiceEngine(manager, context, true, isDistributedMode);
-
+    stateManager = new DrillbitStateManager(DrillbitState.STARTUP);
     logger.info("Construction completed ({} ms).", w.elapsed(TimeUnit.MILLISECONDS));
 
   }
@@ -133,11 +133,12 @@ public class Drillbit implements AutoCloseable {
     final Stopwatch w = Stopwatch.createStarted();
     logger.debug("Startup begun.");
     coord.start(10000);
+    stateManager.setState(DrillbitState.ONLINE);
     storeProvider.start();
     if (profileStoreProvider != storeProvider) {
       profileStoreProvider.start();
     }
-    stateManager = new DrillbitStateManager(DrillbitState.STARTUP);
+
     final DrillbitEndpoint md = engine.start();
     manager.start(md, engine.getController(), engine.getDataConnectionCreator(), coord, storeProvider, profileStoreProvider);
     final DrillbitContext drillbitContext = manager.getContext();

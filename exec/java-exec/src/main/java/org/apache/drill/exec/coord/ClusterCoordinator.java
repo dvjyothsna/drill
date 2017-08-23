@@ -17,7 +17,6 @@
  */
 package org.apache.drill.exec.coord;
 
-import java.io.Closeable;
 import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -26,7 +25,6 @@ import org.apache.drill.exec.coord.store.TransientStore;
 import org.apache.drill.exec.coord.store.TransientStoreConfig;
 import org.apache.drill.exec.proto.CoordinationProtos.DrillbitEndpoint;
 import org.apache.drill.exec.proto.CoordinationProtos.DrillbitEndpoint.State;
-import org.apache.drill.exec.server.Drillbit;
 import org.apache.drill.exec.work.foreman.DrillbitStatusListener;
 
 /**
@@ -68,7 +66,7 @@ public abstract class ClusterCoordinator implements AutoCloseable {
 
   public abstract Collection<DrillbitEndpoint> getOnlineEndPoints();
 
-  public abstract void update(RegistrationHandle handle, State state);
+  public abstract RegistrationHandle update(RegistrationHandle handle, State state);
 
   public interface RegistrationHandle {
     /**
@@ -76,6 +74,8 @@ public abstract class ClusterCoordinator implements AutoCloseable {
      * @return drillbit endpoint
      */
     public abstract DrillbitEndpoint getEndPoint();
+
+    public abstract void setEndPoint( DrillbitEndpoint endpoint);
   }
 
   public abstract DistributedSemaphore getSemaphore(String name, int maximumLeases);
