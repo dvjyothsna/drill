@@ -24,13 +24,11 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.drill.common.exceptions.DrillException;
 import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.exec.ExecConstants;
-import org.apache.drill.exec.SSLConfig;
-import org.apache.drill.exec.exception.DrillbitStartupException;
 import org.apache.drill.exec.rpc.security.plain.PlainFactory;
 import org.apache.drill.exec.server.BootStrapContext;
+import org.apache.drill.exec.server.Drillbit;
 import org.apache.drill.exec.server.rest.auth.DrillRestLoginService;
 import org.apache.drill.exec.work.WorkManager;
 import org.bouncycastle.asn1.x500.X500NameBuilder;
@@ -102,17 +100,22 @@ public class WebServer implements AutoCloseable {
 
   private final BootStrapContext context;
 
+  private final Drillbit drillbit;
+
+  private int port;
+
   /**
    * Create Jetty based web server.
    *
    * @param context Bootstrap context.
    * @param workManager WorkManager instance.
    */
-  public WebServer(final BootStrapContext context, final WorkManager workManager) {
+  public WebServer(final BootStrapContext context, final WorkManager workManager, final Drillbit drillbit) {
     this.context = context;
     this.config = context.getConfig();
     this.metrics = context.getMetrics();
     this.workManager = workManager;
+    this.drillbit = drillbit;
 
     if (config.getBoolean(ExecConstants.HTTP_ENABLE)) {
       embeddedJetty = new Server();
@@ -130,6 +133,7 @@ public class WebServer implements AutoCloseable {
    * @throws Exception
    */
   public void start() throws Exception {
+    port_lastused = config.getInt(ExecConstants.HTTP_PORT);
     if (embeddedJetty == null) {
       return;
     }
@@ -140,14 +144,9 @@ public class WebServer implements AutoCloseable {
       return;
     }
 
-    final ServerConnector serverConnector;
+     ServerConnector serverConnector;
     if (config.getBoolean(ExecConstants.HTTP_ENABLE_SSL)) {
-      try {
-        serverConnector = createHttpsConnector();
-      }
-      catch(DrillException e){
-        throw new DrillbitStartupException(e.getMessage(), e);
-      }
+      serverConnector = createHttpsConnector();
     } else {
       serverConnector = createHttpConnector();
     }
@@ -162,7 +161,7 @@ public class WebServer implements AutoCloseable {
     servletContextHandler.setErrorHandler(errorHandler);
     servletContextHandler.setContextPath("/");
 
-    final ServletHolder servletHolder = new ServletHolder(new ServletContainer(new DrillRestServer(workManager)));
+    final ServletHolder servletHolder = new ServletHolder(new ServletContainer(new DrillRestServer(workManager, drillbit)));
     servletHolder.setInitOrder(1);
     servletContextHandler.addServlet(servletHolder, "/*");
 
@@ -202,7 +201,24 @@ public class WebServer implements AutoCloseable {
     }
 
     embeddedJetty.setHandler(servletContextHandler);
-    embeddedJetty.start();
+    while(true) {
+      try {
+        embeddedJetty.start();
+        break;
+      }
+      catch (Exception e) {
+        if (config.getBoolean(ExecConstants.ENABLE_HTTP_PORT_HUNTING)) {
+          embeddedJetty.removeConnector(serverConnector);
+          serverConnector = createHttpConnector();
+          embeddedJetty.addConnector(serverConnector);
+          embeddedJetty.setHandler(servletContextHandler);
+          continue;
+        }
+        else {
+          throw new IllegalStateException(e);
+        }
+      }
+    }
   }
 
   /**
@@ -271,16 +287,18 @@ public class WebServer implements AutoCloseable {
     logger.info("Setting up HTTPS connector for web server");
 
     final SslContextFactory sslContextFactory = new SslContextFactory();
-    SSLConfig ssl = new SSLConfig(config);
-    if(ssl.isSslValid()){
-      logger.info("Using configured SSL settings for web server");
 
-      sslContextFactory.setKeyStorePath(ssl.getKeyStorePath());
-      sslContextFactory.setKeyStorePassword(ssl.getKeyStorePassword());
-      if(ssl.hasTrustStorePath()){
-        sslContextFactory.setTrustStorePath(ssl.getTrustStorePath());
-        if(ssl.hasTrustStorePassword()){
-          sslContextFactory.setTrustStorePassword(ssl.getTrustStorePassword());
+    if (config.hasPath(ExecConstants.HTTP_KEYSTORE_PATH) &&
+        !Strings.isNullOrEmpty(config.getString(ExecConstants.HTTP_KEYSTORE_PATH))) {
+      logger.info("Using configured SSL settings for web server");
+      sslContextFactory.setKeyStorePath(config.getString(ExecConstants.HTTP_KEYSTORE_PATH));
+      sslContextFactory.setKeyStorePassword(config.getString(ExecConstants.HTTP_KEYSTORE_PASSWORD));
+
+      // TrustStore and TrustStore password are optional
+      if (config.hasPath(ExecConstants.HTTP_TRUSTSTORE_PATH)) {
+        sslContextFactory.setTrustStorePath(config.getString(ExecConstants.HTTP_TRUSTSTORE_PATH));
+        if (config.hasPath(ExecConstants.HTTP_TRUSTSTORE_PASSWORD)) {
+          sslContextFactory.setTrustStorePassword(config.getString(ExecConstants.HTTP_TRUSTSTORE_PASSWORD));
         }
       }
     } else {
@@ -354,14 +372,34 @@ public class WebServer implements AutoCloseable {
    * @return Initialized {@link ServerConnector} instance for HTTP connections.
    * @throws Exception
    */
+  static int port_lastused ;
   private ServerConnector createHttpConnector() throws Exception {
     logger.info("Setting up HTTP connector for web server");
     final HttpConfiguration httpConfig = new HttpConfiguration();
     final ServerConnector httpConnector = new ServerConnector(embeddedJetty, new HttpConnectionFactory(httpConfig));
-    httpConnector.setPort(config.getInt(ExecConstants.HTTP_PORT));
 
+      if (port_lastused == config.getInt(ExecConstants.HTTP_PORT)) {
+        port = config.getInt(ExecConstants.HTTP_PORT);
+        httpConnector.setPort(port);
+        port_lastused++;
+      }
+      else {
+        if (config.getBoolean(ExecConstants.ENABLE_HTTP_PORT_HUNTING)) {
+          while (true) {
+            try {
+              port = port_lastused;
+              httpConnector.setPort(port);
+              port_lastused++;
+              break;
+            } catch (Exception e) {
+              continue;
+            }
+          }
+        }
+      }
     return httpConnector;
   }
+
 
   @Override
   public void close() throws Exception {

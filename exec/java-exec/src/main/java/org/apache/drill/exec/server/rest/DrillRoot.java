@@ -18,9 +18,12 @@
 package org.apache.drill.exec.server.rest;
 
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import javax.annotation.security.PermitAll;
 import javax.inject.Inject;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
@@ -32,6 +35,7 @@ import com.google.common.collect.Sets;
 import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.exec.ExecConstants;
 import org.apache.drill.exec.proto.CoordinationProtos.DrillbitEndpoint;
+import org.apache.drill.exec.server.Drillbit;
 import org.apache.drill.exec.server.rest.DrillRestServer.UserAuthEnabled;
 import org.apache.drill.exec.work.WorkManager;
 import org.glassfish.jersey.server.mvc.Viewable;
@@ -46,11 +50,71 @@ public class DrillRoot {
   @Inject UserAuthEnabled authEnabled;
   @Inject WorkManager work;
   @Inject SecurityContext sc;
+  @Inject Drillbit drillbit;
 
   @GET
   @Produces(MediaType.TEXT_HTML)
   public Viewable getClusterInfo() {
     return ViewableWithPermissions.create(authEnabled.get(), "/rest/index.ftl", sc, getClusterInfoJSON());
+  }
+
+
+  @GET
+  @Path("/state")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Map<String, String> getDrillbitStatus(){
+    Collection<DrillbitInfo> drillbits = getClusterInfoJSON().getDrillbits();
+    Map<String, String> drillStatusMap = new HashMap<String ,String>();
+    for (DrillbitInfo drillbit : drillbits) {
+      drillStatusMap.put(drillbit.getAddress()+"-"+drillbit.getUserPort(),drillbit.getState());
+    }
+    return drillStatusMap;
+  }
+
+  @GET
+  @Path("/graceperiod")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Map<String, Integer> getGracePeriod(){
+
+    final DrillConfig config = work.getContext().getConfig();
+    final int gracePeriod = config.getInt(ExecConstants.GRACE_PERIOD);
+    Map<String, Integer> gracePeriodMap = new HashMap<String, Integer>();
+    gracePeriodMap.put("graceperiod",gracePeriod);
+    return gracePeriodMap;
+  }
+
+  @GET
+  @Path("/queriesCount")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Map<String, Integer> getRemainingQueries() {
+    Map<String, Integer> queriesInfo = new HashMap<String, Integer>();
+    queriesInfo = work.getRemainingQueries();
+    return queriesInfo;
+  }
+
+  @POST
+  @Path("/shutdown")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Map<String, String> shutdownDrillbit() throws Exception {
+    Map<String, String> shutdownInfo = new HashMap<String, String>();
+    try {
+      new Thread(new Runnable() {
+        public void run() {
+          try {
+            drillbit.close();
+          } catch (Exception e) {
+            e.printStackTrace();
+          }
+        }
+      }).start();
+      shutdownInfo.put("response", "Shutdown request is triggered");
+      return shutdownInfo;
+    }
+    catch (Exception e) {
+      logger.debug("Exception in triggering shutdown request",e);
+      shutdownInfo.put("response", "Error in triggering shutdown request");
+      return shutdownInfo;
+    }
   }
 
   @GET
@@ -67,7 +131,7 @@ public class DrillRoot {
     final boolean userEncryptionEnabled = config.getBoolean(ExecConstants.USER_ENCRYPTION_SASL_ENABLED);
     final boolean bitEncryptionEnabled = config.getBoolean(ExecConstants.BIT_ENCRYPTION_SASL_ENABLED);
 
-    for (DrillbitEndpoint endpoint : work.getContext().getBits()) {
+    for (DrillbitEndpoint endpoint : work.getContext().getAvailableBits()) {
       final DrillbitInfo drillbit = new DrillbitInfo(endpoint,
               currentDrillbit.equals(endpoint),
               currentVersion.equals(endpoint.getVersion()));
@@ -127,6 +191,7 @@ public class DrillRoot {
     private final String version;
     private final boolean current;
     private final boolean versionMatch;
+    private final String state;
 
     @JsonCreator
     public DrillbitInfo(DrillbitEndpoint drillbit, boolean current, boolean versionMatch) {
@@ -137,6 +202,7 @@ public class DrillRoot {
       this.version = Strings.isNullOrEmpty(drillbit.getVersion()) ? "Undefined" : drillbit.getVersion();
       this.current = current;
       this.versionMatch = versionMatch;
+      this.state = String.valueOf(drillbit.getState());
     }
 
     public String getAddress() {
@@ -161,6 +227,10 @@ public class DrillRoot {
       return versionMatch;
     }
 
+    public String getState() {
+      return state;
+    }
+
     /**
      * Method used to sort drillbits. Current drillbit goes first.
      * Then drillbits with matching versions, after them drillbits with mismatching versions.
@@ -182,7 +252,12 @@ public class DrillRoot {
 
       if (this.isVersionMatch() == drillbitToCompare.isVersionMatch()) {
         if (this.version.equals(drillbitToCompare.getVersion())) {
-          return this.address.compareTo(drillbitToCompare.getAddress());
+          {
+            if(this.address.equals(drillbitToCompare.getAddress())) {
+              return (this.controlPort.compareTo(drillbitToCompare.getControlPort()));
+            }
+            return (this.address.compareTo(drillbitToCompare.getAddress()));
+          }
         }
         return this.version.compareTo(drillbitToCompare.getVersion());
       }

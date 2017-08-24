@@ -122,10 +122,10 @@ public interface ExecConstants {
   String HTTP_SESSION_MEMORY_RESERVATION = "drill.exec.http.session.memory.reservation";
   String HTTP_SESSION_MEMORY_MAXIMUM = "drill.exec.http.session.memory.maximum";
   String HTTP_SESSION_MAX_IDLE_SECS = "drill.exec.http.session_max_idle_secs";
-  String HTTP_KEYSTORE_PATH = "drill.exec.ssl.keyStorePath";
-  String HTTP_KEYSTORE_PASSWORD = "drill.exec.ssl.keyStorePassword";
-  String HTTP_TRUSTSTORE_PATH = "drill.exec.ssl.trustStorePath";
-  String HTTP_TRUSTSTORE_PASSWORD = "drill.exec.ssl.trustStorePassword";
+  String HTTP_KEYSTORE_PATH = "javax.net.ssl.keyStore";
+  String HTTP_KEYSTORE_PASSWORD = "javax.net.ssl.keyStorePassword";
+  String HTTP_TRUSTSTORE_PATH = "javax.net.ssl.trustStore";
+  String HTTP_TRUSTSTORE_PASSWORD = "javax.net.ssl.trustStorePassword";
   String SYS_STORE_PROVIDER_CLASS = "drill.exec.sys.store.provider.class";
   String SYS_STORE_PROVIDER_LOCAL_PATH = "drill.exec.sys.store.provider.local.path";
   String SYS_STORE_PROVIDER_LOCAL_ENABLE_WRITE = "drill.exec.sys.store.provider.local.write";
@@ -519,4 +519,22 @@ public interface ExecConstants {
    * <tt>-ea -Ddrill.exec.debug.validate_vectors=true</tt>
    */
   String ENABLE_VECTOR_VALIDATION = "drill.exec.debug.validate_vectors";
+
+  /**
+   * Boot-time config option to enable port hunting for the webserver. Primarily
+   * used for starting multiple drillbits(webservers) on a single machine.
+   */
+  String ENABLE_HTTP_PORT_HUNTING = "drill.exec.http.port_hunting";
+
+  /**
+   * Boot-time config option provided to modify duration of the grace period.
+   * Grace period is the amount of time where the drillbit accepts work after
+   * the shutdown request is triggered. The primary use of grace period is to
+   * avoid the race conditions caused by zookeeper delay in updating the state
+   * information of the drillbit that is shutting down. So, it is advisable
+   * to have a grace period that is atleast twice the amount of zookeeper
+   * refresh time.
+   */
+  String GRACE_PERIOD = "drill.exec.grace_period";
+
 }
