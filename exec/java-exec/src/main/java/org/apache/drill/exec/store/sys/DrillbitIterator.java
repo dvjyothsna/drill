@@ -29,7 +29,7 @@ public class DrillbitIterator implements Iterator<Object> {
   private DrillbitEndpoint current;
 
   public DrillbitIterator(FragmentContext c) {
-    this.endpoints = c.getDrillbitContext().getBits().iterator();
+    this.endpoints = c.getDrillbitContext().getAvailableBits().iterator();
     this.current = c.getIdentity();
   }
 
@@ -40,6 +40,7 @@ public class DrillbitIterator implements Iterator<Object> {
     public int data_port;
     public boolean current;
     public String version;
+    public String state;
   }
 
   @Override
@@ -57,6 +58,7 @@ public class DrillbitIterator implements Iterator<Object> {
     i.control_port = ep.getControlPort();
     i.data_port = ep.getDataPort();
     i.version = ep.getVersion();
+    i.state = ep.getState().toString();
     return i;
   }
 

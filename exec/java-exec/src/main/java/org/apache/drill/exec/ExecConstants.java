@@ -519,4 +519,22 @@ public interface ExecConstants {
    * <tt>-ea -Ddrill.exec.debug.validate_vectors=true</tt>
    */
   String ENABLE_VECTOR_VALIDATION = "drill.exec.debug.validate_vectors";
+
+  /**
+   * Boot-time config option to enable port hunting for the webserver. Primarily
+   * used for starting multiple drillbits(webservers) on a single machine.
+   */
+  String ENABLE_HTTP_PORT_HUNTING = "drill.exec.http.port_hunting";
+
+  /**
+   * Boot-time config option provided to modify duration of the grace period.
+   * Grace period is the amount of time where the drillbit accepts work after
+   * the shutdown request is triggered. The primary use of grace period is to
+   * avoid the race conditions caused by zookeeper delay in updating the state
+   * information of the drillbit that is shutting down. So, it is advisable
+   * to have a grace period that is atleast twice the amount of zookeeper
+   * refresh time.
+   */
+  String GRACE_PERIOD = "drill.exec.grace_period";
+
 }

@@ -453,6 +453,22 @@ public class ClusterFixture extends BaseFixture implements AutoCloseable {
   }
 
   /**
+   * Shutdown the drillbit given the name of the drillbit.
+   */
+  public void close_drillbit(final String drillbitname) throws Exception {
+    Exception ex = null;
+    for (Drillbit bit : drillbits())
+    {
+      if(bit.equals(bits.get(drillbitname))) {
+        bit.close();
+      }
+    }
+    if(ex != null) {
+      throw ex;
+    }
+  }
+
+  /**
    * Removes files stored locally in the "local store provider."
    * Required because CTTAS setup fails if these files are left from one
    * run to the next.
