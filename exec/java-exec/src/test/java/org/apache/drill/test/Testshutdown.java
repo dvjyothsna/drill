@@ -62,6 +62,10 @@ public class Testshutdown {
   }
 
 
+  /*
+  Start multiple drillbits and shutdown a drillbit. Then query the online
+  endpoints and check if the drillbit still exists.
+   */
   @Test
   public void testOnlineEndPoints() throws  Exception {
 
@@ -73,7 +77,8 @@ public class Testshutdown {
           ClientFixture client = cluster.clientFixture()) {
 
       Drillbit drillbit = cluster.drillbit("db2");
-        DrillbitEndpoint drillbitEndpoint =  drillbit.getRegistrationHandle().getEndPoint();
+      DrillbitEndpoint drillbitEndpoint =  drillbit.getRegistrationHandle().getEndPoint();
+      int grace_period = drillbit.getContext().getConfig().getInt("drill.exec.grace_period");
       new Thread(new Runnable() {
         public void run() {
           try {
@@ -83,7 +88,7 @@ public class Testshutdown {
           }
         }
       }).start();
-      Thread.sleep(50);
+      Thread.sleep(grace_period+100000);
       Collection<DrillbitEndpoint> drillbitEndpoints = cluster.drillbit().getContext()
               .getClusterCoordinator()
               .getOnlineEndPoints();
