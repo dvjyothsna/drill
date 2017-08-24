@@ -25,6 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.apache.drill.exec.coord.store.TransientStore;
 import org.apache.drill.exec.coord.store.TransientStoreConfig;
 import org.apache.drill.exec.proto.CoordinationProtos.DrillbitEndpoint;
+import org.apache.drill.exec.proto.CoordinationProtos.DrillbitEndpoint.State;
 import org.apache.drill.exec.work.foreman.DrillbitStatusListener;
 
 /**
@@ -39,7 +40,6 @@ public abstract class ClusterCoordinator implements AutoCloseable {
 
   /**
    * Start the cluster coordinator. Millis to wait is
-   *
    * @param millisToWait
    *          The maximum time to wait before throwing an exception if the
    *          cluster coordination service has not successfully started. Use 0
@@ -60,7 +60,26 @@ public abstract class ClusterCoordinator implements AutoCloseable {
    */
   public abstract Collection<DrillbitEndpoint> getAvailableEndpoints();
 
+  /**
+   * Get a collection of ONLINE drillbit endpoints by excluding the drillbits
+   * that are in QUIESCENT state (drillbits that are shutting down). Primarily used by the planner
+   * to plan queries only on ONLINE drillbits and used by the client during initial connection
+   * phase to connect to a drillbit (foreman)
+   * @return A collection of ONLINE endpoints
+   */
+
+  public abstract Collection<DrillbitEndpoint> getOnlineEndPoints();
+
+  public abstract RegistrationHandle update(RegistrationHandle handle, State state);
+
   public interface RegistrationHandle {
+    /**
+     * Get the drillbit endpoint associated with the registration handle
+     * @return drillbit endpoint
+     */
+    public abstract DrillbitEndpoint getEndPoint();
+
+    public abstract void setEndPoint( DrillbitEndpoint endpoint);
   }
 
   public abstract DistributedSemaphore getSemaphore(String name, int maximumLeases);
