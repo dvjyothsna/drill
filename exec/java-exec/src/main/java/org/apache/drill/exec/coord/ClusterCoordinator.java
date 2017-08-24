@@ -17,6 +17,7 @@
  */
 package org.apache.drill.exec.coord;
 
+import java.io.Closeable;
 import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -39,7 +40,9 @@ public abstract class ClusterCoordinator implements AutoCloseable {
 
   /**
    * Start the cluster coordinator.  Millis to wait is
-   * @param millisToWait The maximum time to wait before throwing an exception if the cluster coordination service has not successfully started.  Use 0 to wait indefinitely.
+   * @param millisToWait The maximum time to wait before throwing an exception if the
+   *                     cluster coordination service has not successfully started.  Use 0
+   *                     to wait indefinitely.
    * @throws Exception
    */
   public abstract void start(long millisToWait) throws Exception;

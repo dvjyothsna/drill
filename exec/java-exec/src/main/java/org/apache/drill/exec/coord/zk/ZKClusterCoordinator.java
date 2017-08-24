@@ -237,7 +237,6 @@ public class ZKClusterCoordinator extends ClusterCoordinator {
    */
   @Override
   public Collection<DrillbitEndpoint> getOnlineEndPoints() {
-
     Collection<DrillbitEndpoint> runningEndPoints = new ArrayList<>();
     for (DrillbitEndpoint endpoint: endpoints){
       if(endpoint.getState().equals(State.ONLINE)) {

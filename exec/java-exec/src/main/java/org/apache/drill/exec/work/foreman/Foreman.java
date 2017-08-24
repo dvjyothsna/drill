@@ -259,7 +259,7 @@ public class Foreman implements Runnable {
     try {
       checkForemanState();
     } catch (ForemanException e) {
-      addToEventQueue(QueryState.FAILED, new ForemanException("Query submission failed. Trying to submit work to Foreman that is shutting down?"));
+      addToEventQueue(QueryState.FAILED, new ForemanException("Query submission failed since foreman is shutting down"));
     }
     // track how long the query takes
     queryManager.markStartTime();
@@ -1334,5 +1334,4 @@ public class Foreman implements Runnable {
       logger.warn("Interrupted while waiting for RPC outcome of sending final query result to initiating client.");
     }
   }
-
 }

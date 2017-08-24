@@ -25,7 +25,10 @@ import com.google.common.collect.ImmutableSet;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.drill.common.config.DrillConfig;
+import org.apache.drill.common.exceptions.DrillException;
 import org.apache.drill.exec.ExecConstants;
+import org.apache.drill.exec.SSLConfig;
+import org.apache.drill.exec.exception.DrillbitStartupException;
 import org.apache.drill.exec.rpc.security.plain.PlainFactory;
 import org.apache.drill.exec.server.BootStrapContext;
 import org.apache.drill.exec.server.Drillbit;
@@ -146,7 +149,11 @@ public class WebServer implements AutoCloseable {
 
      ServerConnector serverConnector;
     if (config.getBoolean(ExecConstants.HTTP_ENABLE_SSL)) {
-      serverConnector = createHttpsConnector();
+      try {
+        serverConnector = createHttpsConnector();
+      } catch (DrillException e) {
+        throw new DrillbitStartupException(e.getMessage(), e);
+      }
     } else {
       serverConnector = createHttpConnector();
     }
@@ -288,17 +295,15 @@ public class WebServer implements AutoCloseable {
 
     final SslContextFactory sslContextFactory = new SslContextFactory();
 
-    if (config.hasPath(ExecConstants.HTTP_KEYSTORE_PATH) &&
-        !Strings.isNullOrEmpty(config.getString(ExecConstants.HTTP_KEYSTORE_PATH))) {
+    SSLConfig ssl = new SSLConfig(config);
+    if (ssl.isSslValid()) {
       logger.info("Using configured SSL settings for web server");
-      sslContextFactory.setKeyStorePath(config.getString(ExecConstants.HTTP_KEYSTORE_PATH));
-      sslContextFactory.setKeyStorePassword(config.getString(ExecConstants.HTTP_KEYSTORE_PASSWORD));
-
-      // TrustStore and TrustStore password are optional
-      if (config.hasPath(ExecConstants.HTTP_TRUSTSTORE_PATH)) {
-        sslContextFactory.setTrustStorePath(config.getString(ExecConstants.HTTP_TRUSTSTORE_PATH));
-        if (config.hasPath(ExecConstants.HTTP_TRUSTSTORE_PASSWORD)) {
-          sslContextFactory.setTrustStorePassword(config.getString(ExecConstants.HTTP_TRUSTSTORE_PASSWORD));
+      sslContextFactory.setKeyStorePath(ssl.getKeyStorePath());
+      sslContextFactory.setKeyStorePassword(ssl.getKeyStorePassword());
+      if (ssl.hasTrustStorePath()) {
+        sslContextFactory.setTrustStorePath(ssl.getTrustStorePath());
+        if (ssl.hasTrustStorePassword()) {
+          sslContextFactory.setTrustStorePassword(ssl.getTrustStorePassword());
         }
       }
     } else {
@@ -384,6 +389,7 @@ public class WebServer implements AutoCloseable {
         port_lastused++;
       }
       else {
+        // check if port hunting is enabled
         if (config.getBoolean(ExecConstants.ENABLE_HTTP_PORT_HUNTING)) {
           while (true) {
             try {

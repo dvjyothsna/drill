@@ -47,6 +47,7 @@ import org.apache.drill.exec.store.sys.store.provider.LocalPersistentStoreProvid
 import org.apache.drill.exec.util.GuavaPatcher;
 import org.apache.drill.exec.work.WorkManager;
 import org.apache.zookeeper.Environment;
+
 import org.apache.drill.exec.proto.CoordinationProtos.DrillbitEndpoint.State;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Stopwatch;
@@ -123,7 +124,8 @@ public class Drillbit implements AutoCloseable {
       profileStoreProvider = storeProvider;
     }
 
-    engine = new ServiceEngine(manager, context, true, isDistributedMode);
+    engine = new ServiceEngine(manager, context, allowPortHunting, isDistributedMode);
+
     stateManager = new DrillbitStateManager(DrillbitState.STARTUP);
     logger.info("Construction completed ({} ms).", w.elapsed(TimeUnit.MILLISECONDS));
 
@@ -192,13 +194,13 @@ public class Drillbit implements AutoCloseable {
 
     try {
       AutoCloseables.close(
-            webServer,
-            engine,
-            storeProvider,
-            coord,
-            manager,
-            storageRegistry ,
-            context);
+              webServer,
+              engine,
+              storeProvider,
+              coord,
+              manager,
+              storageRegistry ,
+              context);
 
       //Closing the profile store provider if distinct
       if (storeProvider != profileStoreProvider) {
@@ -207,7 +209,7 @@ public class Drillbit implements AutoCloseable {
     } catch(Exception e) {
       logger.warn("Failure on close()", e);
     }
-    System.out.println("Thread id " + Thread.currentThread() + System.currentTimeMillis());
+
     logger.info("Shutdown completed ({} ms).", w.elapsed(TimeUnit.MILLISECONDS) );
     stateManager.setState(DrillbitState.SHUTDOWN);
   }
@@ -315,6 +317,7 @@ public class Drillbit implements AutoCloseable {
     return start(config, null);
   }
 
+  @SuppressWarnings("resource")
   public static Drillbit start(final DrillConfig config, final RemoteServiceSet remoteServiceSet)
       throws DrillbitStartupException {
     logger.debug("Starting new Drillbit.");
