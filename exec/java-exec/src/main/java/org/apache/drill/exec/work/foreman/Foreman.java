@@ -35,6 +35,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.drill.common.CatastrophicFailure;
 import org.apache.drill.common.EventProcessor;
 import org.apache.drill.common.concurrent.ExtendedLatch;
+import org.apache.drill.common.exceptions.DrillException;
 import org.apache.drill.common.exceptions.ExecutionSetupException;
 import org.apache.drill.common.exceptions.UserException;
 import org.apache.drill.common.logical.LogicalPlan;
@@ -255,6 +256,11 @@ public class Foreman implements Runnable {
     final String originalName = currentThread.getName();
     currentThread.setName(queryIdString + ":foreman");
 
+    try {
+      checkForemanState();
+    } catch (ForemanException e) {
+      addToEventQueue(QueryState.FAILED, new ForemanException("Query submission failed since foreman is shutting down"));
+    }
     // track how long the query takes
     queryManager.markStartTime();
     enqueuedQueries.dec();
@@ -350,6 +356,18 @@ public class Foreman implements Runnable {
      * events (indirectly, through the QueryManager's use of stateListener), about fragment
      * completions. It won't go away until everything is completed, failed, or cancelled.
      */
+  }
+
+  public void checkForemanState() throws ForemanException{
+    DrillbitEndpoint foreman = drillbitContext.getEndpoint();
+    Collection<DrillbitEndpoint> dbs = drillbitContext.getAvailableBits();
+    for( DrillbitEndpoint db : dbs) {
+      if( db.getAddress().equals(foreman.getAddress()) && db.getUserPort() == foreman.getUserPort()) {
+        if(! db.getState().equals(DrillbitEndpoint.State.ONLINE)) {
+          throw new ForemanException("Query submission failed. Trying to connect to Foreman that is shutting down ?");
+        }
+      }
+    }
   }
 
   private void releaseLease() {
@@ -614,9 +632,11 @@ public class Foreman implements Runnable {
     final PhysicalOperator rootOperator = plan.getSortedOperators(false).iterator().next();
     final Fragment rootFragment = rootOperator.accept(MakeFragmentsVisitor.INSTANCE, null);
     final SimpleParallelizer parallelizer = new SimpleParallelizer(queryContext);
+    // Plan the query using only the ONLINE drillbit endpoints. Exclude the endpoints
+    // that are shutting down to reduce the chances of query failure.
     final QueryWorkUnit queryWorkUnit = parallelizer.getFragments(
         queryContext.getOptions().getOptionList(), queryContext.getCurrentEndpoint(),
-        queryId, queryContext.getActiveEndpoints(), drillbitContext.getPlanReader(), rootFragment,
+        queryId, queryContext.getOnlineEndpoints(), drillbitContext.getPlanReader(), rootFragment,
         initiatingClient.getSession(), queryContext.getQueryContextInfo());
 
     if (logger.isTraceEnabled()) {
