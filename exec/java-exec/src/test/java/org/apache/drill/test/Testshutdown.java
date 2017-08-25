@@ -159,7 +159,7 @@ public class Testshutdown {
           throw new RuntimeException("Failed : HTTP error code : "
                   + conn.getResponseCode());
         }
-        i++;
+        port++;
       }
       Thread.sleep(250);
       Collection<DrillbitEndpoint> drillbitEndpoints = cluster.drillbit().getContext()
