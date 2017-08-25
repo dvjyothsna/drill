@@ -38,6 +38,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Properties;
 import java.util.Set;
@@ -63,7 +64,7 @@ public class Testshutdown {
 
 
   /*
-  Start multiple drillbits and shutdown a drillbit. Then query the online
+  Start multiple drillbits and then shutdown a drillbit. Query the online
   endpoints and check if the drillbit still exists.
    */
   @Test
@@ -88,21 +89,29 @@ public class Testshutdown {
           }
         }
       }).start();
-      Thread.sleep(grace_period+100000);
+      //wait for graceperiod
+      Thread.sleep(grace_period);
       Collection<DrillbitEndpoint> drillbitEndpoints = cluster.drillbit().getContext()
               .getClusterCoordinator()
               .getOnlineEndPoints();
+      System.out.println(drillbitEndpoints);
       Assert.assertFalse(drillbitEndpoints.contains(drillbitEndpoint));
     }
   }
+  /*
+    Test if the drillbit transitions from ONLINE state when a shutdown
+    request is initiated
+   */
   @Test
   public void testStateChange() throws  Exception {
 
     String[] drillbits = {"db1" ,"db2", "db3", "db4", "db5", "db6"};
     FixtureBuilder builder = ClusterFixture.builder().withBits(drillbits).withLocalZk();
+
     try ( ClusterFixture cluster = builder.build();
           ClientFixture client = cluster.clientFixture()) {
       Drillbit drillbit = cluster.drillbit("db2");
+      int grace_period = drillbit.getContext().getConfig().getInt("drill.exec.grace_period");
       DrillbitEndpoint drillbitEndpoint =  drillbit.getRegistrationHandle().getEndPoint();
       new Thread(new Runnable() {
         public void run() {
@@ -113,7 +122,7 @@ public class Testshutdown {
           }
         }
       }).start();
-      Thread.sleep(50);
+      Thread.sleep(grace_period);
       Collection<DrillbitEndpoint> drillbitEndpoints = cluster.drillbit().getContext()
               .getClusterCoordinator()
               .getAvailableEndpoints();
@@ -128,29 +137,31 @@ public class Testshutdown {
   @Test
   public void testRestApi() throws Exception {
 
-    FixtureBuilder builder = ClusterFixture.bareBuilder().clusterSize(6).withLocalZk();
+    String[] drillbits = {"db1" ,"db2", "db3", "db4", "db5", "db6"};
+    FixtureBuilder builder = ClusterFixture.bareBuilder().withBits(drillbits).withLocalZk();
     builder = enableWebServer(builder);
+
     int i = 8047;
     final String sql = "SELECT * FROM dfs.`/tmp/drill-test/` ORDER BY employee_id";
     try ( ClusterFixture cluster = builder.build();
           final ClientFixture client = cluster.clientFixture()) {
+      int port = cluster.drillbit("db1").getContext().getConfig().getInt("drill.exec.http.port");
       Thread.sleep(1500);
       final QueryBuilder.QuerySummaryFuture listener =  client.queryBuilder().sql(sql).futureSummary();
       Thread.sleep(50000);
 
-      while( i < 8052) {
-
+      while( port < 8052) {
+        System.out.println(port);
         URL url = new URL("http://localhost:"+i+"/shutdown");
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setRequestMethod("POST");
-        System.out.println("port " + i);
         if (conn.getResponseCode() != 200) {
           throw new RuntimeException("Failed : HTTP error code : "
                   + conn.getResponseCode());
         }
         i++;
       }
-      Thread.sleep(25000);
+      Thread.sleep(250);
       Collection<DrillbitEndpoint> drillbitEndpoints = cluster.drillbit().getContext()
               .getClusterCoordinator()
               .getOnlineEndPoints();
@@ -158,7 +169,7 @@ public class Testshutdown {
 
       }
       Assert.assertTrue(listener.isDone());
-      Assert.assertEquals(drillbitEndpoints.size(), 1);
+      Assert.assertEquals(1,drillbitEndpoints.size());
     }
   }
 
@@ -256,7 +267,7 @@ public class Testshutdown {
     try (ClusterFixture cluster = builder.build();
          final ClientFixture client = cluster.clientFixture()) {
       cluster.defineWorkspace("dfs", "data", "/tmp/drill-test", "psv");
-      client.queryBuilder().sql(sql).printCsv();
+//      client.queryBuilder().sql(sql).printCsv();
       Thread.sleep(10);
     } catch (Exception e) {
       e.printStackTrace();

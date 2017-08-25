@@ -167,12 +167,12 @@ public class Drillbit implements AutoCloseable {
   */
   @Override
   public synchronized void close() {
-    if ( !stateManager.getState().equals(DrillbitState.STARTUP)) {
+    if ( !stateManager.getState().equals(DrillbitState.ONLINE)) {
       return;
     }
     final Stopwatch w = Stopwatch.createStarted();
     logger.debug("Shutdown begun." + this.getRegistrationHandle().getEndPoint());
-    coord.update(registrationHandle, State.QUIESCENT);
+    registrationHandle = coord.update(registrationHandle, State.QUIESCENT);
     stateManager.setState(DrillbitState.GRACE);
     waitForGracePeriod();
     stateManager.setState(DrillbitState.DRAINING);
