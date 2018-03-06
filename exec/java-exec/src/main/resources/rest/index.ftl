@@ -283,7 +283,7 @@
               url = "http://"+address+":"+portNum+"/gracefulShutdown";
               var ssl = $('#ssl').val();
               url = "http://";
-              if (typeof ssl == "ssl_enabled") {
+              if (ssl == "ssl_enabled") {
                     url = "https://";
               }
               url = url+host+"/gracefulShutdown";
