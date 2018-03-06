@@ -79,7 +79,7 @@
                   </span>
                 </td>
                 <td id="status" >${drillbit.getState()}</td>
-                <#if model.shouldShowAdminInfo()>
+                <#if model.shouldShowAdminInfo() &&  drillbit.isCurrent()>
                   <td>
                       <button type="button" id="shutdown" onClick="shutdown('${drillbit.getAddress()}',$(this));"> SHUTDOWN </button>
                   </td>
@@ -143,7 +143,9 @@
             </div>
         </div>
    </#if>
-
+  <#if model.isSslEnabled()>
+  <input type="hidden" id="ssl" value='ssl_enabled'/>
+  </#if>
   <#assign queueInfo = model.queueInfo() />
   <div class="row">
       <div class="col-md-12">
@@ -270,8 +272,13 @@
                         });
       }
        <#if model.shouldShowAdminInfo()>
-          function shutdown(address,button) {
-              url = "http://"+address+":"+portNum+"/gracefulShutdown";
+         function shutdown(address,button) {
+        	      var ssl = $('#ssl').val();
+              	      url = "http://";
+              	if(typeof ssl !== "undefined") {
+                	   url = "https://";
+             	 }
+	      url = url+host+"/gracefulShutdown";
               var result = $.ajax({
                     type: 'POST',
                     url: url,
@@ -281,8 +288,11 @@
                         button.prop('disabled',true).css('opacity',0.5);
                     }
               });
-          }
-      </#if>
+      }
+      var host;
+      window.onload = function () {
+	host = location.host;
+      };
     </script>
 </#macro>
 
