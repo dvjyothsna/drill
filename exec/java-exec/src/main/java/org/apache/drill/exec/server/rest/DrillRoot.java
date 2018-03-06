@@ -344,7 +344,7 @@ public static class ClusterInfo {
   private final boolean shouldShowAdminInfo;
   private final QueueInfo queueInfo;
   private final boolean isSslEnabled;
-  
+
   private String adminUsers;
   private String adminUserGroups;
   private String processUser;
