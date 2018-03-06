@@ -79,7 +79,7 @@
                   </span>
                 </td>
                 <td id="status" >${drillbit.getState()}</td>
-                <#if model.shouldShowAdminInfo()>
+                <#if model.shouldShowAdminInfo() &&  drillbit.isCurrent()>
                   <td>
                       <button type="button" id="shutdown" onClick="shutdown('${drillbit.getAddress()}',$(this));"> SHUTDOWN </button>
                   </td>
@@ -143,7 +143,9 @@
             </div>
         </div>
    </#if>
-
+  <#if model.isSslEnabled()>
+  <input type="hidden" id="ssl" value='ssl_enabled'/>
+  </#if>
   <#assign queueInfo = model.queueInfo() />
   <div class="row">
       <div class="col-md-12">
@@ -193,7 +195,11 @@
       var port = getPortNum();
       var timeout;
       var size = $("#size").html();
+      var host;
 
+      window.onload = function () {
+          host = location.host;
+      };
 
       function getPortNum() {
           var port = $.ajax({
@@ -247,11 +253,14 @@
                 $("#row-"+i).find("#queriesCount").text("");
             }
             else {
-                if( status_map[key] == "ONLINE") {
+                if (status_map[key] == "ONLINE") {
                     $("#row-"+i).find("#status").text(status_map[key]);
                 }
                 else {
-                    fillQueryCount(address,i);
+                    var is_ssl_enabled = $('#ssl').val();
+                    if (is_ssl_enabled != "ssl_enabled") {
+                        fillQueryCount(address,i);
+                    }
                     $("#row-"+i).find("#status").text(status_map[key]);
                 }
             }
@@ -272,6 +281,12 @@
        <#if model.shouldShowAdminInfo()>
           function shutdown(address,button) {
               url = "http://"+address+":"+portNum+"/gracefulShutdown";
+              var ssl = $('#ssl').val();
+              url = "http://";
+              if (ssl == "ssl_enabled") {
+                    url = "https://";
+              }
+              url = url+host+"/gracefulShutdown";
               var result = $.ajax({
                     type: 'POST',
                     url: url,
