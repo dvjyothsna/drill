@@ -257,7 +257,10 @@
                     $("#row-"+i).find("#status").text(status_map[key]);
                 }
                 else {
-                    fillQueryCount(address,i);
+		    var is_ssl_enabled = $('#ssl').val();
+		    if (is_ssl_enabled != "ssl_enabled") { 
+                        fillQueryCount(address,i);
+		    }
                     $("#row-"+i).find("#status").text(status_map[key]);
                 }
             }
