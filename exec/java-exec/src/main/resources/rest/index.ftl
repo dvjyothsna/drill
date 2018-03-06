@@ -195,7 +195,11 @@
       var port = getPortNum();
       var timeout;
       var size = $("#size").html();
+      var host;
 
+      window.onload = function () {
+          host = location.host;
+      };
 
       function getPortNum() {
           var port = $.ajax({
@@ -272,13 +276,14 @@
                         });
       }
        <#if model.shouldShowAdminInfo()>
-         function shutdown(address,button) {
-        	      var ssl = $('#ssl').val();
-              	      url = "http://";
-              	if(typeof ssl !== "undefined") {
-                	   url = "https://";
-             	 }
-	      url = url+host+"/gracefulShutdown";
+          function shutdown(address,button) {
+              url = "http://"+address+":"+portNum+"/gracefulShutdown";
+              var ssl = $('#ssl').val();
+              url = "http://";
+              if (typeof ssl !== "undefined") {
+                    url = "https://";
+              }
+              url = url+host+"/gracefulShutdown";
               var result = $.ajax({
                     type: 'POST',
                     url: url,
@@ -288,11 +293,7 @@
                         button.prop('disabled',true).css('opacity',0.5);
                     }
               });
-      }
-      var host;
-      window.onload = function () {
-	host = location.host;
-      };
+          }
     </script>
 </#macro>
 
