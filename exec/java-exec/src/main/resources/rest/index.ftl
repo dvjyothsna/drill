@@ -261,6 +261,7 @@
 		            if (is_ssl_enabled != "ssl_enabled") {
                         fillQueryCount(address,i);
 		            }
+		            
                     $("#row-"+i).find("#status").text(status_map[key]);
                 }
             }
