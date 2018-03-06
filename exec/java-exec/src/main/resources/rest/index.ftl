@@ -253,14 +253,14 @@
                 $("#row-"+i).find("#queriesCount").text("");
             }
             else {
-                if( status_map[key] == "ONLINE") {
+                if (status_map[key] == "ONLINE") {
                     $("#row-"+i).find("#status").text(status_map[key]);
                 }
                 else {
-		    var is_ssl_enabled = $('#ssl').val();
-		    if (is_ssl_enabled != "ssl_enabled") { 
+		            var is_ssl_enabled = $('#ssl').val();
+		            if (is_ssl_enabled != "ssl_enabled") {
                         fillQueryCount(address,i);
-		    }
+		            }
                     $("#row-"+i).find("#status").text(status_map[key]);
                 }
             }
@@ -283,7 +283,7 @@
               url = "http://"+address+":"+portNum+"/gracefulShutdown";
               var ssl = $('#ssl').val();
               url = "http://";
-              if (typeof ssl !== "undefined") {
+              if (typeof ssl == "ssl_enabled") {
                     url = "https://";
               }
               url = url+host+"/gracefulShutdown";
