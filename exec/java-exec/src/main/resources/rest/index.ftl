@@ -192,11 +192,6 @@
       var port = getPortNum();
       var timeout;
       var size = $("#size").html();
-      var host;
-
-      window.onload = function () {
-          host = location.host;
-      };
 
       function getPortNum() {
           var port = $.ajax({
