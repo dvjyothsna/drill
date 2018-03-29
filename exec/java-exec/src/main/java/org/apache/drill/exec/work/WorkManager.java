@@ -223,7 +223,7 @@ public class WorkManager implements AutoCloseable {
    * @return
    */
   private boolean areNewQueriesOrFragmentsAdded() {
-    return runningFragments.size() > numOfRunningFragments|| queries.size() > numOfRunningQueries;
+    return runningFragments.size() > numOfRunningFragments || queries.size() > numOfRunningQueries;
   }
 
   /**
