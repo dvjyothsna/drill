@@ -257,8 +257,8 @@ public class TestGracefulShutdown extends BaseTestQuery {
       int port = drillbit.getWebServerPort();
       int grace_period = drillbit.getContext().getConfig().getInt(ExecConstants.GRACE_PERIOD);
       long startTime = System.currentTimeMillis();
-      logger.warn("Started at " + String.valueOf(startTime));
-      logger.warn("Drillbit is " + drillbit.getUserPort());
+      logger.trace("Started at " + String.valueOf(startTime));
+      logger.trace("Drillbit is " + drillbit.getUserPort() + drillbit.getWebServerPort());
       listener =  client.queryBuilder().sql(sql).futureSummary();
       Thread.sleep(10000);
       URL url = new URL("http://localhost:"+port+"/shutdown");
@@ -279,7 +279,7 @@ public class TestGracefulShutdown extends BaseTestQuery {
       long stopTime = currentTime + WAIT_TIMEOUT_MS;
 
 //      while (currentTime < stopTime) {
-      logger.warn("Before listener completed" + String.valueOf(currentTime));
+      logger.trace("Before listener completed" + String.valueOf(currentTime));
       while(true) {
         if (listener.isDone() && drillbitEndpoints.size() == 2) {
           break;
@@ -289,7 +289,7 @@ public class TestGracefulShutdown extends BaseTestQuery {
 //        currentTime = System.currentTimeMillis();
       }
       long endTime = System.currentTimeMillis();
-      logger.warn("Finished at " + String.valueOf(endTime));
+      logger.trace("Finished at " + String.valueOf(endTime));
       Assert.fail("Timed out");
     }
   }
