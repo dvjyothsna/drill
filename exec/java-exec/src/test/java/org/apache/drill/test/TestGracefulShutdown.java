@@ -43,6 +43,8 @@ import static org.junit.Assert.fail;
 @Category({SlowTest.class})
 public class TestGracefulShutdown extends BaseTestQuery {
 
+  private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(TestGracefulShutdown.class);
+
   @Rule
   public final TestRule TIMEOUT = TestTools.getTimeoutRule(180_000);
 
@@ -254,6 +256,9 @@ public class TestGracefulShutdown extends BaseTestQuery {
       Drillbit drillbit = cluster.drillbit("db1");
       int port = drillbit.getWebServerPort();
       int grace_period = drillbit.getContext().getConfig().getInt(ExecConstants.GRACE_PERIOD);
+      long startTime = System.currentTimeMillis();
+      logger.warn("Started at " + String.valueOf(startTime));
+      logger.warn("Drillbit is " + drillbit.getUserPort());
       listener =  client.queryBuilder().sql(sql).futureSummary();
       Thread.sleep(10000);
       URL url = new URL("http://localhost:"+port+"/shutdown");
@@ -273,15 +278,18 @@ public class TestGracefulShutdown extends BaseTestQuery {
       long currentTime = System.currentTimeMillis();
       long stopTime = currentTime + WAIT_TIMEOUT_MS;
 
-      while (currentTime < stopTime) {
+//      while (currentTime < stopTime) {
+      logger.warn("Before listener completed" + String.valueOf(currentTime));
+      while(true) {
         if (listener.isDone() && drillbitEndpoints.size() == 2) {
-          return;
+          break;
         }
 
         Thread.sleep(100L);
-        currentTime = System.currentTimeMillis();
+//        currentTime = System.currentTimeMillis();
       }
-
+      long endTime = System.currentTimeMillis();
+      logger.warn("Finished at " + String.valueOf(endTime));
       Assert.fail("Timed out");
     }
   }

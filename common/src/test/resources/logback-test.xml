@@ -30,8 +30,8 @@
       </appender>
 
       <logger name="org.apache.drill" additivity="false">
-        <level value="debug"/>
-        <appender-ref ref="SOCKET"/>
+        <level value="warn"/>
+        <appender-ref ref="STDOUT"/>
       </logger>
 
       <logger name="query.logger" additivity="false">
