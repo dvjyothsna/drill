@@ -20,6 +20,11 @@
 -->
 <configuration>
 
+  <logger name="org.apache.drill" additivity="false">
+    <level value="trace"/>
+    <appender-ref ref="STDOUT"/>
+  </logger>
+
   <if condition='property("drill.lilith.enable").equalsIgnoreCase("true")'>
     <then>
       <appender name="SOCKET" class="de.huxhorn.lilith.logback.appender.ClassicMultiplexSocketAppender">
@@ -30,8 +35,8 @@
       </appender>
 
       <logger name="org.apache.drill" additivity="false">
-        <level value="trace"/>
-        <appender-ref ref="STDOUT"/>
+        <level value="debug"/>
+        <appender-ref ref="SOCKET"/>
       </logger>
 
       <logger name="query.logger" additivity="false">
