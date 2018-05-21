@@ -260,11 +260,12 @@ public class TestGracefulShutdown extends BaseTestQuery {
       logger.trace("Started at " + String.valueOf(startTime));
       logger.trace("Drillbit is " + drillbit.getUserPort() + drillbit.getWebServerPort());
       listener =  client.queryBuilder().sql(sql).futureSummary();
-      Thread.sleep(60000);
+//      Thread.sleep(60000);
       while (true) {
         if (listener.isDone()) {
           break;
         }
+        Thread.sleep(100L);
       }
       URL url = new URL("http://localhost:"+port+"/shutdown");
       HttpURLConnection conn = (HttpURLConnection) url.openConnection();
