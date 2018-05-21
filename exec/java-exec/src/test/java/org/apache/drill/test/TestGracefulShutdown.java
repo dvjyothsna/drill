@@ -282,6 +282,7 @@ public class TestGracefulShutdown extends BaseTestQuery {
 //      while (currentTime < stopTime) {
       logger.trace("Before listener completed" + String.valueOf(currentTime));
 //      while(true) {
+
         Collection<DrillbitEndpoint> drillbitEndpoints = cluster.drillbit()
                 .getContext()
                 .getClusterCoordinator()
