@@ -278,24 +278,25 @@ public class TestGracefulShutdown extends BaseTestQuery {
 
       long currentTime = System.currentTimeMillis();
       long stopTime = currentTime + WAIT_TIMEOUT_MS;
-
+      Thread.sleep(1000);
 //      while (currentTime < stopTime) {
       logger.trace("Before listener completed" + String.valueOf(currentTime));
-      while(true) {
+//      while(true) {
         Collection<DrillbitEndpoint> drillbitEndpoints = cluster.drillbit()
                 .getContext()
                 .getClusterCoordinator()
                 .getAvailableEndpoints();
+        Assert.assertEquals(2,drillbitEndpoints.size());
 
-        if (listener.isDone() && drillbitEndpoints.size() == 2) {
-          logger.trace("Run time is " + listener.get().runTimeMs());
-          logger.trace("Query Summary" + listener.get().toString());
-          break;
-        }
+//        if (listener.isDone() && drillbitEndpoints.size() == 2) {
+//          logger.trace("Run time is " + listener.get().runTimeMs());
+//          logger.trace("Query Summary" + listener.get().toString());
+//          break;
+//        }
 
-        Thread.sleep(100L);
+//        Thread.sleep(100L);
 //        currentTime = System.currentTimeMillis();
-      }
+//      }
       long endTime = System.currentTimeMillis();
       logger.trace("Finished at " + String.valueOf(endTime));
       Assert.fail("Timed out");
