@@ -20,10 +20,10 @@
 -->
 <configuration>
 
-  
 
-  <!--<if condition='property("drill.lilith.enable").equalsIgnoreCase("true")'>-->
-    <!--<then>-->
+
+  <if condition='property("drill.lilith.enable").equalsIgnoreCase("true")'>
+    <then>
       <appender name="SOCKET" class="de.huxhorn.lilith.logback.appender.ClassicMultiplexSocketAppender">
         <Compressing>true</Compressing>
         <ReconnectionDelay>10000</ReconnectionDelay>
@@ -40,8 +40,8 @@
         <level value="info"/>
         <appender-ref ref="SOCKET"/>
       </logger>
-    <!--</then>-->
-  <!--</if>-->
+    </then>
+  </if>
 
   <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
     <!-- encoders are assigned the type

@@ -261,6 +261,11 @@ public class TestGracefulShutdown extends BaseTestQuery {
       logger.trace("Drillbit is " + drillbit.getUserPort() + drillbit.getWebServerPort());
       listener =  client.queryBuilder().sql(sql).futureSummary();
       Thread.sleep(60000);
+      while (true) {
+        if (listener.isDone()) {
+          break;
+        }
+      }
       URL url = new URL("http://localhost:"+port+"/shutdown");
       HttpURLConnection conn = (HttpURLConnection) url.openConnection();
       conn.setRequestMethod("POST");
