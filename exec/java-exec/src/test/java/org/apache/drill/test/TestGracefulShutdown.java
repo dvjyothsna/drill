@@ -276,17 +276,17 @@ public class TestGracefulShutdown extends BaseTestQuery {
       }
       Thread.sleep(grace_period);
 
-      Collection<DrillbitEndpoint> drillbitEndpoints = cluster.drillbit()
-              .getContext()
-              .getClusterCoordinator()
-              .getAvailableEndpoints();
-
       long currentTime = System.currentTimeMillis();
       long stopTime = currentTime + WAIT_TIMEOUT_MS;
 
 //      while (currentTime < stopTime) {
       logger.trace("Before listener completed" + String.valueOf(currentTime));
       while(true) {
+        Collection<DrillbitEndpoint> drillbitEndpoints = cluster.drillbit()
+                .getContext()
+                .getClusterCoordinator()
+                .getAvailableEndpoints();
+
         if (listener.isDone() && drillbitEndpoints.size() == 2) {
           logger.trace("Run time is " + listener.get().runTimeMs());
           logger.trace("Query Summary" + listener.get().toString());
