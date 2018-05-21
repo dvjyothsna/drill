@@ -260,7 +260,6 @@ public class TestGracefulShutdown extends BaseTestQuery {
       logger.trace("Started at " + String.valueOf(startTime));
       logger.trace("Drillbit is " + drillbit.getUserPort() + drillbit.getWebServerPort());
       listener =  client.queryBuilder().sql(sql).futureSummary();
-//      Thread.sleep(60000);
       while (true) {
         if (listener.isDone()) {
           break;
@@ -283,21 +282,16 @@ public class TestGracefulShutdown extends BaseTestQuery {
       logger.trace("Before listener completed" + String.valueOf(currentTime));
 //      while(true) {
 
+      while(currentTime < stopTime) {
         Collection<DrillbitEndpoint> drillbitEndpoints = cluster.drillbit()
                 .getContext()
                 .getClusterCoordinator()
                 .getAvailableEndpoints();
-        Assert.assertEquals(2,drillbitEndpoints.size());
+        if (drillbitEndpoints.size() == 2) {
+          return;
+        }
+      }
 
-//        if (listener.isDone() && drillbitEndpoints.size() == 2) {
-//          logger.trace("Run time is " + listener.get().runTimeMs());
-//          logger.trace("Query Summary" + listener.get().toString());
-//          break;
-//        }
-
-//        Thread.sleep(100L);
-//        currentTime = System.currentTimeMillis();
-//      }
       long endTime = System.currentTimeMillis();
       logger.trace("Finished at " + String.valueOf(endTime));
       Assert.fail("Timed out");
