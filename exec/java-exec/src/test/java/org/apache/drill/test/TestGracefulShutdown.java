@@ -115,8 +115,6 @@ public class TestGracefulShutdown extends BaseTestQuery {
         }
       }).start();
 
-      Thread.sleep(gracePeriod);
-
       long currentTime = System.currentTimeMillis();
       long stopTime = currentTime + WAIT_TIMEOUT_MS;
 
@@ -163,8 +161,6 @@ public class TestGracefulShutdown extends BaseTestQuery {
         }
       }).start();
 
-      Thread.sleep(gracePeriod);
-
       long currentTime = System.currentTimeMillis();
       long stopTime = currentTime + WAIT_TIMEOUT_MS;
 
@@ -207,7 +203,6 @@ public class TestGracefulShutdown extends BaseTestQuery {
       int port = drillbit.getWebServerPort();
       int gracePeriod = drillbit.getContext().getConfig().getInt(ExecConstants.GRACE_PERIOD);
       listener =  client.queryBuilder().sql(sql).futureSummary();
-      Thread.sleep(60000);
       URL url = new URL("http://localhost:" + port + "/gracefulShutdown");
       HttpURLConnection conn = (HttpURLConnection) url.openConnection();
       conn.setRequestMethod("POST");
@@ -215,7 +210,6 @@ public class TestGracefulShutdown extends BaseTestQuery {
         throw new RuntimeException("Failed : HTTP error code : "
                 + conn.getResponseCode());
       }
-      Thread.sleep(gracePeriod);
       Collection<DrillbitEndpoint> drillbitEndpoints = cluster.drillbit()
               .getContext()
               .getClusterCoordinator()
@@ -269,7 +263,6 @@ public class TestGracefulShutdown extends BaseTestQuery {
         throw new RuntimeException("Failed : HTTP error code : "
                 + conn.getResponseCode());
       }
-      Thread.sleep(gracePeriod);
       long currentTime = System.currentTimeMillis();
       long stopTime = currentTime + WAIT_TIMEOUT_MS;
 
@@ -281,6 +274,8 @@ public class TestGracefulShutdown extends BaseTestQuery {
         if (drillbitEndpoints.size() == 2) {
           return;
         }
+
+        Thread.sleep(100L);
         currentTime = System.currentTimeMillis();
       }
       Assert.fail("Timed out");
