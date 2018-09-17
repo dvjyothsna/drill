@@ -252,6 +252,10 @@ public class Metadata_V3 {
     @JsonProperty public int repetitionLevel;
     @JsonProperty public int definitionLevel;
 
+    public Key getKey() {
+      return key;
+    }
+
     // Key to find by name only
     @JsonIgnore private Key key;
 

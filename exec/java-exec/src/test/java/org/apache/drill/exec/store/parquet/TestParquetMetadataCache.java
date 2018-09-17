@@ -64,8 +64,8 @@ public class TestParquetMetadataCache extends PlanTestBase {
   public void testPartitionPruningWithMetadataCache_1() throws Exception {
     test("refresh table metadata dfs.`%s`", TABLE_NAME_1);
     checkForMetadataFile(TABLE_NAME_1);
-    String query = String.format("select dir0, dir1, o_custkey, o_orderdate from dfs.`%s` " +
-            " where dir0=1994 and dir1 in ('Q1', 'Q2')", TABLE_NAME_1);
+    String query = String.format("select max(o_custkey) from dfs.`%s` " +
+            " where dir0=1994", TABLE_NAME_1);
     int expectedRowCount = 20;
     int expectedNumFiles = 2;
 
@@ -184,10 +184,11 @@ public class TestParquetMetadataCache extends PlanTestBase {
     runSQL("REFRESH TABLE METADATA dfs.tmp.`4449`");
 
     testBuilder()
-      .sqlQuery("SELECT COUNT(*) cnt FROM (" +
-        "SELECT l_orderkey FROM dfs.tmp.`4449` WHERE l_discount < 0.05" +
-        " UNION ALL" +
-        " SELECT l_orderkey FROM dfs.tmp.`4449` WHERE l_discount > 0.02)")
+      .sqlQuery("SELECT COUNT(*) cnt FROM dfs.tmp.`4449`")
+//              "(" +
+//        "SELECT l_orderkey FROM dfs.tmp.`4449` WHERE l_discount < 0.05" +
+//        " UNION ALL" +
+//        " SELECT l_orderkey FROM dfs.tmp.`4449` WHERE l_discount > 0.02)")
       .unOrdered()
       .baselineColumns("cnt")
       .baselineValues(71159L)
@@ -278,7 +279,7 @@ public class TestParquetMetadataCache extends PlanTestBase {
     checkForMetadataFile(TABLE_NAME_2);
 
     // run query and check correctness
-    String query1 = String.format("select dir0, dir1, o_custkey, o_orderdate from dfs.`%s` " +
+    String query1 = String.format("select o_custkey, o_orderdate from dfs.`%s` " +
             " where dir0=1995", TABLE_NAME_2);
     int expectedRowCount = 80;
     int expectedNumFiles = 8;
@@ -300,7 +301,7 @@ public class TestParquetMetadataCache extends PlanTestBase {
     checkForMetadataFile(TABLE_NAME_2);
 
     // run query and check correctness
-    String query1 = String.format("select dir0, dir1, o_custkey, o_orderdate from dfs.`%s` " +
+    String query1 = String.format("select o_custkey, o_orderdate from dfs.`%s` " +
             " where dir1='Q3'", TABLE_NAME_2);
     int expectedRowCount = 40;
     int expectedNumFiles = 4;
