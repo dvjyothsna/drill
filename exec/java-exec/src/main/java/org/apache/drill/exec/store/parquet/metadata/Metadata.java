@@ -545,7 +545,7 @@ public class Metadata {
    */
   private void writeFile(ParquetTableMetadata_v3 parquetTableMetadata, Path p, FileSystem fs) throws IOException {
     Metadata_Parquet_Helper metadata_parquet_helper = new Metadata_Parquet_Helper();
-      metadata_parquet_helper.writeMetadataToParquet(parquetTableMetadata, p, fs);
+    metadata_parquet_helper.writeMetadataToParquet(parquetTableMetadata, p, fs);
 //    JsonFactory jsonFactory = new JsonFactory();
 //    jsonFactory.configure(Feature.AUTO_CLOSE_TARGET, false);
 //    jsonFactory.configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, false);
@@ -574,11 +574,15 @@ public class Metadata {
 
   private static ParquetTableMetadata_v3 printGroup(Group g) throws IOException {
     int fieldCount = g.getType().getFieldCount();
+//    List<ParquetFileMetadata> files = new ArrayList<>();
+
     for (int field = 0; field < fieldCount; field++) {
+
       int valueCount = g.getFieldRepetitionCount(field);
 
       Type fieldType = g.getType().getType(field);
       String fieldName = fieldType.getName();
+
 
       for (int index = 0; index < valueCount; index++) {
         if (fieldType.isPrimitive()) {

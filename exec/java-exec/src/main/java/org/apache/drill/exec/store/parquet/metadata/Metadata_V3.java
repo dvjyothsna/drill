@@ -213,7 +213,7 @@ public class Metadata_V3 {
     }
 
     public RowGroupMetadata_v3(Long start, Long length, Long rowCount, Map<String, Float> hostAffinity,
-                               List<ColumnMetadata_v3> columns) {
+                               List< ColumnMetadata_v3> columns) {
       this.start = start;
       this.length = length;
       this.rowCount = rowCount;
