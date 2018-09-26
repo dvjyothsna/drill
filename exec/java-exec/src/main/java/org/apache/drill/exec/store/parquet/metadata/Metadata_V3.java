@@ -45,6 +45,7 @@ public class Metadata_V3 {
 
   @JsonTypeName(V3_3)
   public static class ParquetTableMetadata_v3 extends ParquetTableMetadataBase {
+
     @JsonProperty(value = "metadata_version", access = JsonProperty.Access.WRITE_ONLY) private String metadataVersion;
     /*
      ColumnTypeInfo is schema information from all the files and row groups, merged into
@@ -94,6 +95,10 @@ public class Metadata_V3 {
 
     public ColumnTypeMetadata_v3 getColumnTypeInfo(String[] name) {
       return columnTypeInfo.get(new ColumnTypeMetadata_v3.Key(name));
+    }
+
+    public void setMetadataVersion(String metadataVersion) {
+      this.metadataVersion = metadataVersion;
     }
 
     @JsonIgnore
@@ -195,6 +200,10 @@ public class Metadata_V3 {
 
     @JsonIgnore @Override public List<? extends RowGroupMetadata> getRowGroups() {
       return rowGroups;
+    }
+
+    @JsonIgnore @Override public void setRowGroups(List<RowGroupMetadata_v3> rowGroups) {
+      this.rowGroups = rowGroups;
     }
   }
 

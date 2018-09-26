@@ -806,4 +806,8 @@ public final class ExecConstants {
 
   public static final String LIST_FILES_RECURSIVELY = "storage.list_files_recursively";
   public static final BooleanValidator LIST_FILES_RECURSIVELY_VALIDATOR = new BooleanValidator(LIST_FILES_RECURSIVELY, null);
+
+  public static final String USE_PARQUET_FOR_METADATA_CACHING = "drill.exec.use_parquet_for_metadata_caching";
+  public static final BooleanValidator USE_PARQUET_FOR_METADATA_CACHING__VALIDATOR = new BooleanValidator(USE_PARQUET_FOR_METADATA_CACHING, null);
+
 }

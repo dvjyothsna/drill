@@ -88,6 +88,10 @@ public class MetadataBase {
     @JsonIgnore public abstract Long getLength();
 
     @JsonIgnore public abstract List<? extends RowGroupMetadata> getRowGroups();
+
+
+    @JsonIgnore
+    public abstract void setRowGroups(List<Metadata_V3.RowGroupMetadata_v3> rowGroups);
   }
 
 

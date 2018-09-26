@@ -180,6 +180,11 @@ public class Metadata_V2 {
     @JsonIgnore @Override public List<? extends RowGroupMetadata> getRowGroups() {
       return rowGroups;
     }
+
+    @Override
+    public void setRowGroups(List<Metadata_V3.RowGroupMetadata_v3> rowGroups) {
+      return;
+    }
   }
 
 

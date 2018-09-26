@@ -153,11 +153,11 @@ public class ParquetMetaStatCollector implements  ColumnStatCollector {
     TypeProtos.MajorType type = ParquetReaderUtility.getType(primitiveType, originalType, scale, precision);
     stat.setNumNulls(numNulls);
 
-    if (min != null && max != null ) {
+    if (!min.toString().equals("null") && !max.toString().equals("null")) {
       switch (type.getMinorType()) {
       case INT :
       case TIME:
-        ((IntStatistics) stat).setMinMax(Integer.parseInt(((Integer) min).toString()), Integer.parseInt(((Integer) max).toString()));
+        ((IntStatistics) stat).setMinMax(Integer.parseInt(min.toString()), Integer.parseInt( max.toString()));
         break;
       case BIGINT:
       case TIMESTAMP:

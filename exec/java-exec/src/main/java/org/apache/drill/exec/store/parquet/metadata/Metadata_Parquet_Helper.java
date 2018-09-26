@@ -50,18 +50,19 @@ public class Metadata_Parquet_Helper {
     return writer;
   }
   public static String createMetadataSchema(Metadata_V3.ParquetTableMetadata_v3 parquetTableMetadata) {
+    String schema = null;
+    if (parquetTableMetadata  != null && parquetTableMetadata.getFiles().size() != 0) {
+      schema = "message metadata { \n";
+      schema = schema + "required INT32 fid; \n";
+      schema = schema + "required binary path; \n";
+      schema = schema + "required INT64 length; \n";
+      schema = schema + "required INT64 start; \n";
+      schema = schema + "required INT64 rgLength; \n";
+      schema = schema + "required INT64 rowCount; \n";
+      schema = schema + "required binary hostAffinity; \n";
+      schema = schema + "required int32 rgid; \n";
 
-    String schema = "message metadata { \n";
-    schema = schema + "required INT32 fid; \n";
-    schema = schema + "required binary path; \n";
-    schema = schema + "required INT64 length; \n";
-    schema = schema + "required INT64 start; \n";
-    schema = schema + "required INT64 rgLength; \n";
-    schema = schema + "required INT64 rowCount; \n";
-    schema = schema + "required binary hostAffinity; \n";
-    schema = schema + "required int32 rgid; \n";
-
-    for ( MetadataBase.ColumnMetadata column : parquetTableMetadata.getFiles().get(0).getRowGroups().get(0).getColumns()) {
+      for (MetadataBase.ColumnMetadata column : parquetTableMetadata.getFiles().get(0).getRowGroups().get(0).getColumns()) {
 //      final CharsetEncoder charsetEncoder = Charsets.UTF_8.newEncoder();
 //      final CharBuffer patternCharBuffer = CharBuffer.wrap(java.util.Arrays.toString(column.getName()));
 //      try {
@@ -70,11 +71,12 @@ public class Metadata_Parquet_Helper {
 //        e.printStackTrace();
 //      }
 
-      String name = java.util.Arrays.toString(column.getName());
-      schema = schema + "required binary "+ name + "_name; \n";
-      schema = schema + "required binary " + name + "_minValue; \n";
-      schema = schema + "required binary " + name + "_maxValue; \n";
-      schema = schema + "required INT64 " + name + "_nulls; \n";
+        String name = java.util.Arrays.toString(column.getName());
+        schema = schema + "required binary " + name + "_name; \n";
+        schema = schema + "required binary " + name + "_minValue; \n";
+        schema = schema + "required binary " + name + "_maxValue; \n";
+        schema = schema + "required INT64 " + name + "_nulls; \n";
+      }
     }
     schema = schema + "} \n";
     return schema;
@@ -105,7 +107,7 @@ public class Metadata_Parquet_Helper {
                 .append("rgid", j);
                 for (MetadataBase.ColumnMetadata column : rowGroup.getColumns()) {
                   String name = java.util.Arrays.toString(column.getName());
-                  simpleGroup.append(name + "_name", name)
+                  simpleGroup.append(name + "_name", gson.toJson(column.getName()))
                           .append(name + "_minValue", String.valueOf(column.getMinValue()))
                           .append(name + "_maxValue", String.valueOf(column.getMaxValue()))
                           .append(name + "_nulls", column.getNulls());

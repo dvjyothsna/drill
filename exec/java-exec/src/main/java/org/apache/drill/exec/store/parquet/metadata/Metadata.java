@@ -44,6 +44,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.drill.common.collections.Collectors;
 import org.apache.drill.common.expression.SchemaPath;
 import org.apache.drill.common.util.DrillVersionInfo;
+import org.apache.drill.exec.store.SchemaConfig;
 import org.apache.drill.exec.store.TimedCallable;
 import org.apache.drill.exec.store.dfs.MetadataContext;
 import org.apache.drill.exec.store.parquet.ParquetFormatConfig;
@@ -94,6 +95,7 @@ public class Metadata {
 
   public static final String[] OLD_METADATA_FILENAMES = {".drill.parquet_metadata.v2"};
   public static final String METADATA_FILENAME = ".drill.parquet_metadata";
+  public static final String METADATA_SUMMARY_FILENAME = ".summary";
   public static final String METADATA_DIRECTORIES_FILENAME = ".drill.parquet_metadata_directories";
   public static final String PARQUET_STRINGS_SIGNED_MIN_MAX_ENABLED = "parquet.strings.signed-min-max.enabled";
 
@@ -159,7 +161,7 @@ public class Metadata {
       return null;
     }
     Metadata metadata = new Metadata(formatConfig);
-    metadata.readBlockMeta(path, false, metaContext, fs);
+    metadata.readBlockMeta(path, false, metaContext, fs, null);
     return metadata.parquetTableMetadata;
   }
 
@@ -173,12 +175,12 @@ public class Metadata {
    * @return parquet metadata for a directory. Null if metadata cache is missing, unsupported or corrupted
    */
   public static @Nullable ParquetTableMetadataDirs readMetadataDirs(FileSystem fs, Path path,
-      MetadataContext metaContext, ParquetFormatConfig formatConfig) {
+                                                                    MetadataContext metaContext, ParquetFormatConfig formatConfig, SchemaConfig schemaConfig) {
     if (ignoreReadingMetadata(metaContext, path)) {
       return null;
     }
     Metadata metadata = new Metadata(formatConfig);
-    metadata.readBlockMeta(path, true, metaContext, fs);
+    metadata.readBlockMeta(path, true, metaContext, fs, schemaConfig);
     return metadata.parquetTableMetadataDirs;
   }
 
@@ -537,6 +539,26 @@ public class Metadata {
     return hostAffinityMap;
   }
 
+  private void writeSummary(ParquetTableMetadata_v3 parquetTableMetadata, Path p, FileSystem fs) throws IOException {
+    String summaryPath1 = p.toString();
+    int lastIndex = summaryPath1.lastIndexOf("/");
+    summaryPath1 = summaryPath1.substring(0, lastIndex);
+    Path summaryPath = new Path(summaryPath1, METADATA_SUMMARY_FILENAME);
+    ParquetTableMetadata_v3 p3 = parquetTableMetadata;
+    Summary_new.Summary summary_new = new Summary_new.Summary(p3.getMetadataVersion(), p3.getDirectories(), p3.columnTypeInfo, p3.getDrillVersion());
+    JsonFactory jsonFactory = new JsonFactory();
+    jsonFactory.configure(Feature.AUTO_CLOSE_TARGET, false);
+    jsonFactory.configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, false);
+    ObjectMapper mapper = new ObjectMapper(jsonFactory);
+    SimpleModule module = new SimpleModule();
+    module.addSerializer(ColumnMetadata_v3.class, new ColumnMetadata_v3.Serializer());
+    mapper.registerModule(module);
+    OutputStream os = fs.create(summaryPath);
+    mapper.writerWithDefaultPrettyPrinter().writeValue(os, summary_new);
+    os.flush();
+    os.close();
+  }
+
   /**
    * Serialize parquet metadata to json and write to a file.
    *
@@ -546,17 +568,7 @@ public class Metadata {
   private void writeFile(ParquetTableMetadata_v3 parquetTableMetadata, Path p, FileSystem fs) throws IOException {
     Metadata_Parquet_Helper metadata_parquet_helper = new Metadata_Parquet_Helper();
     metadata_parquet_helper.writeMetadataToParquet(parquetTableMetadata, p, fs);
-//    JsonFactory jsonFactory = new JsonFactory();
-//    jsonFactory.configure(Feature.AUTO_CLOSE_TARGET, false);
-//    jsonFactory.configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, false);
-//    ObjectMapper mapper = new ObjectMapper(jsonFactory);
-//    SimpleModule module = new SimpleModule();
-//    module.addSerializer(ColumnMetadata_v3.class, new ColumnMetadata_v3.Serializer());
-//    mapper.registerModule(module);
-//    OutputStream os = fs.create(p);
-//    mapper.writerWithDefaultPrettyPrinter().writeValue(os, parquetTableMetadata);
-//    os.flush();
-//    os.close();
+    writeSummary(parquetTableMetadata, p, fs);
   }
 
   private void writeFile(ParquetTableMetadataDirs parquetTableMetadataDirs, Path p, FileSystem fs) throws IOException {
@@ -572,75 +584,132 @@ public class Metadata {
     os.close();
   }
 
-  private static ParquetTableMetadata_v3 printGroup(Group g) throws IOException {
+  private static ParquetTableMetadata_v3 printGroup(Group g, List<ParquetFileMetadata> newFiles) throws IOException {
     int fieldCount = g.getType().getFieldCount();
-//    List<ParquetFileMetadata> files = new ArrayList<>();
+    RowGroupMetadata_v3 rowgroup;
+    List<ColumnMetadata_v3> columnInfo = new ArrayList<>();
+    Gson gson = new Gson();
+    int fid = 0, rgid =0;
+    long length = 0, start = 0, rgLength = 0, rowCount = 0;
+    String path = null;
+    Map<String, Float> hostAffinity = null;
+    java.lang.reflect.Type hostAffinityType = new TypeToken<Map<String, Float>>() {}.getType();
 
     for (int field = 0; field < fieldCount; field++) {
-
-      int valueCount = g.getFieldRepetitionCount(field);
-
       Type fieldType = g.getType().getType(field);
       String fieldName = fieldType.getName();
-
-
-      for (int index = 0; index < valueCount; index++) {
-        if (fieldType.isPrimitive()) {
-          System.out.println(fieldName + " " + g.getValueToString(field, index));
+      if (field < 8) {
+        switch (fieldName) {
+          case "fid":
+            fid = g.getInteger(field, 0);
+            break;
+          case "path":
+            path = g.getValueToString(field, 0);
+            break;
+          case "length":
+            length = g.getLong(field, 0);
+            break;
+          case "start":
+            start = g.getLong(field, 0);
+            break;
+          case "rgLength":
+            rgLength = g.getLong(field, 0);
+            break;
+          case "rowCount":
+            rowCount = g.getLong(field, 0);
+            break;
+          case "rgid":
+            rgid = g.getInteger(field, 0);
+            break;
+          case "hostAffinity" :
+            hostAffinity = gson.fromJson(g.getValueToString(field, 0), hostAffinityType);
+            break;
         }
+      } else {
+        java.lang.reflect.Type nameType = new TypeToken<String []>() {}.getType();
+        ColumnMetadata_v3 columnMetadata_v3 = new ColumnMetadata_v3();
+//        List<String> names = gson.fromJson(g.getValueToString(field, 0), nameType);
+        columnMetadata_v3.name = gson.fromJson(g.getValueToString(field++, 0), nameType);
+        columnMetadata_v3.minValue = (Object) g.getValueToString(field++, 0);
+        columnMetadata_v3.maxValue = (Object) g.getValueToString(field++, 0);
+        columnMetadata_v3.nulls = g.getLong(field, 0);
+        columnInfo.add(columnMetadata_v3);
       }
     }
 
-    Gson gson = new Gson();
-
-    String metadata_version = g.getValueToString(0, 0);
-
-    String column = g.getValueToString(1, 0);
-    java.lang.reflect.Type columnType = new TypeToken<ConcurrentHashMap<ColumnTypeMetadata_v3.Key, ColumnTypeMetadata_v3>>() {
-    }.getType();
-    ObjectMapper mapper = new ObjectMapper();
-    ConcurrentHashMap<ColumnTypeMetadata_v3.Key, ColumnTypeMetadata_v3> columnTypeInfo;
-//    columnTypeInfo = mapper.readValue(column, new TypeReference<ConcurrentHashMap<ColumnTypeMetadata_v3.Key, ColumnTypeMetadata_v3>>(){});
-    ConcurrentHashMap<ColumnTypeMetadata_v3.Key, ColumnTypeMetadata_v3> newcolumnTypeInfo = new ConcurrentHashMap<>();
-
-    columnTypeInfo = gson.fromJson(g.getValueToString(1, 0), ConcurrentHashMap.class);
-    for ( Map.Entry<ColumnTypeMetadata_v3.Key, ColumnTypeMetadata_v3> entry : columnTypeInfo.entrySet()) {
-      ColumnTypeMetadata_v3 columnMetadata_v3 = gson.fromJson(gson.toJson(columnTypeInfo.get(entry.getKey())), ColumnTypeMetadata_v3.class);
-      newcolumnTypeInfo.put(columnMetadata_v3.getKey(), columnMetadata_v3);
+    rowgroup = new RowGroupMetadata_v3(start, rgLength, rowCount, hostAffinity, columnInfo);
+    ArrayList<RowGroupMetadata_v3> rowgroups = new ArrayList<>();
+    if (newFiles.size() <= fid) {
+      rowgroups.add(rowgroup);
+      ParquetFileMetadata parquetFileMetadata_v3 = new ParquetFileMetadata_v3(path, length, rowgroups);
+      newFiles.add(parquetFileMetadata_v3);
+    } else {
+      rowgroups = (ArrayList<RowGroupMetadata_v3>) newFiles.get(fid).getRowGroups();
+      rowgroups.add(rowgroup);
+      ParquetFileMetadata pf = newFiles.get(fid);
+      pf.setRowGroups(rowgroups);
+      newFiles.set(fid, pf);
     }
-    java.lang.reflect.Type filesType = new TypeToken<List<ParquetFileMetadata_v3>>() {
-    }.getType();
-    List<ParquetFileMetadata_v3> files = gson.fromJson(
-            g.getValueToString(2, 0), filesType
-    );
-    java.lang.reflect.Type directoriesType = new TypeToken<List<String>>() {
-    }.getType();
-    List<String> directories = gson.fromJson(g.getValueToString(3, 0), directoriesType);
-    String drillVersion = g.getValueToString(4, 0);
-    return new ParquetTableMetadata_v3(metadata_version, files, directories, newcolumnTypeInfo, drillVersion);
+
+//      for (int index = 0; index < valueCount; index++) {
+//        if (fieldType.isPrimitive()) {
+//          System.out.println(fieldName + " " + g.getValueToString(field, index));
+//        }
+//      }
+//    }
+
+//    Gson gson = new Gson();
+//
+//    String metadata_version = g.getValueToString(0, 0);
+//
+//    String column = g.getValueToString(1, 0);
+//    java.lang.reflect.Type columnType = new TypeToken<ConcurrentHashMap<ColumnTypeMetadata_v3.Key, ColumnTypeMetadata_v3>>() {
+//    }.getType();
+//    ObjectMapper mapper = new ObjectMapper();
+//    ConcurrentHashMap<ColumnTypeMetadata_v3.Key, ColumnTypeMetadata_v3> columnTypeInfo;
+////    columnTypeInfo = mapper.readValue(column, new TypeReference<ConcurrentHashMap<ColumnTypeMetadata_v3.Key, ColumnTypeMetadata_v3>>(){});
+//    ConcurrentHashMap<ColumnTypeMetadata_v3.Key, ColumnTypeMetadata_v3> newcolumnTypeInfo = new ConcurrentHashMap<>();
+//
+//    columnTypeInfo = gson.fromJson(g.getValueToString(1, 0), ConcurrentHashMap.class);
+//    for ( Map.Entry<ColumnTypeMetadata_v3.Key, ColumnTypeMetadata_v3> entry : columnTypeInfo.entrySet()) {
+//      ColumnTypeMetadata_v3 columnMetadata_v3 = gson.fromJson(gson.toJson(columnTypeInfo.get(entry.getKey())), ColumnTypeMetadata_v3.class);
+//      newcolumnTypeInfo.put(columnMetadata_v3.getKey(), columnMetadata_v3);
+//    }
+//    java.lang.reflect.Type filesType = new TypeToken<List<ParquetFileMetadata_v3>>() {
+//    }.getType();
+//    List<ParquetFileMetadata_v3> files = gson.fromJson(
+//            g.getValueToString(2, 0), filesType
+//    );
+//    java.lang.reflect.Type directoriesType = new TypeToken<List<String>>() {
+//    }.getType();
+//    List<String> directories = gson.fromJson(g.getValueToString(3, 0), directoriesType);
+//    String drillVersion = g.getValueToString(4, 0);
+//    return new ParquetTableMetadata_v3(metadata_version, files, directories, newcolumnTypeInfo, drillVersion);
+
+      return null;
 
   }
 
-  private ParquetTableMetadata_v3 readParquetFiles(Path path)
+  private List<ParquetFileMetadata> readParquetFiles(Path path)
           throws IOException {
 
+    List<ParquetFileMetadata> newFiles = new ArrayList<>();
     Configuration conf = new Configuration();
     try {
       ParquetMetadata readFooter = ParquetFileReader.readFooter(conf, path, ParquetMetadataConverter.NO_FILTER);
       MessageType schema = readFooter.getFileMetaData().getSchema();
       ParquetFileReader r = new ParquetFileReader(conf, path, readFooter);
-
       PageReadStore pages = null;
       try {
         while (null != (pages = r.readNextRowGroup())) {
           final long rows = pages.getRowCount();
-          System.out.println("Number of rows: " + rows);
+//          System.out.println("Number of rows: " + rows);
 
           final MessageColumnIO columnIO = new ColumnIOFactory().getColumnIO(schema);
           final RecordReader recordReader = columnIO.getRecordReader(pages, new GroupRecordConverter(schema));
           for (int i = 0; i < rows; i++) {
             final Group g = (Group) recordReader.read();
-             return printGroup(g);
+              printGroup(g, newFiles);
             // TODO Compare to System.out.println(g);
           }
         }
@@ -651,10 +720,26 @@ public class Metadata {
       System.out.println("Error reading parquet file.");
       e.printStackTrace();
     }
-
-    return null;
+    ParquetTableMetadata_v3 parquetTableMetadata = new ParquetTableMetadata_v3();
+    List<ParquetFileMetadata> files = newFiles;
+//    System.out.println(newFiles);
+    return newFiles;
   }
 
+  private ParquetTableMetadata_v3 readSummary(ObjectMapper mapper, Path path, ParquetTableMetadata_v3 parquetTableMetadata, FileSystem fs) throws IOException {
+    String summaryPath1 = path.toString();
+    int lastIndex = summaryPath1.lastIndexOf("/");
+    summaryPath1 = summaryPath1.substring(0, lastIndex);
+    Path summaryPath = new Path(summaryPath1, METADATA_SUMMARY_FILENAME);
+    InputStream is = fs.open(summaryPath);
+    Summary_new.Summary summary = mapper.readValue(is, Summary_new.Summary.class);
+    parquetTableMetadata = new ParquetTableMetadata_v3();
+    parquetTableMetadata.directories = summary.directories;
+    parquetTableMetadata.drillVersion = summary.drillVersion;
+    parquetTableMetadata.columnTypeInfo = summary.columnTypeInfo;
+    parquetTableMetadata.setMetadataVersion(summary.getMetadataVersion());
+    return parquetTableMetadata;
+  }
   /**
    * Read the parquet metadata from a file
    *
@@ -663,7 +748,7 @@ public class Metadata {
    *                 or false for {@link Metadata#METADATA_FILENAME} files reading
    * @param metaContext current metadata context
    */
-  private void readBlockMeta(Path path, boolean dirsOnly, MetadataContext metaContext, FileSystem fs) {
+  private void readBlockMeta(Path path, boolean dirsOnly, MetadataContext metaContext, FileSystem fs, SchemaConfig schemaConfig) {
     Stopwatch timer = logger.isDebugEnabled() ? Stopwatch.createStarted() : null;
     Path metadataParentDir = Path.getPathWithoutSchemeAndAuthority(path.getParent());
     String metadataParentDirPath = metadataParentDir.toUri().getPath();
@@ -698,8 +783,14 @@ public class Metadata {
           newMetadata = true;
         }
       } else {
-        parquetTableMetadata = readParquetFiles(path);
-        //parquetTableMetadata = mapper.readValue(is, ParquetTableMetadataBase.class);
+
+//        if (schemaConfig != null && schemaConfig.getOption(ExecConstants.USE_PARQUET_FOR_METADATA_CACHING).bool_val) {
+          List<ParquetFileMetadata> parquetFileMetadata = readParquetFiles(path);
+          parquetTableMetadata = readSummary(mapper, path, (ParquetTableMetadata_v3) parquetTableMetadata, fs);
+          parquetTableMetadata.assignFiles(parquetFileMetadata);
+//        } else {
+//          parquetTableMetadata = mapper.readValue(is, ParquetTableMetadataBase.class);
+//        }
         if (timer != null) {
           logger.debug("Took {} ms to read metadata from cache file", timer.elapsed(TimeUnit.MILLISECONDS));
           timer.stop();
