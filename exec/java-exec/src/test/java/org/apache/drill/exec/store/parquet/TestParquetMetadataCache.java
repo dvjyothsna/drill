@@ -17,23 +17,7 @@
  */
 package org.apache.drill.exec.store.parquet;
 
-import org.apache.drill.shaded.guava.com.google.common.collect.Lists;
-import org.apache.commons.io.filefilter.FalseFileFilter;
-import org.apache.commons.io.filefilter.TrueFileFilter;
-import org.apache.drill.PlanTestBase;
-import org.apache.drill.categories.UnlikelyTest;
-import org.apache.commons.io.FileUtils;
-import org.apache.drill.exec.record.BatchSchema;
-import org.apache.drill.exec.store.parquet.metadata.Metadata;
-import org.apache.drill.exec.store.parquet.metadata.MetadataVersion;
-import org.apache.drill.test.rowSet.schema.SchemaBuilder;
-import org.apache.drill.exec.planner.physical.PlannerSettings;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
-
+import ch.qos.logback.classic.Level;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -43,10 +27,26 @@ import java.nio.file.attribute.FileTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.FalseFileFilter;
+import org.apache.commons.io.filefilter.TrueFileFilter;
+import org.apache.drill.PlanTestBase;
+import org.apache.drill.categories.UnlikelyTest;
+import org.apache.drill.exec.planner.physical.PlannerSettings;
+import org.apache.drill.exec.record.BatchSchema;
+import org.apache.drill.exec.store.parquet.metadata.Metadata;
+import org.apache.drill.exec.store.parquet.metadata.MetadataVersion;
+import org.apache.drill.shaded.guava.com.google.common.collect.Lists;
+import org.apache.drill.test.LogFixture;
+import org.apache.drill.test.rowSet.schema.SchemaBuilder;
+import org.junit.Assert;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import org.junit.BeforeClass;
+import org.junit.Ignore;
+import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 public class TestParquetMetadataCache extends PlanTestBase {
   private static final String TABLE_NAME_1 = "parquetTable1";
@@ -58,6 +58,12 @@ public class TestParquetMetadataCache extends PlanTestBase {
     dirTestWatcher.copyResourceToRoot(Paths.get("multilevel/parquet"), Paths.get(TABLE_NAME_1));
     dirTestWatcher.copyResourceToRoot(Paths.get("multilevel/parquet2"), Paths.get(TABLE_NAME_2));
     dirTestWatcher.copyResourceToRoot(Paths.get("parquet"));
+    LogFixture.LogFixtureBuilder logBuilder = LogFixture.builder()
+            .toConsole()
+            .logger("org.apache.drill.exec.store.parquet.metadata", Level.DEBUG)
+            .logger(Metadata.class, Level.TRACE);
+    logBuilder.build();
+
   }
 
   @Test
@@ -278,7 +284,7 @@ public class TestParquetMetadataCache extends PlanTestBase {
     checkForMetadataFile(TABLE_NAME_2);
 
     // run query and check correctness
-    String query1 = String.format("select o_custkey, o_orderdate from dfs.`%s` " +
+    String query1 = String.format("select dir0, dir1, o_custkey, o_orderdate from dfs.`%s` " +
             " where dir0=1995", TABLE_NAME_2);
     int expectedRowCount = 80;
     int expectedNumFiles = 8;
@@ -300,7 +306,7 @@ public class TestParquetMetadataCache extends PlanTestBase {
     checkForMetadataFile(TABLE_NAME_2);
 
     // run query and check correctness
-    String query1 = String.format("select o_custkey, o_orderdate from dfs.`%s` " +
+    String query1 = String.format("select dir0, dir1, o_custkey, o_orderdate from dfs.`%s` " +
             " where dir1='Q3'", TABLE_NAME_2);
     int expectedRowCount = 40;
     int expectedNumFiles = 4;

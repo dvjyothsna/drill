@@ -161,7 +161,7 @@ public class TestFileGenerator {
 
     MessageType schema = MessageTypeParser.parseMessageType(messageSchema);
 
-    CompressionCodecName  codec = CompressionCodecName.UNCOMPRESSED;
+    CompressionCodecName codec = CompressionCodecName.UNCOMPRESSED;
     ParquetFileWriter w = new ParquetFileWriter(configuration, schema, path);
     w.start();
     HashMap<String, Integer> columnValuesWritten = new HashMap<>();

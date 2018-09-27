@@ -27,7 +27,7 @@ import org.apache.drill.common.expression.SchemaPath;
 import static org.apache.drill.exec.store.parquet.metadata.MetadataVersion.Constants.V3_3;
 import org.apache.parquet.schema.OriginalType;
 import org.apache.parquet.schema.PrimitiveType;
-public class Summary_new {
+public class Metadata_Summary {
 
   @JsonTypeName(V3_3)
   public static class Summary {
