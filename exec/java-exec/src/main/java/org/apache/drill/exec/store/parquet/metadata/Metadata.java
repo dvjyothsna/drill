@@ -624,43 +624,24 @@ public class Metadata {
     Map<String, Float> hostAffinity = null;
     java.lang.reflect.Type hostAffinityType = new TypeToken<Map<String, Float>>() {}.getType();
 
-    for (int field = 0; field < fieldCount; field++) {
-      Type fieldType = g.getType().getType(field);
-      String fieldName = fieldType.getName();
-      if (field < 7) {
-        switch (fieldName) {
-          case "fid":
-            fid = g.getInteger(field, 0);
-            break;
-          case "path":
-            path = g.getValueToString(field, 0);
-            break;
-          case "length":
-            length = g.getLong(field, 0);
-            break;
-          case "start":
-            start = g.getLong(field, 0);
-            break;
-          case "rgLength":
-            rgLength = g.getLong(field, 0);
-            break;
-          case "rowCount":
-            rowCount = g.getLong(field, 0);
-            break;
-          case "hostAffinity" :
-            hostAffinity = gson.fromJson(g.getValueToString(field, 0), hostAffinityType);
-            break;
-        }
-      } else {
+    fid = g.getInteger(0, 0);
+    path = g.getValueToString(1, 0);
+    length = g.getLong(2, 0);
+    start = g.getLong(3, 0);
+    rgLength = g.getLong(4, 0);
+    rowCount = g.getLong(5, 0);
+    hostAffinity = gson.fromJson(g.getValueToString(6, 0), hostAffinityType);
+
+    for (int field = 7; field < fieldCount; field++) {
+//      Type fieldType = g.getType().getType(field);
         java.lang.reflect.Type nameType = new TypeToken<String []>() {}.getType();
         ColumnMetadata_v3 columnMetadata_v3 = new ColumnMetadata_v3();
         columnMetadata_v3.name = gson.fromJson(g.getValueToString(field++, 0), nameType);
-        columnMetadata_v3.minValue = (Object) g.getValueToString(field++, 0);
+        columnMetadata_v3.minValue =  g.getValueToString(field++, 0);
         columnMetadata_v3.maxValue = (Object) g.getValueToString(field++, 0);
         columnMetadata_v3.nulls = g.getLong(field, 0);
         columnInfo.add(columnMetadata_v3);
       }
-    }
     rowgroup = new RowGroupMetadata_v3(start, rgLength, rowCount, hostAffinity, columnInfo);
     ArrayList<RowGroupMetadata_v3> rowgroups = new ArrayList<>();
     if (newFiles.size() <= fid) {
