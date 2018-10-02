@@ -673,6 +673,8 @@ public class Metadata {
       long timeTaken = 0;
       long parsingTime = 0;
       logger.info("Took {} ms to read footer", stopwatch.elapsed(TimeUnit.MILLISECONDS));
+      stopwatch.reset();
+      stopwatch.start();
       try {
         while (true) {
 //          stopwatch = Stopwatch.createStarted();
@@ -770,6 +772,11 @@ public class Metadata {
           if (useParquetForMetadata) {
             Stopwatch stopwatch = Stopwatch.createStarted();
             List<ParquetFileMetadata> parquetFileMetadata = readParquetFiles(path);
+            if (stopwatch != null) {
+              logger.info("Took {} ms to read parquet metadata", stopwatch.elapsed(TimeUnit.MILLISECONDS));
+            }
+            stopwatch.reset();
+            stopwatch.start();
             parquetTableMetadata = readSummary(mapper, path, (ParquetTableMetadata_v3) parquetTableMetadata, fs);
             parquetTableMetadata.assignFiles(parquetFileMetadata);
             if (stopwatch != null) {
