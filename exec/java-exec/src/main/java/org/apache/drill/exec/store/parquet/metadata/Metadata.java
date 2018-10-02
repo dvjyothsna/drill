@@ -655,6 +655,7 @@ public class Metadata {
       pf.setRowGroups(rowgroups);
       newFiles.set(fid, pf);
     }
+    logger.info("Took {} ms to parse metadata", stopwatch.elapsed(TimeUnit.MILLISECONDS));
     stopwatch.stop();
     return null;
   }
@@ -670,6 +671,7 @@ public class Metadata {
       MessageType schema = readFooter.getFileMetaData().getSchema();
       ParquetFileReader r = new ParquetFileReader(conf, path, readFooter);
       PageReadStore pages = null;
+      long timeTaken = 0;
       logger.info("Took {} ms to read footer", stopwatch.elapsed(TimeUnit.MILLISECONDS));
       try {
         while (true) {
@@ -686,11 +688,13 @@ public class Metadata {
               final Group g = (Group) recordReader.read();
               parseData(g, newFiles);
             }
-            logger.info("Took {} ms to parse metadata", stopwatch.elapsed(TimeUnit.MILLISECONDS));
+            timeTaken += stopwatch.elapsed(TimeUnit.MILLISECONDS);
+//            logger.info("Took {} ms to read and parse metadata", stopwatch.elapsed(TimeUnit.MILLISECONDS));
           } else {
             break;
           }
         }
+        logger.info("Took {} ms to read and parse metadata", timeTaken);
       } finally {
         r.close();
       }
