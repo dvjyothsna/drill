@@ -655,7 +655,7 @@ public class Metadata {
       pf.setRowGroups(rowgroups);
       newFiles.set(fid, pf);
     }
-    logger.info("Took {} ms to parse metadata", stopwatch.elapsed(TimeUnit.MILLISECONDS));
+    logger.info("Took {} ms to parse metadata", stopwatch.elapsed(TimeUnit.NANOSECONDS));
     stopwatch.stop();
     return null;
   }
@@ -694,10 +694,10 @@ public class Metadata {
             break;
           }
         }
-        logger.info("Took {} ms to read and parse metadata", timeTaken);
       } finally {
         r.close();
       }
+      logger.info("Took {} ms to read and parse metadata", timeTaken);
     } catch (IOException e) {
       System.out.println("Error reading parquet file.");
       e.printStackTrace();
