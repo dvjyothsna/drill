@@ -31,6 +31,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -621,17 +622,15 @@ public class Metadata {
     int fid = 0;
     long length = 0, start = 0, rgLength = 0, rowCount = 0;
     String path = null;
-    Map<String, Float> hostAffinity = null;
-    java.lang.reflect.Type hostAffinityType = new TypeToken<Map<String, Float>>() {}.getType();
-
+    Map<String, Float> hostAffinity = new HashMap<String, Float>();
     fid = g.getInteger(0, 0);
     path = g.getValueToString(1, 0);
     length = g.getLong(2, 0);
     start = g.getLong(3, 0);
     rgLength = g.getLong(4, 0);
     rowCount = g.getLong(5, 0);
-    hostAffinity = gson.fromJson(g.getValueToString(6, 0), hostAffinityType);
-    logger.info("host affinity is ", String.valueOf(hostAffinity));
+//    hostAffinity = gson.fromJson(g.getValueToString(6, 0), hostAffinityType);
+//    logger.info("host affinity is ", String.valueOf(hostAffinity));
     for (int field = 7; field < fieldCount; field++) {
 //      Type fieldType = g.getType().getType(field);
         java.lang.reflect.Type nameType = new TypeToken<String []>() {}.getType();
