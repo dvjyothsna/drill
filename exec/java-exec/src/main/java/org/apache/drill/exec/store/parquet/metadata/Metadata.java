@@ -655,6 +655,7 @@ public class Metadata {
       pf.setRowGroups(rowgroups);
       newFiles.set(fid, pf);
     }
+    logger.info("Took {} ms to parse parquet", stopwatch.elapsed(TimeUnit.MILLISECONDS));
     stopwatch.stop();
     return null;
   }
