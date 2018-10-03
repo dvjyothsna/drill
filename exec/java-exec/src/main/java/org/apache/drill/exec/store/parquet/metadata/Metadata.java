@@ -666,6 +666,7 @@ public class Metadata {
     List<ParquetFileMetadata> newFiles = new ArrayList<>();
     Configuration conf = new Configuration();
     long timeTaken = 0;
+    long parseTime = 0;
     try {
       Stopwatch stopwatch = Stopwatch.createStarted();
       ParquetMetadata readFooter = ParquetFileReader.readFooter(conf, path, ParquetMetadataConverter.NO_FILTER);
@@ -685,7 +686,9 @@ public class Metadata {
             final RecordReader recordReader = columnIO.getRecordReader(pages, new GroupRecordConverter(schema));
             timeTaken = timeTaken + stopwatch1.elapsed(TimeUnit.MILLISECONDS);
             for (int i = 0; i < rows; i++) {
+              Stopwatch stopwatch2 = Stopwatch.createStarted();
               final Group g = (Group) recordReader.read();
+              parseTime += parseTime + stopwatch2.elapsed(TimeUnit.MILLISECONDS);
               parseData(g, newFiles);
             }
 
@@ -696,6 +699,7 @@ public class Metadata {
       } finally {
         r.close();
       }
+      logger.info("Took {} ms to read record", parseTime);
       logger.info("Took {} ms to do columnIo ", timeTaken);
       logger.info("Took {} ms to read metadata", stopwatch.elapsed(TimeUnit.MILLISECONDS));
     } catch (IOException e) {
