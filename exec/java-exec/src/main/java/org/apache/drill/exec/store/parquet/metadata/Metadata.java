@@ -631,7 +631,7 @@ public class Metadata {
     rgLength = g.getLong(4, 0);
     rowCount = g.getLong(5, 0);
     hostAffinity = gson.fromJson(g.getValueToString(6, 0), hostAffinityType);
-
+    logger.info("host affinity is ", String.valueOf(hostAffinity));
     for (int field = 7; field < fieldCount; field++) {
 //      Type fieldType = g.getType().getType(field);
         java.lang.reflect.Type nameType = new TypeToken<String []>() {}.getType();
@@ -685,14 +685,13 @@ public class Metadata {
             final MessageColumnIO columnIO = new ColumnIOFactory().getColumnIO(schema);
             final RecordReader recordReader = columnIO.getRecordReader(pages, new GroupRecordConverter(schema));
             timeTaken = timeTaken + stopwatch1.elapsed(TimeUnit.MILLISECONDS);
+            Stopwatch stopwatch2 = Stopwatch.createStarted();
             for (int i = 0; i < rows; i++) {
-              Stopwatch stopwatch2 = Stopwatch.createStarted();
-              logger.info(String.valueOf(stopwatch2));
               final Group g = (Group) recordReader.read();
               parseData(g, newFiles);
               logger.info("Took {} ms to read and parse", stopwatch2.elapsed(TimeUnit.MILLISECONDS));
-              parseTime = parseTime + stopwatch2.elapsed(TimeUnit.MILLISECONDS);
             }
+            parseTime = parseTime + stopwatch2.elapsed(TimeUnit.MILLISECONDS);
           } else {
             break;
           }
