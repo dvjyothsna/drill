@@ -685,14 +685,12 @@ public class Metadata {
             final MessageColumnIO columnIO = new ColumnIOFactory().getColumnIO(schema);
             final RecordReader recordReader = columnIO.getRecordReader(pages, new GroupRecordConverter(schema));
             timeTaken = timeTaken + stopwatch1.elapsed(TimeUnit.MILLISECONDS);
-            Stopwatch stopwatch2 = Stopwatch.createStarted();
             for (int i = 0; i < rows; i++) {
+              Stopwatch stopwatch2 = Stopwatch.createStarted();
+              logger.info(String.valueOf(stopwatch2));
               final Group g = (Group) recordReader.read();
-            }
-            parseTime = parseTime + stopwatch2.elapsed(TimeUnit.MILLISECONDS);
-            logger.info("Took {} to read and parse", parseTime);
-            for (int i = 0; i < rows; i++) {
-              final Group g = (Group) recordReader.read();
+              parseTime = parseTime + stopwatch2.elapsed(TimeUnit.MILLISECONDS);
+              logger.info("Took {} ms to read and parse", parseTime);
               parseData(g, newFiles);
             }
           } else {
