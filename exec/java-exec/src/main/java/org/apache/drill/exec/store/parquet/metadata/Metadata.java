@@ -620,14 +620,13 @@ public class Metadata {
     List<ColumnMetadata_v3> columnInfo = new ArrayList<>();
     Gson gson = new Gson();
     int fid = 0;
-    long length = 0, start = 0, rgLength = 0, rowCount = 0;
     Map<String, Float> hostAffinity = new HashMap<String, Float>();
     fid = g.getInteger(0, 0);
     String path = g.getValueToString(1, 0);
     long length = g.getLong(2, 0);
     long start = g.getLong(3, 0);
     long rgLength = g.getLong(4, 0);
-    rowCount = g.getLong(5, 0);
+    long rowCount = g.getLong(5, 0);
 //    hostAffinity = gson.fromJson(g.getValueToString(6, 0), hostAffinityType);
 //    logger.info("host affinity is ", String.valueOf(hostAffinity));
     for (int field = 7; field < fieldCount; field++) {
