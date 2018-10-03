@@ -683,10 +683,10 @@ public class Metadata {
             final RecordReader recordReader = columnIO.getRecordReader(pages, new GroupRecordConverter(schema));
             timeTaken = timeTaken + stopwatch1.elapsed(TimeUnit.MILLISECONDS);
             for (int i = 0; i < rows; i++) {
-              Stopwatch stopwatch2 = Stopwatch.createStarted();
               final Group g = (Group) recordReader.read();
-              parseTime = parseTime + stopwatch2.elapsed(TimeUnit.NANOSECONDS);
+              Stopwatch stopwatch2 = Stopwatch.createStarted();
               parseData(g, newFiles);
+              parseTime = parseTime + stopwatch2.elapsed(TimeUnit.NANOSECONDS);
 //              logger.info("Took {} ms to read and parse", stopwatch2.elapsed(TimeUnit.MILLISECONDS));
             }
           } else {
