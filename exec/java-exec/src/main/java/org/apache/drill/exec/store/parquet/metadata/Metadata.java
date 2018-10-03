@@ -688,7 +688,7 @@ public class Metadata {
             for (int i = 0; i < rows; i++) {
               Stopwatch stopwatch2 = Stopwatch.createStarted();
               final Group g = (Group) recordReader.read();
-              parseTime += parseTime + stopwatch2.elapsed(TimeUnit.MILLISECONDS);
+              parseTime = parseTime + stopwatch2.elapsed(TimeUnit.MILLISECONDS);
               parseData(g, newFiles);
             }
 
