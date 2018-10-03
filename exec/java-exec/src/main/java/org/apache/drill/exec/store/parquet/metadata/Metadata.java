@@ -634,6 +634,7 @@ public class Metadata {
 //        java.lang.reflect.Type nameType = new TypeToken<String []>() {}.getType();
         ColumnMetadata_v3 columnMetadata_v3 = new ColumnMetadata_v3();
         columnMetadata_v3.name = new String[]{"Name"};
+        field++;
 //                gson.fromJson(g.getValueToString(field++, 0), nameType);
         columnMetadata_v3.minValue =  g.getValueToString(field++, 0);
         columnMetadata_v3.maxValue = (Object) g.getValueToString(field++, 0);
