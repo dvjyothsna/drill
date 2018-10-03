@@ -688,10 +688,13 @@ public class Metadata {
             Stopwatch stopwatch2 = Stopwatch.createStarted();
             for (int i = 0; i < rows; i++) {
               final Group g = (Group) recordReader.read();
-              parseData(g, newFiles);
             }
             parseTime = parseTime + stopwatch2.elapsed(TimeUnit.MILLISECONDS);
             logger.info("Took {} to read and parse", parseTime);
+            for (int i = 0; i < rows; i++) {
+              final Group g = (Group) recordReader.read();
+              parseData(g, newFiles);
+            }
           } else {
             break;
           }
