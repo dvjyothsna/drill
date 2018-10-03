@@ -24,8 +24,6 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.module.afterburner.AfterburnerModule;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -618,7 +616,7 @@ public class Metadata {
     int fieldCount = g.getType().getFieldCount();
     RowGroupMetadata_v3 rowgroup;
     List<ColumnMetadata_v3> columnInfo = new ArrayList<>();
-    Gson gson = new Gson();
+//    Gson gson = new Gson();
     int fid = 0;
     long length = 0, start = 0, rgLength = 0, rowCount = 0;
     String path = null;
@@ -633,9 +631,10 @@ public class Metadata {
 //    logger.info("host affinity is ", String.valueOf(hostAffinity));
     for (int field = 7; field < fieldCount; field++) {
 //      Type fieldType = g.getType().getType(field);
-        java.lang.reflect.Type nameType = new TypeToken<String []>() {}.getType();
+//        java.lang.reflect.Type nameType = new TypeToken<String []>() {}.getType();
         ColumnMetadata_v3 columnMetadata_v3 = new ColumnMetadata_v3();
-        columnMetadata_v3.name = gson.fromJson(g.getValueToString(field++, 0), nameType);
+        columnMetadata_v3.name = new String[]{"Name"};
+//                gson.fromJson(g.getValueToString(field++, 0), nameType);
         columnMetadata_v3.minValue =  g.getValueToString(field++, 0);
         columnMetadata_v3.maxValue = (Object) g.getValueToString(field++, 0);
         columnMetadata_v3.nulls = g.getLong(field, 0);
