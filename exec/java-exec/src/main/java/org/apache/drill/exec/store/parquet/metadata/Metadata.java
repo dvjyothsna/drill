@@ -655,7 +655,7 @@ public class Metadata {
       pf.setRowGroups(rowgroups);
       newFiles.set(fid, pf);
     }
-    logger.info("Took {} ms to parse parquet", stopwatch.elapsed(TimeUnit.MILLISECONDS));
+//    logger.info("Took {} ms to parse parquet", stopwatch.elapsed(TimeUnit.MILLISECONDS));
     stopwatch.stop();
     return null;
   }
@@ -665,6 +665,7 @@ public class Metadata {
 
     List<ParquetFileMetadata> newFiles = new ArrayList<>();
     Configuration conf = new Configuration();
+    long timeTaken = 0;
     try {
       Stopwatch stopwatch = Stopwatch.createStarted();
       ParquetMetadata readFooter = ParquetFileReader.readFooter(conf, path, ParquetMetadataConverter.NO_FILTER);
@@ -676,7 +677,9 @@ public class Metadata {
       stopwatch.start();
       try {
         while (true) {
+          Stopwatch stopwatch1 = Stopwatch.createStarted();
           pages = r.readNextRowGroup();
+          timeTaken = timeTaken + stopwatch1.elapsed(TimeUnit.MILLISECONDS);
           if (pages != null) {
             final long rows = pages.getRowCount();
             final MessageColumnIO columnIO = new ColumnIOFactory().getColumnIO(schema);
@@ -692,6 +695,7 @@ public class Metadata {
       } finally {
         r.close();
       }
+      logger.info("Took {} ms to read next row group", timeTaken);
       logger.info("Took {} ms to read metadata", stopwatch.elapsed(TimeUnit.MILLISECONDS));
     } catch (IOException e) {
       System.out.println("Error reading parquet file.");
