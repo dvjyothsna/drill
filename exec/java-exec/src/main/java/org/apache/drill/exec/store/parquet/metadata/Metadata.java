@@ -24,6 +24,8 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.module.afterburner.AfterburnerModule;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -616,26 +618,23 @@ public class Metadata {
     int fieldCount = g.getType().getFieldCount();
     RowGroupMetadata_v3 rowgroup;
     List<ColumnMetadata_v3> columnInfo = new ArrayList<>();
-//    Gson gson = new Gson();
+    Gson gson = new Gson();
     int fid = 0;
     long length = 0, start = 0, rgLength = 0, rowCount = 0;
-    String path = null;
     Map<String, Float> hostAffinity = new HashMap<String, Float>();
     fid = g.getInteger(0, 0);
-    path = g.getValueToString(1, 0);
-    length = g.getLong(2, 0);
-    start = g.getLong(3, 0);
-    rgLength = g.getLong(4, 0);
+    String path = g.getValueToString(1, 0);
+    long length = g.getLong(2, 0);
+    long start = g.getLong(3, 0);
+    long rgLength = g.getLong(4, 0);
     rowCount = g.getLong(5, 0);
 //    hostAffinity = gson.fromJson(g.getValueToString(6, 0), hostAffinityType);
 //    logger.info("host affinity is ", String.valueOf(hostAffinity));
     for (int field = 7; field < fieldCount; field++) {
 //      Type fieldType = g.getType().getType(field);
-//        java.lang.reflect.Type nameType = new TypeToken<String []>() {}.getType();
+        java.lang.reflect.Type nameType = new TypeToken<String []>() {}.getType();
         ColumnMetadata_v3 columnMetadata_v3 = new ColumnMetadata_v3();
-        columnMetadata_v3.name = new String[]{"Name"};
-        field++;
-//                gson.fromJson(g.getValueToString(field++, 0), nameType);
+        columnMetadata_v3.name = gson.fromJson(g.getValueToString(field++, 0), nameType);
         columnMetadata_v3.minValue =  g.getValueToString(field++, 0);
         columnMetadata_v3.maxValue = (Object) g.getValueToString(field++, 0);
         columnMetadata_v3.nulls = g.getLong(field, 0);
@@ -684,13 +683,13 @@ public class Metadata {
             final MessageColumnIO columnIO = new ColumnIOFactory().getColumnIO(schema);
             final RecordReader recordReader = columnIO.getRecordReader(pages, new GroupRecordConverter(schema));
             timeTaken = timeTaken + stopwatch1.elapsed(TimeUnit.MILLISECONDS);
-            Stopwatch stopwatch2 = Stopwatch.createStarted();
             for (int i = 0; i < rows; i++) {
+              Stopwatch stopwatch2 = Stopwatch.createStarted();
               final Group g = (Group) recordReader.read();
+              parseTime = parseTime + stopwatch2.elapsed(TimeUnit.NANOSECONDS);
               parseData(g, newFiles);
-              logger.info("Took {} ms to read and parse", stopwatch2.elapsed(TimeUnit.MILLISECONDS));
+//              logger.info("Took {} ms to read and parse", stopwatch2.elapsed(TimeUnit.MILLISECONDS));
             }
-            parseTime = parseTime + stopwatch2.elapsed(TimeUnit.MILLISECONDS);
           } else {
             break;
           }
@@ -698,7 +697,7 @@ public class Metadata {
       } finally {
         r.close();
       }
-      logger.info("Took {} ms to read record", parseTime);
+      logger.info("Took {} ms to read record", parseTime/1000);
       logger.info("Took {} ms to do columnIo ", timeTaken);
       logger.info("Took {} ms to read metadata", stopwatch.elapsed(TimeUnit.MILLISECONDS));
     } catch (IOException e) {
