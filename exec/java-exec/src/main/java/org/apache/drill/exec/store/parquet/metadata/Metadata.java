@@ -689,9 +689,9 @@ public class Metadata {
               Stopwatch stopwatch2 = Stopwatch.createStarted();
               logger.info(String.valueOf(stopwatch2));
               final Group g = (Group) recordReader.read();
-              parseTime = parseTime + stopwatch2.elapsed(TimeUnit.MILLISECONDS);
-              logger.info("Took {} ms to read and parse", parseTime);
               parseData(g, newFiles);
+              logger.info("Took {} ms to read and parse", stopwatch2.elapsed(TimeUnit.MILLISECONDS));
+              parseTime = parseTime + stopwatch2.elapsed(TimeUnit.MILLISECONDS);
             }
           } else {
             break;
