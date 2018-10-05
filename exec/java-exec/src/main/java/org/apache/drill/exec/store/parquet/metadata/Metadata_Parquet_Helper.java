@@ -57,7 +57,7 @@ public class Metadata_Parquet_Helper {
       schema = schema + "required binary hostAffinity; \n";
 
       for (MetadataBase.ColumnMetadata column : parquetTableMetadata.getFiles().get(0).getRowGroups().get(0).getColumns()) {
-        String name = String.join("_", column.getName());
+        String name = String.join(":", column.getName());
         schema = schema + "required binary " + name + "_name; \n";
         schema = schema + "required binary " + name + "_minValue; \n";
         schema = schema + "required binary " + name + "_maxValue; \n";
@@ -92,8 +92,8 @@ public class Metadata_Parquet_Helper {
                 .append("rowCount", rowGroup.getRowCount())
                 .append("hostAffinity", gson.toJson(rowGroup.getHostAffinity()));
                 for (MetadataBase.ColumnMetadata column : rowGroup.getColumns()) {
-                  String name = String.join("_", column.getName());
-                  simpleGroup.append(name + "_name", gson.toJson(column.getName()))
+                  String name = String.join(":", column.getName());
+                  simpleGroup.append(name + "_name", name)
                           .append(name + "_minValue", String.valueOf(column.getMinValue()))
                           .append(name + "_maxValue", String.valueOf(column.getMaxValue()))
                           .append(name + "_nulls", column.getNulls());
