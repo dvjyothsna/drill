@@ -94,9 +94,10 @@ public class Metadata_Parquet_Helper {
                 .append("rowCount", rowGroup.getRowCount())
                 .append("hostAffinity", gson.toJson(rowGroup.getHostAffinity()));
                 for (MetadataBase.ColumnMetadata column : rowGroup.getColumns()) {
-                  String name = String.join(":", column.getName());
+                  String[] columnName = column.getName();
+                  String name = String.join(":", columnName);
                   simpleGroup.append(name + "_name", name);
-                  TypeProtos.MajorType type = ParquetReaderUtility.getType(column.getPrimitiveType(), column.getOriginalType(), 0, 0);
+                  TypeProtos.MajorType type = ParquetReaderUtility.getType(parquetTableMetadata.getPrimitiveType(columnName), parquetTableMetadata.getOriginalType(columnName), 0, 0);
                   switch (type.getMinorType()) {
                     case INT:
                     case TIME:
