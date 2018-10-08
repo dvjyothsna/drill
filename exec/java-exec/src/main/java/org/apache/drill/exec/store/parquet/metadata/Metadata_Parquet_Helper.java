@@ -59,6 +59,7 @@ public class Metadata_Parquet_Helper {
       schema = schema + "required binary hostAffinity; \n";
 
       for (MetadataBase.ColumnMetadata column : parquetTableMetadata.getFiles().get(0).getRowGroups().get(0).getColumns()) {
+        String[] columnName = column.getName();
         String name = String.join(":", column.getName());
         schema = schema + "required binary " + name + "_name; \n";
         TypeProtos.MajorType type = ParquetReaderUtility.getType(parquetTableMetadata.getPrimitiveType(columnName), parquetTableMetadata.getOriginalType(columnName), 0, 0);
