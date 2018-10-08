@@ -3,8 +3,6 @@ package org.apache.drill.exec.store.parquet.metadata;
 import com.google.gson.Gson;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
-import org.apache.drill.common.types.TypeProtos;
-import org.apache.drill.exec.store.parquet.ParquetReaderUtility;
 import org.apache.drill.shaded.guava.com.google.common.base.Stopwatch;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -97,34 +95,36 @@ public class Metadata_Parquet_Helper {
                   String[] columnName = column.getName();
                   String name = String.join(":", columnName);
                   simpleGroup.append(name + "_name", name);
-                  TypeProtos.MajorType type = ParquetReaderUtility.getType(parquetTableMetadata.getPrimitiveType(columnName), parquetTableMetadata.getOriginalType(columnName), 0, 0);
-                  switch (type.getMinorType()) {
-                    case INT:
-                    case TIME:
-                      simpleGroup.append(name + "_minValue", Integer.parseInt(String.valueOf(column.getMinValue())));
-                      simpleGroup.append(name + "_maxValue", Integer.parseInt(String.valueOf(column.getMaxValue())));
-                      break;
-                    case BIGINT:
-                    case TIMESTAMP:
-                      simpleGroup.append(name + "_minValue", Long.parseLong(String.valueOf(column.getMinValue())));
-                      simpleGroup.append(name + "_maxValue", Long.parseLong(String.valueOf(column.getMaxValue())));
-                      break;
-                    case FLOAT4:
-                      simpleGroup.append(name + "_minValue", Float.parseFloat(String.valueOf(column.getMinValue())));
-                      simpleGroup.append(name + "_maxValue", Float.parseFloat(String.valueOf(column.getMaxValue())));
-                      break;
-                    case FLOAT8:
-                      simpleGroup.append(name + "_minValue", Double.parseDouble(String.valueOf(column.getMinValue())));
-                      simpleGroup.append(name + "_maxValue", Double.parseDouble(String.valueOf(column.getMaxValue())));
-                      break;
-                    case BIT:
-                      simpleGroup.append(name + "_minValue", Boolean.parseBoolean(String.valueOf(column.getMinValue())));
-                      simpleGroup.append(name + "_maxValue", Boolean.parseBoolean(String.valueOf(column.getMaxValue())));
-                      break;
-                    default:
-                      simpleGroup.append(name + "_minValue", String.valueOf(column.getMinValue()));
-                      simpleGroup.append(name + "_maxValue", String.valueOf(column.getMaxValue()));
-                  }
+                  simpleGroup.append(name + "_minValue", String.valueOf(column.getMinValue()));
+                  simpleGroup.append(name + "_maxValue", String.valueOf(column.getMaxValue()));
+//                  TypeProtos.MajorType type = ParquetReaderUtility.getType(parquetTableMetadata.getPrimitiveType(columnName), parquetTableMetadata.getOriginalType(columnName), 0, 0);
+//                  switch (type.getMinorType()) {
+//                    case INT:
+//                    case TIME:
+//                      simpleGroup.append(name + "_minValue", Integer.parseInt(String.valueOf(column.getMinValue())));
+//                      simpleGroup.append(name + "_maxValue", Integer.parseInt(String.valueOf(column.getMaxValue())));
+//                      break;
+//                    case BIGINT:
+//                    case TIMESTAMP:
+//                      simpleGroup.append(name + "_minValue", Long.parseLong(String.valueOf(column.getMinValue())));
+//                      simpleGroup.append(name + "_maxValue", Long.parseLong(String.valueOf(column.getMaxValue())));
+//                      break;
+//                    case FLOAT4:
+//                      simpleGroup.append(name + "_minValue", Float.parseFloat(String.valueOf(column.getMinValue())));
+//                      simpleGroup.append(name + "_maxValue", Float.parseFloat(String.valueOf(column.getMaxValue())));
+//                      break;
+//                    case FLOAT8:
+//                      simpleGroup.append(name + "_minValue", Double.parseDouble(String.valueOf(column.getMinValue())));
+//                      simpleGroup.append(name + "_maxValue", Double.parseDouble(String.valueOf(column.getMaxValue())));
+//                      break;
+//                    case BIT:
+//                      simpleGroup.append(name + "_minValue", Boolean.parseBoolean(String.valueOf(column.getMinValue())));
+//                      simpleGroup.append(name + "_maxValue", Boolean.parseBoolean(String.valueOf(column.getMaxValue())));
+//                      break;
+//                    default:
+//                      simpleGroup.append(name + "_minValue", String.valueOf(column.getMinValue()));
+//                      simpleGroup.append(name + "_maxValue", String.valueOf(column.getMaxValue()));
+//                  }
                   simpleGroup.append(name + "_nulls", column.getNulls());
                 }
         metadataWriter.write(simpleGroup);
