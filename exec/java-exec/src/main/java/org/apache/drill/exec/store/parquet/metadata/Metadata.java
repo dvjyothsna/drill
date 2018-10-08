@@ -620,7 +620,7 @@ public class Metadata {
       start = next + 1;
     }
     if (start < s.length()) {
-      list.add(s.substring(start, s.length() -1));
+      list.add(s.substring(start, s.length()));
     }
     int size = list.size();
     String[] result = new String[size];
