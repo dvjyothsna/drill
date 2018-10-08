@@ -61,8 +61,36 @@ public class Metadata_Parquet_Helper {
       for (MetadataBase.ColumnMetadata column : parquetTableMetadata.getFiles().get(0).getRowGroups().get(0).getColumns()) {
         String name = String.join(":", column.getName());
         schema = schema + "required binary " + name + "_name; \n";
-        schema = schema + "required binary " + name + "_minValue; \n";
-        schema = schema + "required binary " + name + "_maxValue; \n";
+        TypeProtos.MajorType type = ParquetReaderUtility.getType(parquetTableMetadata.getPrimitiveType(columnName), parquetTableMetadata.getOriginalType(columnName), 0, 0);
+        switch (type.getMinorType()) {
+          case INT:
+          case TIME:
+            schema = schema + "required INT32 " + name + "_minValue; \n";
+            schema = schema + "required INT32 " + name + "_maxValue; \n";
+            break;
+          case BIGINT:
+          case TIMESTAMP:
+            schema = schema + "required INT64 " + name + "_minValue; \n";
+            schema = schema + "required INT64 " + name + "_maxValue; \n";
+            break;
+          case FLOAT4:
+            schema = schema + "required FLOAT " + name + "_minValue; \n";
+            schema = schema + "required FLOAT " + name + "_maxValue; \n";
+            break;
+          case FLOAT8:
+            schema = schema + "required DOUBLE " + name + "_minValue; \n";
+            schema = schema + "required DOUBLE " + name + "_maxValue; \n";
+            break;
+          case BIT:
+            schema = schema + "required BOOLEAN " + name + "_minValue; \n";
+            schema = schema + "required BOOLEAN " + name + "_maxValue; \n";
+            break;
+          default:
+            schema = schema + "required binary " + name + "_minValue; \n";
+            schema = schema + "required binary " + name + "_maxValue; \n";
+        }
+//        schema = schema + "required binary " + name + "_minValue; \n";
+//        schema = schema + "required binary " + name + "_maxValue; \n";
         schema = schema + "required INT64 " + name + "_nulls; \n";
       }
     }
