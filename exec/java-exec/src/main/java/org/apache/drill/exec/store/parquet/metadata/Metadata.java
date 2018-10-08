@@ -611,6 +611,22 @@ public class Metadata {
     os.close();
   }
 
+  private static String[] splitString( char delimiter, String s) {
+    ArrayList<String> list = new ArrayList<>();
+    int next = 0, start = 0;
+
+    while ((next = s.indexOf(delimiter, start)) != -1) {
+      list.add(s.substring(start, next));
+      start = next + 1;
+    }
+    if (start < s.length()) {
+      list.add(s.substring(start, s.length() -1));
+    }
+    int size = list.size();
+    String[] result = new String[size];
+    return list.subList(0, size).toArray(result);
+  }
+
   private static ParquetTableMetadata_v3 parseData(Group g, List<ParquetFileMetadata> newFiles) throws IOException {
     Stopwatch stopwatch = Stopwatch.createStarted();
     int fieldCount = g.getType().getFieldCount();
@@ -631,7 +647,7 @@ public class Metadata {
 //      Type fieldType = g.getType().getType(field);
 //        java.lang.reflect.Type nameType = new TypeToken<String []>() {}.getType();
         ColumnMetadata_v3 columnMetadata_v3 = new ColumnMetadata_v3();
-        columnMetadata_v3.name = g.getValueToString(field++, 0).split(":");
+        columnMetadata_v3.name = splitString(':', g.getValueToString(field++, 0));
         columnMetadata_v3.minValue =  g.getValueToString(field++, 0);
         columnMetadata_v3.maxValue = (Object) g.getValueToString(field++, 0);
         columnMetadata_v3.nulls = g.getLong(field, 0);
