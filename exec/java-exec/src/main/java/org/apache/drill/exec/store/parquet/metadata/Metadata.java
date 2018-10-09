@@ -649,6 +649,7 @@ public class Metadata {
         ColumnMetadata_v3 columnMetadata_v3 = new ColumnMetadata_v3();
         columnMetadata_v3.name = splitString(':', g.getValueToString(field++, 0));
         columnMetadata_v3.minValue =  g.getValueToString(field++, 0);
+        Type type = g.getType().getType(field);
         columnMetadata_v3.maxValue = (Object) g.getValueToString(field++, 0);
         columnMetadata_v3.nulls = g.getLong(field, 0);
         columnInfo.add(columnMetadata_v3);

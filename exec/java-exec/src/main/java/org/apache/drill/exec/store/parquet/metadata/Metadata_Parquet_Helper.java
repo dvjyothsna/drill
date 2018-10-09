@@ -47,56 +47,56 @@ public class Metadata_Parquet_Helper {
     return writer;
   }
   public static String createMetadataSchema(Metadata_V3.ParquetTableMetadata_v3 parquetTableMetadata) {
-    String schema = null;
+    StringBuilder schema = null;
     if (parquetTableMetadata  != null && parquetTableMetadata.getFiles().size() != 0) {
-      schema = "message metadata { \n";
-      schema = schema + "required INT32 fid; \n";
-      schema = schema + "required binary path; \n";
-      schema = schema + "required INT64 length; \n";
-      schema = schema + "required INT64 start; \n";
-      schema = schema + "required INT64 rgLength; \n";
-      schema = schema + "required INT64 rowCount; \n";
-      schema = schema + "required binary hostAffinity; \n";
+      schema.append("message metadata { \n");
+      schema.append("required INT32 fid; \n");
+      schema.append("required binary path; \n");
+      schema.append("required INT64 length; \n");
+      schema.append("required INT64 start; \n");
+      schema.append("required INT64 rgLength; \n");
+      schema.append("required INT64 rowCount; \n");
+      schema.append("required binary hostAffinity; \n");
 
       for (MetadataBase.ColumnMetadata column : parquetTableMetadata.getFiles().get(0).getRowGroups().get(0).getColumns()) {
         String[] columnName = column.getName();
         String name = String.join(":", column.getName());
-        schema = schema + "required binary " + name + "_name; \n";
+        schema.append("required binary " + name + "_name; \n");
         TypeProtos.MajorType type = ParquetReaderUtility.getType(parquetTableMetadata.getPrimitiveType(columnName), parquetTableMetadata.getOriginalType(columnName), 0, 0);
         switch (type.getMinorType()) {
           case INT:
           case TIME:
-            schema = schema + "required INT32 " + name + "_minValue; \n";
-            schema = schema + "required INT32 " + name + "_maxValue; \n";
+            schema.append("required INT32 " + name + "_minValue; \n");
+            schema.append("required INT32 " + name + "_maxValue; \n");
             break;
           case BIGINT:
           case TIMESTAMP:
-            schema = schema + "required INT64 " + name + "_minValue; \n";
-            schema = schema + "required INT64 " + name + "_maxValue; \n";
+            schema.append("required INT64 " + name + "_minValue; \n");
+            schema.append("required INT64 " + name + "_maxValue; \n");
             break;
           case FLOAT4:
-            schema = schema + "required FLOAT " + name + "_minValue; \n";
-            schema = schema + "required FLOAT " + name + "_maxValue; \n";
+            schema.append("required FLOAT " + name + "_minValue; \n");
+            schema.append("required FLOAT " + name + "_maxValue; \n");
             break;
           case FLOAT8:
-            schema = schema + "required DOUBLE " + name + "_minValue; \n";
-            schema = schema + "required DOUBLE " + name + "_maxValue; \n";
+            schema.append("required DOUBLE " + name + "_minValue; \n");
+            schema.append("required DOUBLE " + name + "_maxValue; \n");
             break;
           case BIT:
-            schema = schema + "required BOOLEAN " + name + "_minValue; \n";
-            schema = schema + "required BOOLEAN " + name + "_maxValue; \n";
+            schema.append("required BOOLEAN " + name + "_minValue; \n");
+            schema.append("required BOOLEAN " + name + "_maxValue; \n");
             break;
           default:
-            schema = schema + "required binary " + name + "_minValue; \n";
-            schema = schema + "required binary " + name + "_maxValue; \n";
+            schema.append("required binary " + name + "_minValue; \n");
+            schema.append("required binary " + name + "_maxValue; \n");
         }
-//        schema = schema + "required binary " + name + "_minValue; \n";
-//        schema = schema + "required binary " + name + "_maxValue; \n";
-        schema = schema + "required INT64 " + name + "_nulls; \n";
+//        schema.append("required binary " + name + "_minValue; \n";
+//        schema.append("required binary " + name + "_maxValue; \n";
+        schema.append("required INT64 " + name + "_nulls; \n");
       }
     }
-    schema = schema + "} \n";
-    return schema;
+    schema.append("} \n");
+    return schema.toString();
   }
 
   public void writeMetadataToParquet(Metadata_V3.ParquetTableMetadata_v3 parquetTableMetadata, Path path, FileSystem fs) throws IOException{
