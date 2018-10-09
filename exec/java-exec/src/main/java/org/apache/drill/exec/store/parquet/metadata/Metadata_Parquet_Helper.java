@@ -47,7 +47,7 @@ public class Metadata_Parquet_Helper {
     return writer;
   }
   public static String createMetadataSchema(Metadata_V3.ParquetTableMetadata_v3 parquetTableMetadata) {
-    StringBuilder schema = null;
+    StringBuilder schema = new StringBuilder();
     if (parquetTableMetadata  != null && parquetTableMetadata.getFiles().size() != 0) {
       schema.append("message metadata { \n");
       schema.append("required INT32 fid; \n");
