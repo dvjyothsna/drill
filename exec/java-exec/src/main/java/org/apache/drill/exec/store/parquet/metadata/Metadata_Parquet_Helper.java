@@ -106,7 +106,7 @@ public class Metadata_Parquet_Helper {
     logger.info("Took {} ms to create schema", stopwatch.elapsed(TimeUnit.MILLISECONDS));
     stopwatch.reset();
     stopwatch.start();
-    ParquetWriter metadataWriter = initWriter(metadataSchema, path, false);
+    ParquetWriter metadataWriter = initWriter(metadataSchema, path, true);
     GroupFactory gf = new SimpleGroupFactory(metadataSchema);
     Gson gson = new Gson();
 
