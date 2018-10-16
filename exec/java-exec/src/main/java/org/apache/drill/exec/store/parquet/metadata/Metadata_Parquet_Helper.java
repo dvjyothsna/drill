@@ -3,8 +3,6 @@ package org.apache.drill.exec.store.parquet.metadata;
 import com.google.gson.Gson;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
-import org.apache.drill.common.types.TypeProtos;
-import org.apache.drill.exec.store.parquet.ParquetReaderUtility;
 import org.apache.drill.shaded.guava.com.google.common.base.Stopwatch;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -62,7 +60,9 @@ public class Metadata_Parquet_Helper {
         String[] columnName = column.getName();
         String name = String.join(":", column.getName());
         schema.append("required binary " + name + "_name; \n");
-        TypeProtos.MajorType type = ParquetReaderUtility.getType(parquetTableMetadata.getPrimitiveType(columnName), parquetTableMetadata.getOriginalType(columnName), 0, 0);
+        schema.append("required binary" + name + "_columnStats; \n");
+
+       /* TypeProtos.MajorType type = ParquetReaderUtility.getType(parquetTableMetadata.getPrimitiveType(columnName), parquetTableMetadata.getOriginalType(columnName), 0, 0);
         switch (type.getMinorType()) {
           case INT:
           case TIME:
@@ -89,10 +89,10 @@ public class Metadata_Parquet_Helper {
           default:
             schema.append("required binary " + name + "_minValue; \n");
             schema.append("required binary " + name + "_maxValue; \n");
-        }
+        }*/
 //        schema.append("required binary " + name + "_minValue; \n";
 //        schema.append("required binary " + name + "_maxValue; \n";
-        schema.append("required INT64 " + name + "_nulls; \n");
+//        schema.append("required INT64 " + name + "_nulls; \n");
       }
     }
     schema.append("} \n");
@@ -126,9 +126,10 @@ public class Metadata_Parquet_Helper {
                   String[] columnName = column.getName();
                   String name = String.join(":", columnName);
                   simpleGroup.append(name + "_name", name);
+                  simpleGroup.append(name + "_columnStats", gson.toJson(column));
 //                  simpleGroup.append(name + "_minValue", String.valueOf(column.getMinValue()));
 //                  simpleGroup.append(name + "_maxValue", String.valueOf(column.getMaxValue()));
-                  TypeProtos.MajorType type = ParquetReaderUtility.getType(parquetTableMetadata.getPrimitiveType(columnName), parquetTableMetadata.getOriginalType(columnName), 0, 0);
+               /*   TypeProtos.MajorType type = ParquetReaderUtility.getType(parquetTableMetadata.getPrimitiveType(columnName), parquetTableMetadata.getOriginalType(columnName), 0, 0);
                   switch (type.getMinorType()) {
                     case INT:
                     case TIME:
@@ -157,6 +158,7 @@ public class Metadata_Parquet_Helper {
                       simpleGroup.append(name + "_maxValue", String.valueOf(column.getMaxValue()));
                   }
                   simpleGroup.append(name + "_nulls", column.getNulls());
+                  */
                 }
         metadataWriter.write(simpleGroup);
       }
