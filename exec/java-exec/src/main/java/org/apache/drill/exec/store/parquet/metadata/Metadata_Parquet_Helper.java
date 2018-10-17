@@ -60,7 +60,7 @@ public class Metadata_Parquet_Helper {
         String[] columnName = column.getName();
         String name = String.join(":", column.getName());
         schema.append("required binary " + name + "_name; \n");
-        schema.append("required binary" + name + "_columnStats; \n");
+//        schema.append("required binary " + name + "_columnStats; \n");
 
        /* TypeProtos.MajorType type = ParquetReaderUtility.getType(parquetTableMetadata.getPrimitiveType(columnName), parquetTableMetadata.getOriginalType(columnName), 0, 0);
         switch (type.getMinorType()) {
@@ -90,9 +90,9 @@ public class Metadata_Parquet_Helper {
             schema.append("required binary " + name + "_minValue; \n");
             schema.append("required binary " + name + "_maxValue; \n");
         }*/
-//        schema.append("required binary " + name + "_minValue; \n";
-//        schema.append("required binary " + name + "_maxValue; \n";
-//        schema.append("required INT64 " + name + "_nulls; \n");
+        schema.append("required binary " + name + "_minValue; \n");
+        schema.append("required binary " + name + "_maxValue; \n");
+        schema.append("required INT64 " + name + "_nulls; \n");
       }
     }
     schema.append("} \n");
@@ -105,7 +105,6 @@ public class Metadata_Parquet_Helper {
     stopwatch.stop();
     logger.info("Took {} ms to create schema", stopwatch.elapsed(TimeUnit.MILLISECONDS));
     stopwatch.reset();
-    stopwatch.start();
     ParquetWriter metadataWriter = initWriter(metadataSchema, path, true);
     GroupFactory gf = new SimpleGroupFactory(metadataSchema);
     Gson gson = new Gson();
@@ -126,9 +125,9 @@ public class Metadata_Parquet_Helper {
                   String[] columnName = column.getName();
                   String name = String.join(":", columnName);
                   simpleGroup.append(name + "_name", name);
-                  simpleGroup.append(name + "_columnStats", gson.toJson(column));
-//                  simpleGroup.append(name + "_minValue", String.valueOf(column.getMinValue()));
-//                  simpleGroup.append(name + "_maxValue", String.valueOf(column.getMaxValue()));
+//                  simpleGroup.append(name + "_columnStats", gson.toJson(column));
+                  simpleGroup.append(name + "_minValue", String.valueOf(column.getMinValue()));
+                  simpleGroup.append(name + "_maxValue", String.valueOf(column.getMaxValue()));
                /*   TypeProtos.MajorType type = ParquetReaderUtility.getType(parquetTableMetadata.getPrimitiveType(columnName), parquetTableMetadata.getOriginalType(columnName), 0, 0);
                   switch (type.getMinorType()) {
                     case INT:
@@ -156,13 +155,14 @@ public class Metadata_Parquet_Helper {
                     default:
                       simpleGroup.append(name + "_minValue", String.valueOf(column.getMinValue()));
                       simpleGroup.append(name + "_maxValue", String.valueOf(column.getMaxValue()));
-                  }
+                  } */
                   simpleGroup.append(name + "_nulls", column.getNulls());
-                  */
+
                 }
         metadataWriter.write(simpleGroup);
       }
     }
+    stopwatch.start();
     metadataWriter.close();
     stopwatch.stop();
     logger.info("Took {} ms to write metadata to parquet", stopwatch.elapsed(TimeUnit.MILLISECONDS));
