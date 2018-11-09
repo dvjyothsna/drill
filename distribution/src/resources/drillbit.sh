@@ -94,11 +94,24 @@ waitForProcessEnd()
   commandName=$2
   kill_drillbit=$3
   processedAt=`date +%s`
+  triggered_shutdown=false
+  FILE=$DRILL_PID_DIR/.graceful
   origcnt=${DRILL_STOP_TIMEOUT:-120}
   while kill -0 $pidKilled > /dev/null 2>&1;
    do
      echo -n "."
      sleep 1;
+     #Incase of graceful shutdown, create .graceful file and wait till it is deleted to trigger kill command.
+     if [ "$kill_drillbit" = false ]; then
+       if [ "$triggered_shutdown" = false ]; then
+         touch $DRILL_PID_DIR/.graceful
+         triggered_shutdown=true
+       else
+         if [ ! -f "$FILE" ]; then
+           kill $pidKilled > /dev/null 2>&1;
+	 fi
+       fi
+     fi
      if [ "$kill_drillbit" = true ] ; then
         # if process persists more than $DRILL_STOP_TIMEOUT (default 120 sec) no mercy
         if [ $(( `date +%s` - $processedAt )) -gt $origcnt ]; then
@@ -192,6 +205,8 @@ start_bit ( )
   echo $procId > $pidFile # Yeah, $pidFile is a file, $procId is the pid...
   echo $! > $pidFile
   sleep 1
+  #remove any previous uncleaned .graceful file
+  rm $DRILL_PID_DIR/.graceful
   check_after_start $procId
 }
 
@@ -204,7 +219,9 @@ stop_bit ( )
     if kill -0 $pidToKill > /dev/null 2>&1; then
       echo "Stopping $command"
       echo "`date` Terminating $command pid $pidToKill" >> "$DRILLBIT_LOG_PATH"
-      kill $pidToKill > /dev/null 2>&1
+      if [ $kill_drillbit = true ]; then
+        kill $pidToKill > /dev/null 2>&1
+      fi
       waitForProcessEnd $pidToKill $command $kill_drillbit
       retval=0
     else

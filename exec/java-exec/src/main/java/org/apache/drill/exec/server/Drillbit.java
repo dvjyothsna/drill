@@ -17,6 +17,7 @@
  */
 package org.apache.drill.exec.server;
 
+import java.io.File;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -149,7 +150,7 @@ public class Drillbit implements AutoCloseable {
     boolean bindToLoopbackAddress = config.getBoolean(ExecConstants.ALLOW_LOOPBACK_ADDRESS_BINDING);
     final boolean allowPortHunting = (serviceSet != null) || drillPortHunt;
     context = new BootStrapContext(config, definitions, classpathScan);
-    manager = new WorkManager(context);
+    manager = new WorkManager(context, this);
 
     webServer = new WebServer(context, manager, this);
     boolean isDistributedMode = (serviceSet == null) && !bindToLoopbackAddress;
@@ -284,6 +285,10 @@ public class Drillbit implements AutoCloseable {
       //Closing the profile store provider if distinct
       if (storeProvider != profileStoreProvider) {
         AutoCloseables.close(profileStoreProvider);
+      }
+      File f = new File(System.getenv("DRILL_PID_DIR") + "/.graceful");
+      if (f.exists()) {
+        f.delete();
       }
     } catch(Exception e) {
       logger.warn("Failure on close()", e);
