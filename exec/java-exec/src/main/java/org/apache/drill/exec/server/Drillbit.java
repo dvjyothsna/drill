@@ -220,8 +220,9 @@ public class Drillbit implements AutoCloseable {
     drillbitContext.startRM();
 
     Runtime.getRuntime().addShutdownHook(new ShutdownThread(this, new StackTrace()));
-//    GracefulShutdownThread gracefulShutdownThread = new GracefulShutdownThread(this, new StackTrace());
-//    gracefulShutdownThread.start();
+    GracefulShutdownThread gracefulShutdownThread = new GracefulShutdownThread(this, new StackTrace());
+    gracefulShutdownThread.start();
+    Runtime.getRuntime().addShutdownHook(gracefulShutdownThread);
     logger.info("Startup completed ({} ms).", w.elapsed(TimeUnit.MILLISECONDS));
   }
 
