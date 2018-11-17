@@ -25,6 +25,7 @@ import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
+import org.apache.drill.exec.work.foreman.QueryManager;
 import org.apache.drill.shaded.guava.com.google.common.base.Preconditions;
 import org.apache.drill.shaded.guava.com.google.common.collect.Lists;
 import org.apache.drill.shaded.guava.com.google.common.collect.Maps;
@@ -467,13 +468,13 @@ public class WorkManager implements AutoCloseable {
       // StatusThread is started
       final Controller controller = dContext.getController();
       final DrillbitEndpoint localBitEndPoint = dContext.getEndpoint();
-      try {
-        pollShutdown(drillbit);
-      } catch (IOException e) {
-        e.printStackTrace();
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
+//      try {
+////        pollShutdown(drillbit);
+//      } catch (IOException e) {
+//        e.printStackTrace();
+//      } catch (InterruptedException e) {
+//        e.printStackTrace();
+//      }
 
 
       while (true) {

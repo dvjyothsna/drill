@@ -18,6 +18,13 @@
 package org.apache.drill.exec.server;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
+import java.nio.file.StandardWatchEventKinds;
+import java.nio.file.WatchEvent;
+import java.nio.file.WatchKey;
+import java.nio.file.WatchService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -213,6 +220,8 @@ public class Drillbit implements AutoCloseable {
     drillbitContext.startRM();
 
     Runtime.getRuntime().addShutdownHook(new ShutdownThread(this, new StackTrace()));
+    GracefulShutdownThread gracefulShutdownThread = new GracefulShutdownThread(this, new StackTrace());
+    gracefulShutdownThread.start();
     logger.info("Startup completed ({} ms).", w.elapsed(TimeUnit.MILLISECONDS));
   }
 
@@ -338,6 +347,47 @@ public class Drillbit implements AutoCloseable {
 
       optionManager.setLocalOption(defaultValue.kind, optionName, optionString);
     }
+  }
+
+
+  private static class GracefulShutdownThread extends Thread {
+
+    private final Drillbit drillbit;
+    private final StackTrace stackTrace;
+
+    public GracefulShutdownThread(final Drillbit drillbit, final StackTrace stackTrace) {
+      this.drillbit = drillbit;
+      this.stackTrace = stackTrace;
+    }
+
+    @Override
+    public void run () {
+      try {
+        pollShutdown(drillbit);
+      } catch (IOException e) {
+        e.printStackTrace();
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+    }
+
+    private void pollShutdown(Drillbit drillbit) throws IOException, InterruptedException {
+      final Path path = FileSystems.getDefault().getPath(System.getenv("DRILL_PID_DIR"));
+      try (final WatchService watchService = FileSystems.getDefault().newWatchService()) {
+        path.register(watchService, StandardWatchEventKinds.ENTRY_MODIFY, StandardWatchEventKinds.ENTRY_CREATE);
+        while (true) {
+          final WatchKey wk = watchService.take();
+          for (WatchEvent<?> event : wk.pollEvents()) {
+            final Path changed = (Path) event.context();
+            if (changed.endsWith(".graceful")) {
+              drillbit.close();
+              break;
+            }
+          }
+        }
+      }
+    }
+
   }
 
   /**
