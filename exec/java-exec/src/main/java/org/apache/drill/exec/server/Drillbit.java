@@ -17,7 +17,13 @@
  */
 package org.apache.drill.exec.server;
 
-import java.io.File;
+import java.io.IOException;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
+import java.nio.file.StandardWatchEventKinds;
+import java.nio.file.WatchEvent;
+import java.nio.file.WatchKey;
+import java.nio.file.WatchService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -91,6 +97,8 @@ public class Drillbit implements AutoCloseable {
   private DrillbitStateManager stateManager;
   private boolean quiescentMode;
   private boolean forcefulShutdown = false;
+  PollShutdownThread pollShutdownThread;
+  private boolean interruptPollShutdown = true;
 
   public void setQuiescentMode(boolean quiescentMode) {
     this.quiescentMode = quiescentMode;
@@ -150,7 +158,7 @@ public class Drillbit implements AutoCloseable {
     boolean bindToLoopbackAddress = config.getBoolean(ExecConstants.ALLOW_LOOPBACK_ADDRESS_BINDING);
     final boolean allowPortHunting = (serviceSet != null) || drillPortHunt;
     context = new BootStrapContext(config, definitions, classpathScan);
-    manager = new WorkManager(context, this);
+    manager = new WorkManager(context);
 
     webServer = new WebServer(context, manager, this);
     boolean isDistributedMode = (serviceSet == null) && !bindToLoopbackAddress;
@@ -213,6 +221,8 @@ public class Drillbit implements AutoCloseable {
     drillbitContext.startRM();
 
     Runtime.getRuntime().addShutdownHook(new ShutdownThread(this, new StackTrace()));
+    pollShutdownThread = new PollShutdownThread(this, new StackTrace());
+    pollShutdownThread.start();
     logger.info("Startup completed ({} ms).", w.elapsed(TimeUnit.MILLISECONDS));
   }
 
@@ -286,16 +296,17 @@ public class Drillbit implements AutoCloseable {
       if (storeProvider != profileStoreProvider) {
         AutoCloseables.close(profileStoreProvider);
       }
-      File f = new File(System.getenv("DRILL_PID_DIR") + "/.graceful");
-      if (f.exists()) {
-        f.delete();
-      }
     } catch(Exception e) {
       logger.warn("Failure on close()", e);
     }
 
     logger.info("Shutdown completed ({} ms).", w.elapsed(TimeUnit.MILLISECONDS) );
     stateManager.setState(DrillbitState.SHUTDOWN);
+    // Interrupt the polling for shutdown since shutdown is triggered from WebUI.
+    if (interruptPollShutdown) {
+      pollShutdownThread.interrupt();
+    }
+
   }
 
   private void javaPropertiesToSystemOptions() {
@@ -337,6 +348,50 @@ public class Drillbit implements AutoCloseable {
       }
 
       optionManager.setLocalOption(defaultValue.kind, optionName, optionString);
+    }
+  }
+
+
+  // Polls for graceful file to check if graceful shutdown is triggered from the script.
+  private static class PollShutdownThread extends Thread {
+
+    private final Drillbit drillbit;
+    private final StackTrace stackTrace;
+
+    public PollShutdownThread(final Drillbit drillbit, final StackTrace stackTrace) {
+      this.drillbit = drillbit;
+      this.stackTrace = stackTrace;
+    }
+
+    @Override
+    public void run () {
+      try {
+        pollShutdown(drillbit);
+      } catch (Exception e) {
+        throw new RuntimeException("Caught exception while polling for shutdown\n" + stackTrace, e);
+      }
+    }
+
+    private void pollShutdown(Drillbit drillbit) throws IOException, InterruptedException {
+      final Path path = FileSystems.getDefault().getPath(System.getenv("DRILL_PID_DIR"));
+      final String file = System.getenv("GRACEFUL_FILE_SUFFIX");
+      boolean triggered_shutdown = false;
+      try (final WatchService watchService = FileSystems.getDefault().newWatchService()) {
+        path.register(watchService, StandardWatchEventKinds.ENTRY_MODIFY, StandardWatchEventKinds.ENTRY_CREATE);
+        while (!triggered_shutdown) {
+          final WatchKey wk = watchService.take();
+          for (WatchEvent<?> event : wk.pollEvents()) {
+            final Path changed = (Path) event.context();
+            if (changed.endsWith(file)) {
+              drillbit.interruptPollShutdown = false;
+              triggered_shutdown = true;
+              drillbit.close();
+              wk.cancel();
+              break;
+            }
+          }
+        }
+      }
     }
   }
 

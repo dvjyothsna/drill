@@ -18,13 +18,6 @@
 package org.apache.drill.exec.work;
 
 import com.codahale.metrics.Gauge;
-import java.io.IOException;
-import java.nio.file.FileSystems;
-import java.nio.file.Path;
-import java.nio.file.StandardWatchEventKinds;
-import java.nio.file.WatchEvent;
-import java.nio.file.WatchKey;
-import java.nio.file.WatchService;
 import org.apache.drill.shaded.guava.com.google.common.base.Preconditions;
 import org.apache.drill.shaded.guava.com.google.common.collect.Lists;
 import org.apache.drill.shaded.guava.com.google.common.collect.Maps;
@@ -46,7 +39,6 @@ import org.apache.drill.exec.rpc.control.Controller;
 import org.apache.drill.exec.rpc.control.WorkEventBus;
 import org.apache.drill.exec.rpc.data.DataConnectionCreator;
 import org.apache.drill.exec.server.BootStrapContext;
-import org.apache.drill.exec.server.Drillbit;
 import org.apache.drill.exec.server.DrillbitContext;
 import org.apache.drill.exec.server.rest.auth.DrillUserPrincipal;
 import org.apache.drill.exec.store.sys.PersistentStoreProvider;
@@ -87,7 +79,6 @@ public class WorkManager implements AutoCloseable {
 
   private final BootStrapContext bContext;
   private DrillbitContext dContext;
-  private Drillbit drillbit;
 
   private final ControlMessageHandler controlMessageWorker;
   private final UserWorker userWorker;
@@ -103,12 +94,12 @@ public class WorkManager implements AutoCloseable {
    */
   private final static int STATUS_PERIOD_SECONDS = 5;
 
-  public WorkManager(final BootStrapContext context, Drillbit drillbit) {
+  public WorkManager(final BootStrapContext context) {
     this.bContext = context;
     bee = new WorkerBee(); // TODO should this just be an interface?
     workBus = new WorkEventBus(); // TODO should this just be an interface?
     executor = context.getExecutor();
-    this.drillbit = drillbit;
+
     // TODO references to this escape here (via WorkerBee) before construction is done
     controlMessageWorker = new ControlMessageHandler(bee); // TODO getFragmentRunner(), getForemanForQueryId()
     userWorker = new UserWorker(bee); // TODO should just be an interface? addNewForeman(), getForemanForQueryId()
@@ -442,22 +433,6 @@ public class WorkManager implements AutoCloseable {
     public StatusThread() {
       // assume this thread is created by a non-daemon thread
       setName("WorkManager.StatusThread");
-  }
-  private void pollShutdown(Drillbit drillbit) throws IOException, InterruptedException {
-      final Path path = FileSystems.getDefault().getPath(System.getenv("DRILL_PID_DIR"));
-      try (final WatchService watchService = FileSystems.getDefault().newWatchService()) {
-        path.register(watchService, StandardWatchEventKinds.ENTRY_MODIFY, StandardWatchEventKinds.ENTRY_CREATE);
-        while (true) {
-          final WatchKey wk = watchService.take();
-          for (WatchEvent<?> event : wk.pollEvents()) {
-            final Path changed = (Path) event.context();
-            if (changed.endsWith(".graceful")) {
-              drillbit.close();
-              break;
-            }
-          }
-        }
-      }
     }
 
     @Override
@@ -467,14 +442,6 @@ public class WorkManager implements AutoCloseable {
       // StatusThread is started
       final Controller controller = dContext.getController();
       final DrillbitEndpoint localBitEndPoint = dContext.getEndpoint();
-      try {
-        pollShutdown(drillbit);
-      } catch (IOException e) {
-        e.printStackTrace();
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
-
 
       while (true) {
         final List<DrillRpcFuture<Ack>> futures = Lists.newArrayList();
