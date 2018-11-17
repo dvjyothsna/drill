@@ -380,7 +380,16 @@ public class Drillbit implements AutoCloseable {
           for (WatchEvent<?> event : wk.pollEvents()) {
             final Path changed = (Path) event.context();
             if (changed.endsWith(".graceful")) {
-              drillbit.close();
+              new Thread(new Runnable() {
+                @Override
+                public void run() {
+                  try {
+                    drillbit.close();
+                  } catch (Exception e) {
+                    logger.error("Request to shutdown drillbit failed", e);
+                  }
+                }
+              }).start();
               break;
             }
           }
