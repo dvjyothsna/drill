@@ -106,10 +106,10 @@ waitForProcessEnd()
        if [ "$triggered_shutdown" = false ]; then
          touch $DRILL_PID_DIR/.graceful
          triggered_shutdown=true
-       else
-         if [ ! -f "$FILE" ]; then
-           kill $pidKilled > /dev/null 2>&1;
-	 fi
+     # else
+      #   if [ ! -f "$FILE" ]; then
+       #    kill $pidKilled > /dev/null 2>&1;
+	   #fi
        fi
      fi
      if [ "$kill_drillbit" = true ] ; then
