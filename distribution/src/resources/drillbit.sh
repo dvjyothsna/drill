@@ -202,7 +202,7 @@ start_bit ( )
   echo $! > $pidFile
   sleep 1
   #remove any previous uncleaned .graceful file
-  if [ ! -f "$FILE" ]; then
+  if [ -f "$FILE" ]; then
     rm $DRILL_PID_DIR/.graceful
   fi
   check_after_start $procId

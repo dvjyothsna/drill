@@ -98,7 +98,7 @@ public class Drillbit implements AutoCloseable {
   private boolean quiescentMode;
   private boolean forcefulShutdown = false;
   GracefulShutdownThread gracefulShutdownThread;
-  private boolean interruptGracefulThread = false;
+  private boolean interruptGracefulThread = true;
 
   public void setQuiescentMode(boolean quiescentMode) {
     this.quiescentMode = quiescentMode;
@@ -302,7 +302,9 @@ public class Drillbit implements AutoCloseable {
 
     logger.info("Shutdown completed ({} ms).", w.elapsed(TimeUnit.MILLISECONDS) );
     stateManager.setState(DrillbitState.SHUTDOWN);
-    gracefulShutdownThread.interrupt();
+    if (interruptGracefulThread) {
+      gracefulShutdownThread.interrupt();
+    }
 
   }
 
@@ -381,7 +383,7 @@ public class Drillbit implements AutoCloseable {
           for (WatchEvent<?> event : wk.pollEvents()) {
             final Path changed = (Path) event.context();
             if (changed.endsWith(".graceful")) {
-              drillbit.interruptGracefulThread = true;
+              drillbit.interruptGracefulThread = false;
 //              new Thread(new Runnable() {
 //                @Override
 //                public void run() {
