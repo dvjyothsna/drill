@@ -306,7 +306,7 @@ public class Drillbit implements AutoCloseable {
 
     logger.info("Shutdown completed ({} ms).", w.elapsed(TimeUnit.MILLISECONDS) );
     stateManager.setState(DrillbitState.SHUTDOWN);
-//    gracefulShutdownThread.interrupt();
+    gracefulShutdownThread.interrupt();
 
   }
 
@@ -367,7 +367,6 @@ public class Drillbit implements AutoCloseable {
     public void run () {
       try {
         pollShutdown(drillbit);
-        return;
       } catch (IOException e) {
         e.printStackTrace();
       } catch (InterruptedException e) {
