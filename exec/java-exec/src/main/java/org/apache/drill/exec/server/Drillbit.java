@@ -98,6 +98,7 @@ public class Drillbit implements AutoCloseable {
   private DrillbitStateManager stateManager;
   private boolean quiescentMode;
   private boolean forcefulShutdown = false;
+  GracefulShutdownThread gracefulShutdownThread;
 
   public void setQuiescentMode(boolean quiescentMode) {
     this.quiescentMode = quiescentMode;
@@ -220,7 +221,7 @@ public class Drillbit implements AutoCloseable {
     drillbitContext.startRM();
 
     Runtime.getRuntime().addShutdownHook(new ShutdownThread(this, new StackTrace()));
-    GracefulShutdownThread gracefulShutdownThread = new GracefulShutdownThread(this, new StackTrace());
+    gracefulShutdownThread = new GracefulShutdownThread(this, new StackTrace());
     gracefulShutdownThread.start();
     Runtime.getRuntime().addShutdownHook(gracefulShutdownThread);
     logger.info("Startup completed ({} ms).", w.elapsed(TimeUnit.MILLISECONDS));
@@ -306,6 +307,8 @@ public class Drillbit implements AutoCloseable {
 
     logger.info("Shutdown completed ({} ms).", w.elapsed(TimeUnit.MILLISECONDS) );
     stateManager.setState(DrillbitState.SHUTDOWN);
+    gracefulShutdownThread.interrupt();
+
   }
 
   private void javaPropertiesToSystemOptions() {
