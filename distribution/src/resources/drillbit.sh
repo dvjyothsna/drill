@@ -205,6 +205,7 @@ start_bit ( )
   if [ -f "$FILE" ]; then
     rm $DRILL_PID_DIR/.graceful
   fi
+  echo $GRACEFUL_FILE
   check_after_start $procId
 }
 
