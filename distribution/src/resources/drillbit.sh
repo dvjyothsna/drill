@@ -101,7 +101,7 @@ waitForProcessEnd()
    do
      echo -n "."
      sleep 1;
-     #Incase of graceful shutdown, create .graceful file and wait till it is deleted to trigger kill command.
+     #Incase of graceful shutdown, create .graceful file and wait till the process ends.
      if [ "$kill_drillbit" = false ]; then
        if [ "$triggered_shutdown" = false ]; then
          touch $DRILL_PID_DIR/.graceful
