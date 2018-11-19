@@ -87,6 +87,7 @@ export args
 
 # Set default scheduling priority
 DRILL_NICENESS=${DRILL_NICENESS:-0}
+FILE=$DRILL_PID_DIR/.graceful
 
 waitForProcessEnd()
 {
@@ -95,7 +96,6 @@ waitForProcessEnd()
   kill_drillbit=$3
   processedAt=`date +%s`
   triggered_shutdown=false
-  FILE=$DRILL_PID_DIR/.graceful
   origcnt=${DRILL_STOP_TIMEOUT:-120}
   while kill -0 $pidKilled > /dev/null 2>&1;
    do
@@ -106,10 +106,6 @@ waitForProcessEnd()
        if [ "$triggered_shutdown" = false ]; then
          touch $DRILL_PID_DIR/.graceful
          triggered_shutdown=true
-     # else
-      #   if [ ! -f "$FILE" ]; then
-       #    kill $pidKilled > /dev/null 2>&1;
-	   #fi
        fi
      fi
      if [ "$kill_drillbit" = true ] ; then
@@ -206,7 +202,9 @@ start_bit ( )
   echo $! > $pidFile
   sleep 1
   #remove any previous uncleaned .graceful file
-  rm $DRILL_PID_DIR/.graceful
+  if [ ! -f "$FILE" ]; then
+    rm $DRILL_PID_DIR/.graceful
+  fi
   check_after_start $procId
 }
 

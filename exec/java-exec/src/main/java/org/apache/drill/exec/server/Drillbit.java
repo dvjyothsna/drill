@@ -296,10 +296,6 @@ public class Drillbit implements AutoCloseable {
       if (storeProvider != profileStoreProvider) {
         AutoCloseables.close(profileStoreProvider);
       }
-      File f = new File(System.getenv("DRILL_PID_DIR") + "/.graceful");
-      if (f.exists()) {
-        f.delete();
-      }
     } catch(Exception e) {
       logger.warn("Failure on close()", e);
     }
