@@ -382,7 +382,7 @@ public class Drillbit implements AutoCloseable {
           final WatchKey wk = watchService.take();
           for (WatchEvent<?> event : wk.pollEvents()) {
             final Path changed = (Path) event.context();
-            if (changed.endsWith(".graceful")) {
+            if (changed.endsWith("graceful")) {
               drillbit.interruptGracefulThread = false;
 //              new Thread(new Runnable() {
 //                @Override

@@ -87,7 +87,7 @@ export args
 
 # Set default scheduling priority
 DRILL_NICENESS=${DRILL_NICENESS:-0}
-FILE=$DRILL_PID_DIR/.graceful
+FILE=$DRILL_PID_DIR/graceful
 
 waitForProcessEnd()
 {
@@ -101,10 +101,10 @@ waitForProcessEnd()
    do
      echo -n "."
      sleep 1;
-     #Incase of graceful shutdown, create .graceful file and wait till the process ends.
+     #Incase of graceful shutdown, create graceful file and wait till the process ends.
      if [ "$kill_drillbit" = false ]; then
        if [ "$triggered_shutdown" = false ]; then
-         touch $DRILL_PID_DIR/.graceful
+         touch $DRILL_PID_DIR/graceful
          triggered_shutdown=true
        fi
      fi
@@ -201,9 +201,9 @@ start_bit ( )
   echo $procId > $pidFile # Yeah, $pidFile is a file, $procId is the pid...
   echo $! > $pidFile
   sleep 1
-  #remove any previous uncleaned .graceful file
+  #remove any previous uncleaned graceful file
   if [ -f "$FILE" ]; then
-    rm $DRILL_PID_DIR/.graceful
+    rm $DRILL_PID_DIR/graceful
   fi
   echo $GRACEFUL_FILE
   check_after_start $procId
