@@ -205,7 +205,6 @@ start_bit ( )
   if [ -f "$GRACEFUL_FILE" ]; then
     rm $GRACEFUL_FILE
   fi
-  echo $GRACEFUL_FILE
   check_after_start $procId
 }
 
