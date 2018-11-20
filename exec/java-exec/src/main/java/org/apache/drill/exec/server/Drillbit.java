@@ -374,7 +374,6 @@ public class Drillbit implements AutoCloseable {
     private void pollShutdown(Drillbit drillbit) throws IOException, InterruptedException {
       final Path path = FileSystems.getDefault().getPath(System.getenv("DRILL_PID_DIR"));
       final String file = System.getenv("GRACEFUL_FILE_SUFFIX");
-      logger.info("Shutdown file is {}", file);
       boolean triggered_shutdown = false;
       try (final WatchService watchService = FileSystems.getDefault().newWatchService()) {
         path.register(watchService, StandardWatchEventKinds.ENTRY_MODIFY, StandardWatchEventKinds.ENTRY_CREATE);
@@ -382,11 +381,10 @@ public class Drillbit implements AutoCloseable {
           final WatchKey wk = watchService.take();
           for (WatchEvent<?> event : wk.pollEvents()) {
             final Path changed = (Path) event.context();
-            logger.info("Shutdown file1 is {}", file);
             if (changed.endsWith(file)) {
-              logger.info("Triggering shutdown");
               drillbit.interruptGracefulThread = false;
               triggered_shutdown = true;
+              drillbit.close();
               wk.cancel();
               break;
             }
