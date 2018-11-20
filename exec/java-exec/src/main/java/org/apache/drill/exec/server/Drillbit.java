@@ -382,7 +382,9 @@ public class Drillbit implements AutoCloseable {
           final WatchKey wk = watchService.take();
           for (WatchEvent<?> event : wk.pollEvents()) {
             final Path changed = (Path) event.context();
+            logger.info("Shutdown file1 is {}", file);
             if (changed.endsWith(file)) {
+              logger.info("Triggering shutdown");
               drillbit.interruptGracefulThread = false;
               triggered_shutdown = true;
               wk.cancel();
