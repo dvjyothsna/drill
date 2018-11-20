@@ -97,7 +97,7 @@ public class Drillbit implements AutoCloseable {
   private DrillbitStateManager stateManager;
   private boolean quiescentMode;
   private boolean forcefulShutdown = false;
-  GracefulShutdownThread gracefulShutdownThread;
+  PollShutdownThread pollShutdownThread;
   private boolean interruptGracefulThread = true;
 
   public void setQuiescentMode(boolean quiescentMode) {
@@ -221,8 +221,8 @@ public class Drillbit implements AutoCloseable {
     drillbitContext.startRM();
 
     Runtime.getRuntime().addShutdownHook(new ShutdownThread(this, new StackTrace()));
-    gracefulShutdownThread = new GracefulShutdownThread(this, new StackTrace());
-    gracefulShutdownThread.start();
+    pollShutdownThread = new PollShutdownThread(this, new StackTrace());
+    pollShutdownThread.start();
     logger.info("Startup completed ({} ms).", w.elapsed(TimeUnit.MILLISECONDS));
   }
 
@@ -304,7 +304,7 @@ public class Drillbit implements AutoCloseable {
     stateManager.setState(DrillbitState.SHUTDOWN);
     if (interruptGracefulThread) {
       logger.info("Interrupting the GracefulThread");
-      gracefulShutdownThread.interrupt();
+      pollShutdownThread.interrupt();
     }
 
   }
@@ -352,12 +352,13 @@ public class Drillbit implements AutoCloseable {
   }
 
 
-  private static class GracefulShutdownThread extends Thread {
+  // Polls for graceful file to check if graceful shutdown is triggered from the script.
+  private static class PollShutdownThread extends Thread {
 
     private final Drillbit drillbit;
     private final StackTrace stackTrace;
 
-    public GracefulShutdownThread(final Drillbit drillbit, final StackTrace stackTrace) {
+    public PollShutdownThread(final Drillbit drillbit, final StackTrace stackTrace) {
       this.drillbit = drillbit;
       this.stackTrace = stackTrace;
     }
@@ -392,7 +393,6 @@ public class Drillbit implements AutoCloseable {
         }
       }
     }
-
   }
 
   /**
