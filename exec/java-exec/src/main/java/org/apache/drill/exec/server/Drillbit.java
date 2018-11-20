@@ -366,16 +366,15 @@ public class Drillbit implements AutoCloseable {
     public void run () {
       try {
         pollShutdown(drillbit);
-      } catch (IOException e) {
-        e.printStackTrace();
-      } catch (InterruptedException e) {
-        e.printStackTrace();
+      } catch (Exception e) {
+        throw new RuntimeException("Caught exception while polling for shutdown\n" + stackTrace, e);
       }
     }
 
     private void pollShutdown(Drillbit drillbit) throws IOException, InterruptedException {
       final Path path = FileSystems.getDefault().getPath(System.getenv("DRILL_PID_DIR"));
       final String file = System.getenv("GRACEFUL_FILE_SUFFIX");
+      logger.info("Shutdown file is {}", file);
       boolean triggered_shutdown = false;
       try (final WatchService watchService = FileSystems.getDefault().newWatchService()) {
         path.register(watchService, StandardWatchEventKinds.ENTRY_MODIFY, StandardWatchEventKinds.ENTRY_CREATE);
