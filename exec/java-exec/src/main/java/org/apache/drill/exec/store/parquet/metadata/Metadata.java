@@ -73,6 +73,7 @@ import org.apache.parquet.column.statistics.Statistics;
 import org.apache.parquet.example.data.Group;
 import org.apache.parquet.example.data.simple.convert.GroupRecordConverter;
 import org.apache.parquet.format.converter.ParquetMetadataConverter;
+import static org.apache.parquet.format.converter.ParquetMetadataConverter.NO_FILTER;
 import org.apache.parquet.hadoop.ParquetFileReader;
 import org.apache.parquet.hadoop.metadata.BlockMetaData;
 import org.apache.parquet.hadoop.metadata.ColumnChunkMetaData;
@@ -86,6 +87,7 @@ import org.apache.parquet.schema.MessageType;
 import org.apache.parquet.schema.OriginalType;
 import org.apache.parquet.schema.PrimitiveType;
 import org.apache.parquet.schema.Type;
+
 
 
 public class Metadata {
@@ -643,17 +645,18 @@ public class Metadata {
     long rowCount = g.getLong(5, 0);
 //    hostAffinity = gson.fromJson(g.getValueToString(6, 0), hostAffinityType);
 //    logger.info("host affinity is ", String.valueOf(hostAffinity));
-    for (int field = 7; field < fieldCount; field++) {
-//      Type fieldType = g.getType().getType(field);
-//        java.lang.reflect.Type nameType = new TypeToken<String []>() {}.getType();
-        ColumnMetadata_v3 columnMetadata_v3 = new ColumnMetadata_v3();
-        columnMetadata_v3.name = splitString(':', g.getValueToString(field++, 0));
-        columnMetadata_v3.minValue =  g.getValueToString(field++, 0);
-        Type type = g.getType().getType(field);
-        columnMetadata_v3.maxValue = (Object) g.getValueToString(field++, 0);
-        columnMetadata_v3.nulls = g.getLong(field, 0);
-        columnInfo.add(columnMetadata_v3);
-      }
+//    for (int field = 7; field < fieldCount; field++) {
+////      Type fieldType = g.getType().getType(field);
+////        java.lang.reflect.Type nameType = new TypeToken<String []>() {}.getType();
+//        ColumnMetadata_v3 columnMetadata_v3 = new ColumnMetadata_v3();
+//        columnMetadata_v3.name = splitString(':', g.getValueToString(field++, 0));
+//        columnMetadata_v3.minValue =  g.getValueToString(field++, 0);
+//        Type type = g.getType().getType(field);
+//        columnMetadata_v3.maxValue = (Object) g.getValueToString(field++, 0);
+//        columnMetadata_v3.nulls = g.getLong(field, 0);
+//        columnInfo.add(columnMetadata_v3);
+//      }
+//    columnInfo = ;
     rowgroup = new RowGroupMetadata_v3(start, rgLength, rowCount, hostAffinity, columnInfo);
     ArrayList<RowGroupMetadata_v3> rowgroups = new ArrayList<>();
     if (newFiles.size() <= fid) {
@@ -681,8 +684,22 @@ public class Metadata {
     long parseTime = 0;
     try {
       Stopwatch stopwatch = Stopwatch.createStarted();
+      ParquetReadOptions options = ParquetReadOptions.builder().withMetadataFilter(NO_FILTER).build();
+//      ParquetFileReader reader = ParquetFileReader.open((InputFile) path, options);
+//      ParquetMetadata readFooter= reader.getFooter();
       ParquetMetadata readFooter = ParquetFileReader.readFooter(conf, path, ParquetMetadataConverter.NO_FILTER);
       MessageType schema = readFooter.getFileMetaData().getSchema();
+      schema.getColumns();
+//      ColumnReader columnReader;
+//      MemPageStore memPageStore = new MemPageStore(10);
+//      ColumnReadStoreImpl columnReadStore =  new ColumnReadStoreImpl(
+//              null,
+//              new DummyRecordConverter(schema).getRootConverter(),
+//              schema,
+//              null);
+//      columnReader = columnReadStore.getColumnReader(schema.getColumns().get(0));
+//      columnReader.getTotalValueCount();
+
       ParquetFileReader r = new ParquetFileReader(conf, path, readFooter);
       PageReadStore pages = null;
       logger.info("Took {} ms to read footer", stopwatch.elapsed(TimeUnit.MILLISECONDS));
@@ -696,6 +713,7 @@ public class Metadata {
             final long rows = pages.getRowCount();
             final MessageColumnIO columnIO = new ColumnIOFactory().getColumnIO(schema);
             final RecordReader recordReader = columnIO.getRecordReader(pages, new GroupRecordConverter(schema));
+
             timeTaken = timeTaken + stopwatch1.elapsed(TimeUnit.MILLISECONDS);
             for (int i = 0; i < rows; i++) {
               final Group g = (Group) recordReader.read();

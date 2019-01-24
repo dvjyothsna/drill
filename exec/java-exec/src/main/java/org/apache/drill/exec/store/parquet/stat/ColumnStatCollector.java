@@ -27,6 +27,6 @@ public interface ColumnStatCollector {
    * Given a list of fields (SchemaPath), return mapping from field to its corresponding ColumnStatistics
    * @return
    */
-  Map<SchemaPath, ColumnStatistics> collectColStat(Set<SchemaPath> fields);
+  Map<SchemaPath, ColumnStatistics> collectColStat(Set<SchemaPath> fields) throws Exception;
 
 }

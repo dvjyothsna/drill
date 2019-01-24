@@ -72,7 +72,7 @@ public class ParquetMetaStatCollector implements  ColumnStatCollector {
   }
 
   @Override
-  public Map<SchemaPath, ColumnStatistics> collectColStat(Set<SchemaPath> fields) {
+  public Map<SchemaPath, ColumnStatistics> collectColStat(Set<SchemaPath> fields) throws Exception {
     Stopwatch timer = logger.isDebugEnabled() ? Stopwatch.createStarted() : null;
 
     // map from column to ColumnMetadata
@@ -108,8 +108,12 @@ public class ParquetMetaStatCollector implements  ColumnStatCollector {
           scale = columnTypeInfo.scale;
           precision = columnTypeInfo.precision;
         }
-
-        statMap.put(field, getStat(min, max, numNulls, primitiveType, originalType, scale, precision));
+        try {
+          statMap.put(field, getStat(min, max, numNulls, primitiveType, originalType, scale, precision));
+        } catch(Exception e) {
+          logger.warn("Could not apply filter prune due to Exception : {}", e);
+          throw e;
+        }
       } else {
         final String columnName = field.getRootSegment().getPath();
         if (implicitColValues.containsKey(columnName)) {
@@ -152,35 +156,38 @@ public class ParquetMetaStatCollector implements  ColumnStatCollector {
 
     TypeProtos.MajorType type = ParquetReaderUtility.getType(primitiveType, originalType, scale, precision);
     stat.setNumNulls(numNulls);
-
-    if (!min.toString().equals("null") && !max.toString().equals("null")) {
-      switch (type.getMinorType()) {
-      case INT :
-      case TIME:
-        ((IntStatistics) stat).setMinMax(Integer.parseInt(min.toString()), Integer.parseInt( max.toString()));
-        break;
-      case BIGINT:
-      case TIMESTAMP:
-        ((LongStatistics) stat).setMinMax(Long.parseLong(min.toString()), Long.parseLong(max.toString()));
-        break;
-      case FLOAT4:
-        ((FloatStatistics) stat).setMinMax(Float.parseFloat(min.toString()), Float.parseFloat(max.toString()));
-        break;
-      case FLOAT8:
-        ((DoubleStatistics) stat).setMinMax(Double.parseDouble(min.toString()), Double.parseDouble(max.toString()));
-        break;
-      case DATE:
-        convertedStat = new LongStatistics();
-        convertedStat.setNumNulls(stat.getNumNulls());
-        final long minMS = convertToDrillDateValue(Integer.parseInt(min.toString()));
-        final long maxMS = convertToDrillDateValue(Integer.parseInt(max.toString()));
-        ((LongStatistics) convertedStat ).setMinMax(minMS, maxMS);
-        break;
-      case BIT:
-        ((BooleanStatistics) stat).setMinMax(Boolean.parseBoolean(min.toString()), Boolean.parseBoolean(max.toString()));
-        break;
-      default:
+    try {
+      if (!min.toString().equals("null") && !max.toString().equals("null")) {
+        switch (type.getMinorType()) {
+          case INT:
+          case TIME:
+            ((IntStatistics) stat).setMinMax(Integer.parseInt(min.toString()), Integer.parseInt(max.toString()));
+            break;
+          case BIGINT:
+          case TIMESTAMP:
+            ((LongStatistics) stat).setMinMax(Long.parseLong(min.toString()), Long.parseLong(max.toString()));
+            break;
+          case FLOAT4:
+            ((FloatStatistics) stat).setMinMax(Float.parseFloat(min.toString()), Float.parseFloat(max.toString()));
+            break;
+          case FLOAT8:
+            ((DoubleStatistics) stat).setMinMax(Double.parseDouble(min.toString()), Double.parseDouble(max.toString()));
+            break;
+          case DATE:
+            convertedStat = new LongStatistics();
+            convertedStat.setNumNulls(stat.getNumNulls());
+            final long minMS = convertToDrillDateValue(Integer.parseInt(min.toString()));
+            final long maxMS = convertToDrillDateValue(Integer.parseInt(max.toString()));
+            ((LongStatistics) convertedStat).setMinMax(minMS, maxMS);
+            break;
+          case BIT:
+            ((BooleanStatistics) stat).setMinMax(Boolean.parseBoolean(min.toString()), Boolean.parseBoolean(max.toString()));
+            break;
+          default:
+        }
       }
+    } catch (NullPointerException e) {
+      throw e;
     }
 
     return new ColumnStatistics(convertedStat, type);

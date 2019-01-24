@@ -60,7 +60,12 @@ public class ParquetRGFilterEvaluator {
     final Set<SchemaPath> schemaPathsInExpr = expr.accept(new FieldReferenceFinder(), null);
     final ColumnStatCollector columnStatCollector = new ParquetFooterStatCollector(footer, rowGroupIndex, implicitColValues,true, options);
 
-    Map<SchemaPath, ColumnStatistics> columnStatisticsMap = columnStatCollector.collectColStat(schemaPathsInExpr);
+    Map<SchemaPath, ColumnStatistics> columnStatisticsMap = null;
+    try {
+      columnStatisticsMap = columnStatCollector.collectColStat(schemaPathsInExpr);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
 
     return matches(expr, columnStatisticsMap, footer.getBlocks().get(rowGroupIndex).getRowCount(), fragmentContext, fragmentContext.getFunctionRegistry());
   }

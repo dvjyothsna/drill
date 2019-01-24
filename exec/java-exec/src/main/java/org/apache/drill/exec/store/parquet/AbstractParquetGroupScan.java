@@ -239,8 +239,13 @@ public abstract class AbstractParquetGroupScan extends AbstractFileGroupScan {
           parquetTableMetadata,
           rowGroup.getColumns(),
           implicitColValues);
-
-      Map<SchemaPath, ColumnStatistics> columnStatisticsMap = statCollector.collectColStat(schemaPathsInExpr);
+      Map<SchemaPath, ColumnStatistics> columnStatisticsMap;
+      try {
+        columnStatisticsMap = statCollector.collectColStat(schemaPathsInExpr);
+      } catch (Exception e) {
+        logger.warn("Could not apply filter prune due to Exception : {}", e);
+        return null;
+      }
 
       if (filterPredicate == null) {
         ErrorCollector errorCollector = new ErrorCollectorImpl();
