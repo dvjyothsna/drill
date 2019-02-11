@@ -256,7 +256,11 @@ public class Metadata {
     //  relative paths in the metadata are only necessary for meta cache files.
     ParquetTableMetadata_v3 metadataTableWithRelativePaths =
         MetadataPathUtils.createMetadataWithRelativePaths(parquetTableMetadata, path);
+    Stopwatch stopwatch = Stopwatch.createStarted();
+    stopwatch.start();
     writeFile(metadataTableWithRelativePaths, new Path(p, METADATA_FILENAME), fs);
+    logger.info("Took {} ms to write file {} metadata ", stopwatch.elapsed(TimeUnit.MILLISECONDS), p);
+    stopwatch.stop();
 
     if (directoryList.size() > 0 && childFiles.size() == 0) {
       ParquetTableMetadataDirs parquetTableMetadataDirsRelativePaths =
@@ -606,7 +610,11 @@ public class Metadata {
           newMetadata = true;
         }
       } else {
+        Stopwatch stopwatch = Stopwatch.createStarted();
+        stopwatch.start();
         parquetTableMetadata = mapper.readValue(is, ParquetTableMetadataBase.class);
+        logger.info("Took {} ms to read file metadata", stopwatch.elapsed(TimeUnit.MILLISECONDS));
+        stopwatch.stop();
         if (timer != null) {
           logger.debug("Took {} ms to read metadata from cache file", timer.elapsed(TimeUnit.MILLISECONDS));
           timer.stop();
