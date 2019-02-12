@@ -450,9 +450,9 @@ public class Metadata {
 
     for (BlockMetaData rowGroup : metadata.getBlocks()) {
       List<ColumnMetadata_v3> columnMetadataList = new ArrayList<>();
+      int i = 0;
       long length = 0;
       for (ColumnChunkMetaData col : rowGroup.getColumns()) {
-        Statistics<?> stats = col.getStatistics();
         String[] columnName = col.getPath().toArray();
         SchemaPath columnSchemaName = SchemaPath.getCompoundPath(columnName);
         ColTypeInfo colTypeInfo = colTypeInfoMap.get(columnSchemaName);
@@ -467,23 +467,27 @@ public class Metadata {
         parquetTableMetadata.columnTypeInfo.put(new ColumnTypeMetadata_v3.Key(columnTypeMetadata.name), columnTypeMetadata);
 
         // Save the column schema info. We'll merge it into one list
-        Object minValue = null;
-        Object maxValue = null;
-        long numNulls = -1;
-        boolean statsAvailable = stats != null && !stats.isEmpty();
-        if (statsAvailable) {
-          if (stats.hasNonNullValue()) {
-            minValue = stats.genericGetMin();
-            maxValue = stats.genericGetMax();
-            if (containsCorruptDates == ParquetReaderUtility.DateCorruptionStatus.META_SHOWS_CORRUPTION && columnTypeMetadata.originalType == OriginalType.DATE) {
-              minValue = ParquetReaderUtility.autoCorrectCorruptedDate((Integer) minValue);
-              maxValue = ParquetReaderUtility.autoCorrectCorruptedDate((Integer) maxValue);
+        while ( i < 2) {
+          Statistics<?> stats = col.getStatistics();
+          Object minValue = null;
+          Object maxValue = null;
+          long numNulls = -1;
+          boolean statsAvailable = stats != null && !stats.isEmpty();
+          if (statsAvailable) {
+            if (stats.hasNonNullValue()) {
+              minValue = stats.genericGetMin();
+              maxValue = stats.genericGetMax();
+              if (containsCorruptDates == ParquetReaderUtility.DateCorruptionStatus.META_SHOWS_CORRUPTION && columnTypeMetadata.originalType == OriginalType.DATE) {
+                minValue = ParquetReaderUtility.autoCorrectCorruptedDate((Integer) minValue);
+                maxValue = ParquetReaderUtility.autoCorrectCorruptedDate((Integer) maxValue);
+              }
             }
+            numNulls = stats.getNumNulls();
           }
-          numNulls = stats.getNumNulls();
+          ColumnMetadata_v3 columnMetadata = new ColumnMetadata_v3(columnTypeMetadata.name, col.getPrimitiveType().getPrimitiveTypeName(), minValue, maxValue, numNulls);
+          columnMetadataList.add(columnMetadata);
+          i++;
         }
-        ColumnMetadata_v3 columnMetadata = new ColumnMetadata_v3(columnTypeMetadata.name, col.getPrimitiveType().getPrimitiveTypeName(), minValue, maxValue, numNulls);
-        columnMetadataList.add(columnMetadata);
         length += col.getTotalSize();
       }
 
