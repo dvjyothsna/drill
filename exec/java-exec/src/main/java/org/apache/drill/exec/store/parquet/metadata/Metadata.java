@@ -257,7 +257,6 @@ public class Metadata {
     ParquetTableMetadata_v3 metadataTableWithRelativePaths =
         MetadataPathUtils.createMetadataWithRelativePaths(parquetTableMetadata, path);
     Stopwatch stopwatch = Stopwatch.createStarted();
-    stopwatch.start();
     writeFile(metadataTableWithRelativePaths, new Path(p, METADATA_FILENAME), fs);
     logger.info("Took {} ms to write file {} metadata ", stopwatch.elapsed(TimeUnit.MILLISECONDS), p);
     stopwatch.stop();
@@ -611,7 +610,6 @@ public class Metadata {
         }
       } else {
         Stopwatch stopwatch = Stopwatch.createStarted();
-        stopwatch.start();
         parquetTableMetadata = mapper.readValue(is, ParquetTableMetadataBase.class);
         logger.info("Took {} ms to read file metadata", stopwatch.elapsed(TimeUnit.MILLISECONDS));
         stopwatch.stop();
