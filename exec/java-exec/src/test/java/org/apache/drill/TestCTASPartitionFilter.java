@@ -51,8 +51,8 @@ public class TestCTASPartitionFilter extends PlanTestBase {
   @Test
   public void testDrill3965() throws Exception {
     test("use dfs.tmp");
-    test("create table orders_auto_partition partition by(o_orderpriority) as select * from cp.`tpch/orders.parquet`");
-    test("explain plan for select count(*) from `orders_auto_partition/1_0_1.parquet` where o_orderpriority = '5-LOW'");
+    test("create table orders_auto_partition as select * from cp.`tpch/orders.parquet` order by o_orderkey");
+    test("explain plan for select count(*) from `orders_auto_partition` where o_orderkey = 5");
   }
 
   @Test

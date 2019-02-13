@@ -17,6 +17,11 @@
  */
 package org.apache.drill.exec.planner.sql.handlers;
 
+import org.apache.calcite.sql.SqlIdentifier;
+import org.apache.calcite.sql.SqlLiteral;
+import org.apache.calcite.sql.SqlNodeList;
+import org.apache.calcite.sql.parser.SqlParserPos;
+import org.apache.drill.common.expression.SchemaPath;
 import static org.apache.drill.exec.planner.sql.SchemaUtilites.findSchema;
 
 import org.apache.calcite.schema.SchemaPlus;
@@ -69,6 +74,8 @@ public class RefreshMetadataHandler extends DefaultSqlHandler {
       }
 
       final String tableName = refreshTable.getName();
+      final SqlNodeList columnList = getColumnList(refreshTable);
+      final SqlLiteral allColumns = refreshTable.getAllColumns();
 
       if (tableName.contains("*") || tableName.contains("?")) {
         return direct(false, "Glob path %s not supported for metadata refresh", tableName);
@@ -121,13 +128,24 @@ public class RefreshMetadataHandler extends DefaultSqlHandler {
         .withFormatConfig((ParquetFormatConfig) formatConfig)
         .withOptions(context.getOptions())
         .build();
-      Metadata.createMeta(fs, selectionRoot, readerConfig);
+
+      Metadata.createMeta(fs, selectionRoot, readerConfig, allColumns.booleanValue(), columnList);
       return direct(true, "Successfully updated metadata for table %s.", tableName);
 
     } catch(Exception e) {
       logger.error("Failed to update metadata for table '{}'", refreshTable.getName(), e);
       return DirectPlan.createDirectPlan(context, false, String.format("Error: %s", e.getMessage()));
     }
+  }
+
+  /* Generates the column list specified in the Refresh statement */
+  private SqlNodeList getColumnList(final SqlRefreshMetadata sqlrefreshMetadata) {
+    SqlNodeList columnList = sqlrefreshMetadata.getFieldList();
+    if (columnList == null || columnList.size() <= 0) {
+      columnList = new SqlNodeList(SqlParserPos.ZERO);
+      columnList.add(new SqlIdentifier(SchemaPath.STAR_COLUMN.rootName(), SqlParserPos.ZERO));
+    }
+    return columnList;
   }
 
 

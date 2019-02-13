@@ -36,7 +36,9 @@
     "REFRESH",
     "METADATA",
     "IF",
-    "JAR"
+    "JAR",
+    "COLUMNS",
+    "NONE"
   ]
 
   # List of methods for parsing custom SQL statements.

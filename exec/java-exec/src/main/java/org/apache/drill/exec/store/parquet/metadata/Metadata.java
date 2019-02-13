@@ -24,6 +24,10 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.module.afterburner.AfterburnerModule;
+import java.util.HashSet;
+import java.util.Set;
+import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqlNodeList;
 import org.apache.drill.exec.store.parquet.ParquetReaderConfig;
 import org.apache.drill.shaded.guava.com.google.common.base.Stopwatch;
 import org.apache.drill.shaded.guava.com.google.common.collect.Lists;
@@ -101,14 +105,15 @@ public class Metadata {
 
   /**
    * Create the parquet metadata file for the directory at the given path, and for any subdirectories.
-   *
-   * @param fs file system
+   *  @param fs file system
    * @param path path
    * @param readerConfig parquet reader configuration
+   * @param allColumns
+   * @param columnList
    */
-  public static void createMeta(FileSystem fs, String path, ParquetReaderConfig readerConfig) throws IOException {
+  public static void createMeta(FileSystem fs, String path, ParquetReaderConfig readerConfig, boolean allColumns, SqlNodeList columnList) throws IOException {
     Metadata metadata = new Metadata(readerConfig);
-    metadata.createMetaFilesRecursively(path, fs);
+    metadata.createMetaFilesRecursively(path, fs, allColumns, columnList);
   }
 
   /**
@@ -203,12 +208,14 @@ public class Metadata {
    *
    * @param path to the directory of the parquet table
    * @param fs file system
+   * @param allColumns
+   * @param columnList
    * @return Pair of parquet metadata. The left one is a parquet metadata for the table. The right one of the Pair is
    *         a metadata for all subdirectories (if they are present and there are no any parquet files in the
    *         {@code path} directory).
    * @throws IOException if parquet metadata can't be serialized and written to the json file
    */
-  private Pair<ParquetTableMetadata_v3, ParquetTableMetadataDirs> createMetaFilesRecursively(final String path, FileSystem fs) throws IOException {
+  private Pair<ParquetTableMetadata_v3, ParquetTableMetadataDirs> createMetaFilesRecursively(final String path, FileSystem fs, boolean allColumns, SqlNodeList columnList) throws IOException {
     Stopwatch timer = logger.isDebugEnabled() ? Stopwatch.createStarted() : null;
     List<ParquetFileMetadata_v3> metaDataList = Lists.newArrayList();
     List<String> directoryList = Lists.newArrayList();
@@ -222,7 +229,7 @@ public class Metadata {
 
     for (final FileStatus file : DrillFileSystemUtil.listAll(fs, p, false)) {
       if (file.isDirectory()) {
-        ParquetTableMetadata_v3 subTableMetadata = (createMetaFilesRecursively(file.getPath().toString(), fs)).getLeft();
+        ParquetTableMetadata_v3 subTableMetadata = (createMetaFilesRecursively(file.getPath().toString(), fs, allColumns, columnList)).getLeft();
         metaDataList.addAll(subTableMetadata.files);
         directoryList.addAll(subTableMetadata.directories);
         directoryList.add(file.getPath().toString());
@@ -236,7 +243,7 @@ public class Metadata {
     ParquetTableMetadata_v3 parquetTableMetadata = new ParquetTableMetadata_v3(SUPPORTED_VERSIONS.last().toString(),
                                                                                 DrillVersionInfo.getVersion());
     if (childFiles.size() > 0) {
-      List<ParquetFileMetadata_v3 > childFilesMetadata = getParquetFileMetadata_v3(parquetTableMetadata, childFiles);
+      List<ParquetFileMetadata_v3 > childFilesMetadata = getParquetFileMetadata_v3(parquetTableMetadata, childFiles, allColumns, columnList);
       metaDataList.addAll(childFilesMetadata);
       // Note that we do not need to merge the columnInfo at this point. The columnInfo is already added
       // to the parquetTableMetadata.
@@ -326,7 +333,7 @@ public class Metadata {
       throws IOException {
     ParquetTableMetadata_v3 tableMetadata = new ParquetTableMetadata_v3(SUPPORTED_VERSIONS.last().toString(),
                                                                         DrillVersionInfo.getVersion());
-    tableMetadata.files = getParquetFileMetadata_v3(tableMetadata, fileStatusMap);
+    tableMetadata.files = getParquetFileMetadata_v3(tableMetadata, fileStatusMap, true, new SqlNodeList(null));
     tableMetadata.directories = new ArrayList<>();
     return tableMetadata;
   }
@@ -337,14 +344,16 @@ public class Metadata {
    * @param parquetTableMetadata_v3 can store column schema info from all the files and row groups
    * @param fileStatusMap parquet files statuses and corresponding file systems
    *
+   * @param allColumns
+   * @param columnList
    * @return list of the parquet file metadata with absolute paths
    * @throws IOException is thrown in case of issues while executing the list of runnables
    */
   private List<ParquetFileMetadata_v3> getParquetFileMetadata_v3(
-      ParquetTableMetadata_v3 parquetTableMetadata_v3, Map<FileStatus, FileSystem> fileStatusMap) throws IOException {
+          ParquetTableMetadata_v3 parquetTableMetadata_v3, Map<FileStatus, FileSystem> fileStatusMap, boolean allColumns, SqlNodeList columnList) throws IOException {
     return TimedCallable.run("Fetch parquet metadata", logger,
         Collectors.toList(fileStatusMap,
-            (fileStatus, fileSystem) -> new MetadataGatherer(parquetTableMetadata_v3, fileStatus, fileSystem)),
+            (fileStatus, fileSystem) -> new MetadataGatherer(parquetTableMetadata_v3, fileStatus, fileSystem, allColumns, columnList)),
         16
     );
   }
@@ -357,16 +366,20 @@ public class Metadata {
     private final ParquetTableMetadata_v3 parquetTableMetadata;
     private final FileStatus fileStatus;
     private final FileSystem fs;
+    private final boolean allColumns;
+    private final SqlNodeList columnList;
 
-    MetadataGatherer(ParquetTableMetadata_v3 parquetTableMetadata, FileStatus fileStatus, FileSystem fs) {
+    MetadataGatherer(ParquetTableMetadata_v3 parquetTableMetadata, FileStatus fileStatus, FileSystem fs, boolean allColumns, SqlNodeList columnList) {
       this.parquetTableMetadata = parquetTableMetadata;
       this.fileStatus = fileStatus;
       this.fs = fs;
+      this.allColumns = allColumns;
+      this.columnList = columnList;
     }
 
     @Override
     protected ParquetFileMetadata_v3 runInner() throws Exception {
-      return getParquetFileMetadata_v3(parquetTableMetadata, fileStatus, fs);
+      return getParquetFileMetadata_v3(parquetTableMetadata, fileStatus, fs, allColumns, columnList);
     }
 
     public String toString() {
@@ -413,7 +426,7 @@ public class Metadata {
    * Get the metadata for a single file
    */
   private ParquetFileMetadata_v3 getParquetFileMetadata_v3(ParquetTableMetadata_v3 parquetTableMetadata,
-      final FileStatus file, final FileSystem fs) throws IOException, InterruptedException {
+                                                           final FileStatus file, final FileSystem fs, boolean allColumns, SqlNodeList columnList) throws IOException, InterruptedException {
     final ParquetMetadata metadata;
     final UserGroupInformation processUserUgi = ImpersonationUtil.getProcessUserUGI();
     final Configuration conf = new Configuration(fs.getConf());
@@ -449,7 +462,6 @@ public class Metadata {
       List<ColumnMetadata_v3> columnMetadataList = new ArrayList<>();
       long length = 0;
       for (ColumnChunkMetaData col : rowGroup.getColumns()) {
-        Statistics<?> stats = col.getStatistics();
         String[] columnName = col.getPath().toArray();
         SchemaPath columnSchemaName = SchemaPath.getCompoundPath(columnName);
         ColTypeInfo colTypeInfo = colTypeInfoMap.get(columnSchemaName);
@@ -463,24 +475,34 @@ public class Metadata {
         }
         parquetTableMetadata.columnTypeInfo.put(new ColumnTypeMetadata_v3.Key(columnTypeMetadata.name), columnTypeMetadata);
 
-        // Save the column schema info. We'll merge it into one list
-        Object minValue = null;
-        Object maxValue = null;
-        long numNulls = -1;
-        boolean statsAvailable = stats != null && !stats.isEmpty();
-        if (statsAvailable) {
-          if (stats.hasNonNullValue()) {
-            minValue = stats.genericGetMin();
-            maxValue = stats.genericGetMax();
-            if (containsCorruptDates == ParquetReaderUtility.DateCorruptionStatus.META_SHOWS_CORRUPTION && columnTypeMetadata.originalType == OriginalType.DATE) {
-              minValue = ParquetReaderUtility.autoCorrectCorruptedDate((Integer) minValue);
-              maxValue = ParquetReaderUtility.autoCorrectCorruptedDate((Integer) maxValue);
-            }
-          }
-          numNulls = stats.getNumNulls();
+        Set<String> columnSet = new HashSet<>();
+        for ( SqlNode column : columnList.getList()) {
+          columnSet.add(column.toString());
         }
-        ColumnMetadata_v3 columnMetadata = new ColumnMetadata_v3(columnTypeMetadata.name, col.getPrimitiveType().getPrimitiveTypeName(), minValue, maxValue, numNulls);
-        columnMetadataList.add(columnMetadata);
+
+        if (allColumns) {
+          if (columnSet == null || columnSet != null && columnSet.size() > 0 && columnSet.contains(col)) {
+            Statistics<?> stats = col.getStatistics();
+            // Save the column schema info. We'll merge it into one list
+            Object minValue = null;
+            Object maxValue = null;
+            long numNulls = -1;
+            boolean statsAvailable = stats != null && !stats.isEmpty();
+            if (statsAvailable) {
+              if (stats.hasNonNullValue()) {
+                minValue = stats.genericGetMin();
+                maxValue = stats.genericGetMax();
+                if (containsCorruptDates == ParquetReaderUtility.DateCorruptionStatus.META_SHOWS_CORRUPTION && columnTypeMetadata.originalType == OriginalType.DATE) {
+                  minValue = ParquetReaderUtility.autoCorrectCorruptedDate((Integer) minValue);
+                  maxValue = ParquetReaderUtility.autoCorrectCorruptedDate((Integer) maxValue);
+                }
+              }
+              numNulls = stats.getNumNulls();
+            }
+            ColumnMetadata_v3 columnMetadata = new ColumnMetadata_v3(columnTypeMetadata.name, col.getPrimitiveType().getPrimitiveTypeName(), minValue, maxValue, numNulls);
+            columnMetadataList.add(columnMetadata);
+          }
+        }
         length += col.getTotalSize();
       }
 
@@ -602,7 +624,7 @@ public class Metadata {
         parquetTableMetadataDirs.updateRelativePaths(metadataParentDirPath);
         if (!alreadyCheckedModification && tableModified(parquetTableMetadataDirs.getDirectories(), path, metadataParentDir, metaContext, fs)) {
           parquetTableMetadataDirs =
-              (createMetaFilesRecursively(Path.getPathWithoutSchemeAndAuthority(path.getParent()).toString(), fs)).getRight();
+              (createMetaFilesRecursively(Path.getPathWithoutSchemeAndAuthority(path.getParent()).toString(), fs, true, new SqlNodeList(null))).getRight();
           newMetadata = true;
         }
       } else {
@@ -615,8 +637,9 @@ public class Metadata {
           ((ParquetTableMetadata_v3) parquetTableMetadata).updateRelativePaths(metadataParentDirPath);
         }
         if (!alreadyCheckedModification && tableModified(parquetTableMetadata.getDirectories(), path, metadataParentDir, metaContext, fs)) {
+          // TODO change with current columns
           parquetTableMetadata =
-              (createMetaFilesRecursively(Path.getPathWithoutSchemeAndAuthority(path.getParent()).toString(), fs)).getLeft();
+              (createMetaFilesRecursively(Path.getPathWithoutSchemeAndAuthority(path.getParent()).toString(), fs, true, new SqlNodeList(null))).getLeft();
           newMetadata = true;
         }
 

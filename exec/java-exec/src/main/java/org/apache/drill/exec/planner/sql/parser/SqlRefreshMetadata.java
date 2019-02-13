@@ -24,6 +24,7 @@ import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.SqlSpecialOperator;
 import org.apache.calcite.sql.SqlWriter;
@@ -43,15 +44,27 @@ public class SqlRefreshMetadata extends DrillSqlCall {
   public static final SqlSpecialOperator OPERATOR = new SqlSpecialOperator("REFRESH_TABLE_METADATA", SqlKind.OTHER_DDL) {
     @Override
     public SqlCall createCall(SqlLiteral functionQualifier, SqlParserPos pos, SqlNode... operands) {
-      return new SqlRefreshMetadata(pos, (SqlIdentifier) operands[0]);
+      return new SqlRefreshMetadata(pos, (SqlIdentifier) operands[0], (SqlLiteral) operands[1], (SqlNodeList) operands[2]);
     }
   };
 
   private SqlIdentifier tblName;
+  private final SqlLiteral allColumns;
+  private final SqlNodeList fieldList;
 
-  public SqlRefreshMetadata(SqlParserPos pos, SqlIdentifier tblName){
+  public SqlNodeList getFieldList() {
+    return fieldList;
+  }
+
+  public SqlLiteral getAllColumns() {
+    return allColumns;
+  }
+
+  public SqlRefreshMetadata(SqlParserPos pos, SqlIdentifier tblName, SqlLiteral allColumns, SqlNodeList fieldList){
     super(pos);
     this.tblName = tblName;
+    this.allColumns = allColumns;
+    this.fieldList = fieldList;
   }
 
   @Override
