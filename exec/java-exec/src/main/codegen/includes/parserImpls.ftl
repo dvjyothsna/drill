@@ -300,7 +300,6 @@ SqlNode SqlRefreshMetadata() :
     <TABLE>
     <METADATA>
     [ <COLUMNS>
-      <NOCOLUMNS>
     ]
     tblName = CompoundIdentifier()
     {
