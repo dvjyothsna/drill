@@ -38,7 +38,7 @@
     "IF",
     "JAR",
     "COLUMNS",
-    "NONE"
+    "NOCOLUMNS"
   ]
 
   # List of methods for parsing custom SQL statements.
