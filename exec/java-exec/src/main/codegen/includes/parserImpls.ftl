@@ -298,11 +298,11 @@ SqlNode SqlRefreshMetadata() :
 {
     <REFRESH> { pos = getPos(); }
     <TABLE>
+    tblName = CompoundIdentifier()
     <METADATA>
     [
-        <COLUMNS> {allColumns = SqlLiteral.createBoolean(true, getPos())}
+        <COLUMNS> { allColumns = SqlLiteral.createBoolean(true, getPos()) }
     ]
-    tblName = CompoundIdentifier()
     {
         return new SqlRefreshMetadata(pos, tblName, allColumns, fieldList);
     }
