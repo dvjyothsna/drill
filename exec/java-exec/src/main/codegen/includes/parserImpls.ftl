@@ -299,7 +299,7 @@ SqlNode SqlRefreshMetadata() :
     <REFRESH> { pos = getPos(); }
     <TABLE>
     [
-            <COLUMNS> 
+            <COLUMNS> {allColumns = null;}
     ]
     <METADATA>
     tblName = CompoundIdentifier()
