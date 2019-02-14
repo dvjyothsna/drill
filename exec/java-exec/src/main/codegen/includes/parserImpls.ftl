@@ -301,7 +301,7 @@ SqlNode SqlRefreshMetadata() :
     <METADATA>
     [ <COLUMNS>
       ( fieldList = ParseRequiredFieldList("Table")
-      | <NONE>)
+      | <NOCOLUMNS>)
     ]
     tblName = CompoundIdentifier()
     {
