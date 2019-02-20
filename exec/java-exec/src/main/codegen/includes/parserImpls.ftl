@@ -304,7 +304,7 @@ SqlNode SqlRefreshMetadata() :
     <METADATA>
     tblName = CompoundIdentifier()
     {
-        return new SqlRefreshMetadata(pos, tblName, allColumns, tblName);
+        return new SqlRefreshMetadata(pos, tblName, allColumns, fieldList);
     }
 }
 
