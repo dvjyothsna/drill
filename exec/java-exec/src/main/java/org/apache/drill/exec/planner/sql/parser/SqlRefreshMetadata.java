@@ -76,6 +76,8 @@ public class SqlRefreshMetadata extends DrillSqlCall {
   public List<SqlNode> getOperandList() {
     List<SqlNode> ops = Lists.newArrayList();
     ops.add(tblName);
+    ops.add(allColumns);
+    ops.add(fieldList);
     return ops;
   }
 
