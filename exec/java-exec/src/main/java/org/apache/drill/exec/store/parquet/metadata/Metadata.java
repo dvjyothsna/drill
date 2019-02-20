@@ -480,7 +480,7 @@ public class Metadata {
           columnSet.add(column.toString());
         }
 
-          if (allColumns || columnSet == null || !allColumns && columnSet != null && columnSet.size() > 0 && columnSet.contains(columnSchemaName.toString())) {
+          if (allColumns || columnSet == null || !allColumns && columnSet != null && columnSet.size() > 0 && columnSet.contains(columnSchemaName.getRootSegmentPath().toString())) {
             Statistics<?> stats = col.getStatistics();
             // Save the column schema info. We'll merge it into one list
             Object minValue = null;
