@@ -299,8 +299,8 @@ SqlNode SqlRefreshMetadata() :
     <REFRESH> { pos = getPos(); }
     <TABLE>
     [
-            <COLUMNS> { allColumns = SqlLiteral.createBoolean(false, pos);
-                        fieldList = ParseRequiredFieldList("Table"); }
+            <COLUMNS> { allColumns = SqlLiteral.createBoolean(false, pos); }
+            fieldList = ParseRequiredFieldList("Table")
     ]
     <METADATA>
     tblName = CompoundIdentifier()
