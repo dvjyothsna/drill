@@ -480,8 +480,7 @@ public class Metadata {
           columnSet.add(column.toString());
         }
 
-        if (allColumns) {
-          if (columnSet == null || columnSet != null && columnSet.size() > 0 && columnSet.contains(col)) {
+          if (allColumns || columnSet == null || !allColumns &&columnSet != null && columnSet.size() > 0 && columnSet.contains(col)) {
             Statistics<?> stats = col.getStatistics();
             // Save the column schema info. We'll merge it into one list
             Object minValue = null;
@@ -502,7 +501,6 @@ public class Metadata {
             ColumnMetadata_v3 columnMetadata = new ColumnMetadata_v3(columnTypeMetadata.name, col.getPrimitiveType().getPrimitiveTypeName(), minValue, maxValue, numNulls);
             columnMetadataList.add(columnMetadata);
           }
-        }
         length += col.getTotalSize();
       }
 
