@@ -333,7 +333,7 @@ public class Metadata {
       throws IOException {
     ParquetTableMetadata_v3 tableMetadata = new ParquetTableMetadata_v3(SUPPORTED_VERSIONS.last().toString(),
                                                                         DrillVersionInfo.getVersion());
-    tableMetadata.files = getParquetFileMetadata_v3(tableMetadata, fileStatusMap, true, new SqlNodeList(null));
+    tableMetadata.files = getParquetFileMetadata_v3(tableMetadata, fileStatusMap, true, null);
     tableMetadata.directories = new ArrayList<>();
     return tableMetadata;
   }
@@ -476,8 +476,10 @@ public class Metadata {
         parquetTableMetadata.columnTypeInfo.put(new ColumnTypeMetadata_v3.Key(columnTypeMetadata.name), columnTypeMetadata);
 
         Set<String> columnSet = new HashSet<>();
-        for ( SqlNode column : columnList.getList()) {
-          columnSet.add(column.toString());
+        if (columnList != null) {
+          for (SqlNode column : columnList.getList()) {
+            columnSet.add(column.toString());
+          }
         }
 
           if (allColumns || columnSet == null || !allColumns && columnSet != null && columnSet.size() > 0 && columnSet.contains(columnSchemaName.getRootSegmentPath().toString())) {
@@ -622,7 +624,7 @@ public class Metadata {
         parquetTableMetadataDirs.updateRelativePaths(metadataParentDirPath);
         if (!alreadyCheckedModification && tableModified(parquetTableMetadataDirs.getDirectories(), path, metadataParentDir, metaContext, fs)) {
           parquetTableMetadataDirs =
-              (createMetaFilesRecursively(Path.getPathWithoutSchemeAndAuthority(path.getParent()).toString(), fs, true, new SqlNodeList(null))).getRight();
+              (createMetaFilesRecursively(Path.getPathWithoutSchemeAndAuthority(path.getParent()).toString(), fs, true, null)).getRight();
           newMetadata = true;
         }
       } else {
@@ -637,7 +639,7 @@ public class Metadata {
           if (!alreadyCheckedModification && tableModified(parquetTableMetadata.getDirectories(), path, metadataParentDir, metaContext, fs)) {
           // TODO change with current columns
           parquetTableMetadata =
-              (createMetaFilesRecursively(Path.getPathWithoutSchemeAndAuthority(path.getParent()).toString(), fs, true, new SqlNodeList(null))).getLeft();
+              (createMetaFilesRecursively(Path.getPathWithoutSchemeAndAuthority(path.getParent()).toString(), fs, true, null)).getLeft();
           newMetadata = true;
         }
 

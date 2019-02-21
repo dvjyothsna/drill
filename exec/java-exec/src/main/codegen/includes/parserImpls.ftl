@@ -293,19 +293,19 @@ SqlNode SqlRefreshMetadata() :
     SqlIdentifier tblName;
     SqlNodeList fieldList = null;
     SqlNode query;
-    SqlLiteral allColumns = null;
+    boolean allColumns = true;
 }
 {
     <REFRESH> { pos = getPos(); }
     <TABLE>
-    [
-            <COLUMNS> { allColumns = SqlLiteral.createBoolean(false, pos); }
-            fieldList = ParseRequiredFieldList("Table")
-    ]
     <METADATA>
+    [
+        <COLUMNS> { allColumns = false; }
+        fieldList = ParseRequiredFieldList("Table")
+    ]
     tblName = CompoundIdentifier()
     {
-        return new SqlRefreshMetadata(pos, tblName, allColumns, fieldList);
+        return new SqlRefreshMetadata(pos, tblName, SqlLiteral.createBoolean(allColumns, getPos()), fieldList);
     }
 }
 
