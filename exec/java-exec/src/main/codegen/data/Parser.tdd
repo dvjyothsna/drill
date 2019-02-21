@@ -92,6 +92,7 @@
 
   # List of keywords from "keywords" section that are not reserved.
   nonReservedKeywords: [
+    "COLUMNS"
   ]
 
   # List of additional join types. Each is a method with no arguments.
