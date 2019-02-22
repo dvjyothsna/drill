@@ -37,8 +37,7 @@
     "METADATA",
     "IF",
     "JAR",
-    "COLUMNS",
-    "NOCOLUMNS"
+    "COLUMNS"
   ]
 
   # List of methods for parsing custom SQL statements.
@@ -92,8 +91,7 @@
 
   # List of keywords from "keywords" section that are not reserved.
   nonReservedKeywords: [
-    "COLUMNS",
-    "NOCOLUMNS"
+    "COLUMNS"
   ]
 
   # List of additional join types. Each is a method with no arguments.
