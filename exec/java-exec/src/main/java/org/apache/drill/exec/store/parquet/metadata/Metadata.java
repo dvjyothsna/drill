@@ -478,7 +478,7 @@ public class Metadata {
         Set<String> columnSet = new HashSet<>();
         if (columnList != null) {
           for (SqlNode column : columnList.getList()) {
-            columnSet.add(column.toString());
+            columnSet.add(SchemaPath.parseFromString(column.toString()).getRootSegmentPath());
           }
         }
 

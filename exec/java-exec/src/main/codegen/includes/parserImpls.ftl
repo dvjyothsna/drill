@@ -285,7 +285,7 @@ SqlNode SqlDropTable() :
 
 /**
  * Parse refresh table metadata statement.
- * REFRESH TABLE METADATA tblname
+ * REFRESH TABLE METADATA [COLUMNS ((field1, field2,..) | NONE)] tblname
  */
 SqlNode SqlRefreshMetadata() :
 {
@@ -301,11 +301,10 @@ SqlNode SqlRefreshMetadata() :
     <METADATA>
     [
         <COLUMNS> { allColumns = false; }
-
-         ( fieldList = ParseRequiredFieldList("Table")
-         |
-         <NONE>
-         )
+        (   fieldList = ParseRequiredFieldList("Table")
+            |
+            <NONE>
+        )
     ]
     tblName = CompoundIdentifier()
     {
