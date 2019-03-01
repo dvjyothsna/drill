@@ -27,7 +27,6 @@ import org.apache.drill.common.expression.fn.FuncHolder;
 import org.apache.drill.common.expression.fn.FunctionReplacementUtils;
 import org.apache.drill.common.expression.visitors.AbstractExprVisitor;
 import org.apache.drill.common.types.TypeProtos;
-import org.apache.drill.common.types.Types;
 import org.apache.drill.exec.expr.fn.DrillSimpleFuncHolder;
 import org.apache.drill.exec.expr.fn.interpreter.InterpreterEvaluator;
 import org.apache.drill.exec.expr.holders.BigIntHolder;
@@ -74,11 +73,6 @@ public class StatisticsProvider<T extends Comparable<T>> extends AbstractExprVis
     ColumnStatistics columnStatistics = columnStatMap.get(typedFieldExpr.getPath().getUnIndexed());
     if (columnStatistics != null) {
       return columnStatistics;
-    } else if (typedFieldExpr.getMajorType().equals(Types.OPTIONAL_INT)) {
-      // field does not exist.
-      MinMaxStatistics<Integer> statistics = new MinMaxStatistics<>(null, null, Integer::compareTo);
-      statistics.setNullsCount(rowCount); // all values are nulls
-      return statistics;
     }
     return null;
   }
