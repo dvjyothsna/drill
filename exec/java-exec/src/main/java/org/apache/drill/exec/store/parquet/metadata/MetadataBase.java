@@ -33,6 +33,7 @@ import static org.apache.drill.exec.store.parquet.metadata.MetadataVersion.Const
 import static org.apache.drill.exec.store.parquet.metadata.MetadataVersion.Constants.V3_1;
 import static org.apache.drill.exec.store.parquet.metadata.MetadataVersion.Constants.V3_2;
 import static org.apache.drill.exec.store.parquet.metadata.MetadataVersion.Constants.V3_3;
+import static org.apache.drill.exec.store.parquet.metadata.MetadataVersion.Constants.V4;
 
 public class MetadataBase {
 
@@ -53,7 +54,9 @@ public class MetadataBase {
       @JsonSubTypes.Type(value = Metadata_V3.ParquetTableMetadata_v3.class, name = V3),
       @JsonSubTypes.Type(value = Metadata_V3.ParquetTableMetadata_v3.class, name = V3_1),
       @JsonSubTypes.Type(value = Metadata_V3.ParquetTableMetadata_v3.class, name = V3_2),
-      @JsonSubTypes.Type(value = Metadata_V3.ParquetTableMetadata_v3.class, name = V3_3)
+      @JsonSubTypes.Type(value = Metadata_V3.ParquetTableMetadata_v3.class, name = V3_3),
+      @JsonSubTypes.Type(value = Metadata_V3.ParquetTableMetadata_v3.class, name = V4),
+
   })
   public static abstract class ParquetTableMetadataBase {
 
@@ -73,6 +76,10 @@ public class MetadataBase {
     @JsonIgnore public abstract Integer getRepetitionLevel(String[] columnName);
 
     @JsonIgnore public abstract Integer getDefinitionLevel(String[] columnName);
+
+    @JsonIgnore public abstract Integer getScale(String[] columnName);
+
+    @JsonIgnore public abstract Integer getPrecision(String[] columnName);
 
     @JsonIgnore public abstract boolean isRowGroupPrunable();
 
@@ -103,7 +110,6 @@ public class MetadataBase {
 
     @JsonIgnore public abstract List<? extends ColumnMetadata> getColumns();
   }
-
 
   public static abstract class ColumnMetadata {
 

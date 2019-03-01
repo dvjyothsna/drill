@@ -149,6 +149,16 @@ public class Metadata_V3 {
       return getColumnTypeInfo(columnName).definitionLevel;
     }
 
+    @Override
+    public Integer getScale(String[] columnName) {
+      return getColumnTypeInfo(columnName).scale;
+    }
+
+    @Override
+    public Integer getPrecision(String[] columnName) {
+      return getColumnTypeInfo(columnName).precision;
+    }
+
     @JsonIgnore @Override
     public boolean isRowGroupPrunable() {
       return true;

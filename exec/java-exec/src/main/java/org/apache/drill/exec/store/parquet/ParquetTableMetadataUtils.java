@@ -26,7 +26,7 @@ import org.apache.drill.exec.resolver.TypeCastRules;
 import org.apache.drill.exec.server.options.OptionManager;
 import org.apache.drill.exec.store.ColumnExplorer;
 import org.apache.drill.exec.store.parquet.metadata.MetadataBase;
-import org.apache.drill.exec.store.parquet.metadata.Metadata_V3;
+import org.apache.drill.exec.store.parquet.metadata.MetadataVersion;
 import org.apache.drill.metastore.BaseMetadata;
 import org.apache.drill.metastore.CollectableColumnStatisticsKind;
 import org.apache.drill.metastore.ColumnStatistics;
@@ -552,12 +552,11 @@ public class ParquetTableMetadataUtils {
       int scale = 0;
       int definitionLevel = 1;
       int repetitionLevel = 0;
-      // only ColumnTypeMetadata_v3 stores information about scale, precision, repetition level and definition level
-      if (parquetTableMetadata.hasColumnMetadata() && parquetTableMetadata instanceof Metadata_V3.ParquetTableMetadata_v3) {
-        Metadata_V3.ColumnTypeMetadata_v3 columnTypeInfo =
-            ((Metadata_V3.ParquetTableMetadata_v3) parquetTableMetadata).getColumnTypeInfo(column.getName());
-        scale = columnTypeInfo.scale;
-        precision = columnTypeInfo.precision;
+      MetadataVersion metadataVersion = new MetadataVersion(parquetTableMetadata.getMetadataVersion());
+      // only ColumnTypeMetadata_v3 and ColumnTypeMetadata_v4 store information about scale, precision, repetition level and definition level
+      if (parquetTableMetadata.hasColumnMetadata() && (metadataVersion.compareTo(new MetadataVersion(3, 0)) >= 0)) {
+        scale = parquetTableMetadata.getScale(column.getName());
+        precision = parquetTableMetadata.getPrecision(column.getName());
         repetitionLevel = parquetTableMetadata.getRepetitionLevel(column.getName());
         definitionLevel = parquetTableMetadata.getDefinitionLevel(column.getName());
       }

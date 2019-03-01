@@ -90,6 +90,16 @@ public class Metadata_V1 {
       return null;
     }
 
+    @Override
+    public Integer getScale(String[] columnName) {
+      return null;
+    }
+
+    @Override
+    public Integer getPrecision(String[] columnName) {
+      return null;
+    }
+
     @JsonIgnore @Override
     public boolean isRowGroupPrunable() {
       return false;
