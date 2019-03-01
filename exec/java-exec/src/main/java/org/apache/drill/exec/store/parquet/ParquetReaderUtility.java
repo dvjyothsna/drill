@@ -64,6 +64,8 @@ import static org.apache.drill.exec.store.parquet.metadata.Metadata_V2.ColumnTyp
 import static org.apache.drill.exec.store.parquet.metadata.Metadata_V2.ParquetTableMetadata_v2;
 import static org.apache.drill.exec.store.parquet.metadata.Metadata_V3.ColumnTypeMetadata_v3;
 import static org.apache.drill.exec.store.parquet.metadata.Metadata_V3.ParquetTableMetadata_v3;
+import static org.apache.drill.exec.store.parquet.metadata.Metadata_V4.ColumnTypeMetadata_v4;
+import static org.apache.drill.exec.store.parquet.metadata.Metadata_V4.ParquetTableMetadata_v4;
 import static org.apache.drill.exec.store.parquet.metadata.MetadataBase.ColumnMetadata;
 import static org.apache.drill.exec.store.parquet.metadata.MetadataBase.ParquetTableMetadataBase;
 import static org.apache.drill.exec.store.parquet.metadata.MetadataBase.ParquetFileMetadata;
@@ -318,7 +320,7 @@ public class ParquetReaderUtility {
     int minRowGroups = Integer.MAX_VALUE;
     int maxNumColumns = 0;
 
-    // Setting Min / Max values for V2 and V3 versions; for versions V3_3 and above need to do decoding
+    // Setting Min / Max values for V2, V3 and V4 versions; for versions V4 and above need to do decoding
     boolean needDecoding = new MetadataVersion(parquetTableMetadata.getMetadataVersion()).compareTo(new MetadataVersion(3, 3)) >= 0;
     for (ParquetFileMetadata file : parquetTableMetadata.getFiles()) {
       if ( timer != null ) { // for debugging only
@@ -382,6 +384,14 @@ public class ParquetReaderUtility {
     } else if (parquetTableMetadata instanceof ParquetTableMetadata_v3) {
       for (ColumnTypeMetadata_v3 columnTypeMetadata :
         ((ParquetTableMetadata_v3) parquetTableMetadata).columnTypeInfo.values()) {
+        if (columnTypeMetadata.primitiveType == PrimitiveTypeName.BINARY
+            || columnTypeMetadata.primitiveType == PrimitiveTypeName.FIXED_LEN_BYTE_ARRAY) {
+          names.add(Arrays.asList(columnTypeMetadata.name));
+        }
+      }
+    } else if (parquetTableMetadata instanceof ParquetTableMetadata_v4) {
+      for (ColumnTypeMetadata_v4 columnTypeMetadata :
+              ((ParquetTableMetadata_v4) parquetTableMetadata).getColumnTypeInfoMap().values()) {
         if (columnTypeMetadata.primitiveType == PrimitiveTypeName.BINARY
             || columnTypeMetadata.primitiveType == PrimitiveTypeName.FIXED_LEN_BYTE_ARRAY) {
           names.add(Arrays.asList(columnTypeMetadata.name));

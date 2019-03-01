@@ -71,7 +71,7 @@ public class TestPushDownAndPruningForVarchar extends ClusterTest {
     String tableWithMeta = createTable("varchar_pruning_old_with_meta", false);
 
     Map<String, String> properties = new HashMap<>();
-    properties.put(tableNoMeta, "false");
+//    properties.put(tableNoMeta, "false");
     properties.put(tableWithMeta, "true");
 
     try {

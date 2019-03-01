@@ -163,7 +163,6 @@ public class Metadata_V1 {
     public Map<String, Float> hostAffinity;
     @JsonProperty
     public List<ColumnMetadata_v1> columns;
-
     public RowGroupMetadata_v1() {
     }
 

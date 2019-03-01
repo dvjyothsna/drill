@@ -27,6 +27,7 @@ import org.apache.drill.exec.server.options.OptionManager;
 import org.apache.drill.exec.store.ColumnExplorer;
 import org.apache.drill.exec.store.parquet.metadata.MetadataBase;
 import org.apache.drill.exec.store.parquet.metadata.Metadata_V3;
+import org.apache.drill.exec.store.parquet.metadata.Metadata_V4;
 import org.apache.drill.metastore.BaseMetadata;
 import org.apache.drill.metastore.CollectableColumnStatisticsKind;
 import org.apache.drill.metastore.ColumnStatistics;
@@ -552,10 +553,17 @@ public class ParquetTableMetadataUtils {
       int scale = 0;
       int definitionLevel = 1;
       int repetitionLevel = 0;
-      // only ColumnTypeMetadata_v3 stores information about scale, precision, repetition level and definition level
-      if (parquetTableMetadata.hasColumnMetadata() && parquetTableMetadata instanceof Metadata_V3.ParquetTableMetadata_v3) {
+      // only ColumnTypeMetadata_v3 and ColumnTypeMetadata_v4 store information about scale, precision, repetition level and definition level
+      if (parquetTableMetadata.hasColumnMetadata() && parquetTableMetadata instanceof Metadata_V4.ParquetTableMetadata_v4) {
+        Metadata_V4.ColumnTypeMetadata_v4 columnTypeInfo =
+            ((Metadata_V4.ParquetTableMetadata_v4) parquetTableMetadata).getColumnTypeInfo(column.getName());
+        scale = columnTypeInfo.scale;
+        precision = columnTypeInfo.precision;
+        repetitionLevel = parquetTableMetadata.getRepetitionLevel(column.getName());
+        definitionLevel = parquetTableMetadata.getDefinitionLevel(column.getName());
+      } else if (parquetTableMetadata.hasColumnMetadata() && parquetTableMetadata instanceof Metadata_V3.ParquetTableMetadata_v3) {
         Metadata_V3.ColumnTypeMetadata_v3 columnTypeInfo =
-            ((Metadata_V3.ParquetTableMetadata_v3) parquetTableMetadata).getColumnTypeInfo(column.getName());
+                ((Metadata_V3.ParquetTableMetadata_v3) parquetTableMetadata).getColumnTypeInfo(column.getName());
         scale = columnTypeInfo.scale;
         precision = columnTypeInfo.precision;
         repetitionLevel = parquetTableMetadata.getRepetitionLevel(column.getName());
