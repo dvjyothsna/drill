@@ -81,6 +81,7 @@ public class MetadataBase {
     @JsonIgnore public abstract String getDrillVersion();
 
     @JsonIgnore public abstract String getMetadataVersion();
+
   }
 
   public static abstract class ParquetFileMetadata {

@@ -145,6 +145,11 @@ public class MetadataVersion implements Comparable<MetadataVersion> {
      */
     public static final String V3_3 = "3.3";
 
+  /**
+   *  Version 4.1: Split summary and rowgroup metadata.
+   */
+  public static final String V4_1 = "4.1";
+
     /**
      * All historical versions of the Drill metadata cache files. In case of introducing a new parquet metadata version
      * please follow the {@link MetadataVersion#FORMAT}.
@@ -155,7 +160,8 @@ public class MetadataVersion implements Comparable<MetadataVersion> {
         new MetadataVersion(V3),
         new MetadataVersion(V3_1),
         new MetadataVersion(V3_2),
-        new MetadataVersion(V3_3)
+        new MetadataVersion(V3_3),
+        new MetadataVersion(V4_1)
     );
 
     /**
