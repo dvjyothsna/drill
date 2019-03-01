@@ -91,6 +91,16 @@ public class Metadata_V1 {
     }
 
     @JsonIgnore @Override
+    public Integer getScale(String[] columnName) {
+      return null;
+    }
+
+    @JsonIgnore @Override
+    public Integer getPrecision(String[] columnName) {
+      return null;
+    }
+
+    @JsonIgnore @Override
     public boolean isRowGroupPrunable() {
       return false;
     }
@@ -106,6 +116,11 @@ public class Metadata_V1 {
 
     @JsonIgnore @Override public String getMetadataVersion() {
       return metadataVersion;
+    }
+
+    @JsonIgnore @Override
+    public List<? extends MetadataBase.ColumnTypeMetadata> getColumnTypeInfoList() {
+      return null;
     }
   }
 

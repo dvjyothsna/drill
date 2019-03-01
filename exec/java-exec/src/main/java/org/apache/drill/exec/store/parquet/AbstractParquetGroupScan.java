@@ -25,6 +25,7 @@ import org.apache.drill.common.expression.ExpressionStringBuilder;
 import org.apache.drill.exec.physical.base.AbstractGroupScanWithMetadata;
 import org.apache.drill.exec.physical.base.ParquetMetadataProvider;
 import org.apache.drill.exec.record.metadata.TupleMetadata;
+import org.apache.drill.exec.store.parquet.metadata.Metadata_V4;
 import org.apache.drill.metastore.BaseMetadata;
 import org.apache.drill.metastore.LocationProvider;
 import org.apache.drill.metastore.PartitionMetadata;
@@ -431,6 +432,10 @@ public abstract class AbstractParquetGroupScan extends AbstractGroupScanWithMeta
     return rowGroups;
   }
 
+  protected Metadata_V4.MetadataSummary getMetadataSummary() {
+    return ((ParquetMetadataProvider) metadataProvider).getSummary();
+  }
+
   /**
    * Removes metadata which does not belong to any of partitions in metadata list.
    *
@@ -555,6 +560,7 @@ public abstract class AbstractParquetGroupScan extends AbstractGroupScanWithMeta
         prunedRowGroups = abstractParquetGroupScan.getRowGroupsMetadata();
       }
 
+      Metadata_V4.MetadataSummary summary = abstractParquetGroupScan.getMetadataSummary();
       if (isMatchAllMetadata()) {
         this.rowGroups = prunedRowGroups;
         return;
