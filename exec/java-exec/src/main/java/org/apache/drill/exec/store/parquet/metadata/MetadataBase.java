@@ -33,6 +33,7 @@ import static org.apache.drill.exec.store.parquet.metadata.MetadataVersion.Const
 import static org.apache.drill.exec.store.parquet.metadata.MetadataVersion.Constants.V3_1;
 import static org.apache.drill.exec.store.parquet.metadata.MetadataVersion.Constants.V3_2;
 import static org.apache.drill.exec.store.parquet.metadata.MetadataVersion.Constants.V3_3;
+import static org.apache.drill.exec.store.parquet.metadata.MetadataVersion.Constants.V4;
 
 public class MetadataBase {
 
@@ -53,7 +54,9 @@ public class MetadataBase {
       @JsonSubTypes.Type(value = Metadata_V3.ParquetTableMetadata_v3.class, name = V3),
       @JsonSubTypes.Type(value = Metadata_V3.ParquetTableMetadata_v3.class, name = V3_1),
       @JsonSubTypes.Type(value = Metadata_V3.ParquetTableMetadata_v3.class, name = V3_2),
-      @JsonSubTypes.Type(value = Metadata_V3.ParquetTableMetadata_v3.class, name = V3_3)
+      @JsonSubTypes.Type(value = Metadata_V3.ParquetTableMetadata_v3.class, name = V3_3),
+      @JsonSubTypes.Type(value = Metadata_V3.ParquetTableMetadata_v3.class, name = V4),
+
   })
   public static abstract class ParquetTableMetadataBase {
 
@@ -81,6 +84,10 @@ public class MetadataBase {
     @JsonIgnore public abstract String getDrillVersion();
 
     @JsonIgnore public abstract String getMetadataVersion();
+
+  }
+
+  public static abstract class ParquetGlobalSummary {
 
   }
 

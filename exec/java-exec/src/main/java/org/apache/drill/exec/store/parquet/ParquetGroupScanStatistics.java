@@ -22,6 +22,7 @@ import org.apache.drill.common.expression.SchemaPath;
 import org.apache.drill.common.types.TypeProtos;
 import org.apache.drill.exec.physical.base.GroupScan;
 import org.apache.hadoop.fs.Path;
+import org.apache.drill.exec.store.parquet.metadata.Metadata_V4;
 import org.apache.parquet.schema.OriginalType;
 import org.apache.parquet.schema.PrimitiveType;
 
@@ -34,6 +35,9 @@ import static org.apache.drill.exec.store.parquet.metadata.MetadataBase.ColumnMe
 import static org.apache.drill.exec.store.parquet.metadata.MetadataBase.ParquetTableMetadataBase;
 import static org.apache.drill.exec.store.parquet.metadata.Metadata_V3.ColumnTypeMetadata_v3;
 import static org.apache.drill.exec.store.parquet.metadata.Metadata_V3.ParquetTableMetadata_v3;
+import static org.apache.drill.exec.store.parquet.metadata.Metadata_V4.ParquetTableMetadata_v4;
+import static org.apache.drill.exec.store.parquet.metadata.Metadata_V4.ColumnTypeMetadata_v4;
+
 
 /**
  * Holds common statistics about data in parquet group scan,
@@ -161,6 +165,11 @@ public class ParquetGroupScanStatistics {
     int scale = 0;
     if (parquetTableMetadata.hasColumnMetadata()) {
       // only ColumnTypeMetadata_v3 stores information about scale and precision
+      if (parquetTableMetadata instanceof Metadata_V4.ParquetTableMetadata_v4) {
+        ColumnTypeMetadata_v4 columnTypeInfo = ((ParquetTableMetadata_v4) parquetTableMetadata).getColumnTypeInfo(columnMetadata.getName());
+        scale = columnTypeInfo.scale;
+        precision = columnTypeInfo.precision;
+      }
       if (parquetTableMetadata instanceof ParquetTableMetadata_v3) {
         ColumnTypeMetadata_v3 columnTypeInfo = ((ParquetTableMetadata_v3) parquetTableMetadata)
             .getColumnTypeInfo(columnMetadata.getName());
