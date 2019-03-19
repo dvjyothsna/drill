@@ -155,6 +155,7 @@ public class MetadataBase {
     public abstract PrimitiveType.PrimitiveTypeName getPrimitiveType();
 
     public abstract OriginalType getOriginalType();
+
   }
 
 }

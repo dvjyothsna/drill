@@ -42,13 +42,10 @@ import org.apache.parquet.schema.PrimitiveType;
 
 public class Metadata_V4 {
 
-  @JsonTypeName(V4)
   public static class ParquetTableMetadata_v4 extends ParquetTableMetadataBase {
 
-    @JsonProperty
     Summary summary = new Summary();
-    @JsonProperty
-    ParquetColumnMetadata parquetColumnMetadata;
+    FileMetadata fileMetadata = new FileMetadata();
 
 
     /**
@@ -71,30 +68,30 @@ public class Metadata_V4 {
       this.summary = summary;
     }
 
-    public ParquetTableMetadata_v4(Summary summary, ParquetColumnMetadata files) {
+    public ParquetTableMetadata_v4(Summary summary, FileMetadata files) {
       this.summary = summary;
-      this.parquetColumnMetadata = files;
+      this.fileMetadata = files;
     }
 
-//    public ParquetTableMetadata_v4(String metadataVersion, ParquetTableMetadataBase parquetTable,
-//                                   ParquetColumnMetadata files, List<String> directories, String drillVersion, long totalRowCount) {
-//      this.summary.metadataVersion = metadataVersion;
-//      this.parquetColumnMetadata = files;
-//      this.summary.directories = directories;
-//      this.summary.columnTypeInfo = ((ParquetTableMetadata_v4) parquetTable).summary.columnTypeInfo;
-//      this.summary.drillVersion = drillVersion;
-//      this.summary.totalRowCount = totalRowCount;
-//    }
-//
-//    public ParquetTableMetadata_v4(String metadataVersion, ParquetColumnMetadata files, List<String> directories,
-//                                   ConcurrentHashMap<ColumnTypeMetadata_v4.Key, ColumnTypeMetadata_v4> columnTypeInfo,
-//                                   String drillVersion, long totalRowCount) {
-//      this.summary.metadataVersion = metadataVersion;
-//      this.parquetColumnMetadata = files;
-//      this.summary.directories = directories;
-//      this.summary.columnTypeInfo = columnTypeInfo;
-//      this.summary.drillVersion = drillVersion;
-//    }
+    public ParquetTableMetadata_v4(String metadataVersion, ParquetTableMetadataBase parquetTableMetadata,
+                                   List<ParquetFileMetadata_v4> files, List<Path> directories, String drillVersion, long totalRowCount) {
+      this.summary.metadataVersion = metadataVersion;
+      this.fileMetadata.files = files;
+      this.summary.directories = directories;
+      this.summary.columnTypeInfo = ((ParquetTableMetadata_v4) parquetTableMetadata).summary.columnTypeInfo;
+      this.summary.drillVersion = drillVersion;
+      this.summary.totalRowCount = totalRowCount;
+    }
+
+    public ParquetTableMetadata_v4(String metadataVersion, List<ParquetFileMetadata_v4> files, List<Path> directories,
+                                   ConcurrentHashMap<ColumnTypeMetadata_v4.Key, ColumnTypeMetadata_v4> columnTypeInfo,
+                                   String drillVersion, long totalRowCount) {
+      this.summary.metadataVersion = metadataVersion;
+      this.fileMetadata.files = files;
+      this.summary.directories = directories;
+      this.summary.columnTypeInfo = columnTypeInfo;
+      this.summary.drillVersion = drillVersion;
+    }
 
     public ColumnTypeMetadata_v4 getColumnTypeInfo(String[] name) {
       return summary.getColumnTypeInfo(name);
@@ -105,12 +102,17 @@ public class Metadata_V4 {
       return summary.getDirectories();
     }
 
-    @Override
-    public List<? extends ParquetFileMetadata> getFiles() {
-      return parquetColumnMetadata.getFiles();
+    @JsonIgnore
+    public ColumnTypeMetadata_v4 getColumnTypeInfo(ColumnTypeMetadata_v4.Key key) {
+      return summary.getColumnTypeInfo(key);
     }
 
-    @JsonIgnore @Override public String getMetadataVersion() {
+    @Override
+    public List<? extends ParquetFileMetadata> getFiles() {
+      return fileMetadata.getFiles();
+    }
+
+     @Override public String getMetadataVersion() {
       return summary.getMetadataVersion();
     }
 
@@ -118,82 +120,88 @@ public class Metadata_V4 {
      * If directories list and file metadata list contain relative paths, update it to absolute ones
      * @param baseDir base parent directory
      */
-    @JsonIgnore public void updateRelativePaths(String baseDir) {
+     public void updateRelativePaths(String baseDir) {
       // update directories paths to absolute ones
       this.summary.directories = MetadataPathUtils.convertToAbsolutePaths(summary.directories, baseDir);
 
       // update files paths to absolute ones
-      this.parquetColumnMetadata.files = MetadataPathUtils.convertToFilesWithAbsolutePathsv4(parquetColumnMetadata.files, baseDir);
+      this.fileMetadata.files = MetadataPathUtils.convertToFilesWithAbsolutePathsv4(fileMetadata.files, baseDir);
     }
 
 //    @JsonIgnore @Override public List<? extends ParquetFileMetadata> getFiles() {
 //      return files;
 //    }
 
-    @JsonIgnore @Override public void assignFiles(List<? extends ParquetFileMetadata> newFiles) {
-      this.parquetColumnMetadata.assignFiles(newFiles);
+     @Override public void assignFiles(List<? extends ParquetFileMetadata> newFiles) {
+      this.fileMetadata.assignFiles(newFiles);
     }
 
     @Override public boolean hasColumnMetadata() {
       return true;
     }
 
-    @JsonIgnore @Override public PrimitiveType.PrimitiveTypeName getPrimitiveType(String[] columnName) {
+     @Override public PrimitiveType.PrimitiveTypeName getPrimitiveType(String[] columnName) {
       return getColumnTypeInfo(columnName).primitiveType;
     }
 
-    @JsonIgnore @Override public OriginalType getOriginalType(String[] columnName) {
+     @Override public OriginalType getOriginalType(String[] columnName) {
       return getColumnTypeInfo(columnName).originalType;
     }
 
-    @JsonIgnore @Override
+     @Override
     public Integer getRepetitionLevel(String[] columnName) {
       return getColumnTypeInfo(columnName).repetitionLevel;
     }
 
-    @JsonIgnore @Override
+     @Override
     public Integer getDefinitionLevel(String[] columnName) {
       return getColumnTypeInfo(columnName).definitionLevel;
     }
 
-    @JsonIgnore @Override
+     @Override
     public boolean isRowGroupPrunable() {
       return true;
     }
 
-    @JsonIgnore @Override public ParquetTableMetadataBase clone() {
-      return new ParquetTableMetadata_v4(summary, parquetColumnMetadata);
+     @Override public ParquetTableMetadataBase clone() {
+      return new ParquetTableMetadata_v4(summary, fileMetadata);
     }
 
-    @JsonIgnore @Override
+     @Override
     public String getDrillVersion() {
       return summary.drillVersion;
     }
 
-    @JsonIgnore
+
     public Summary getSummary(){
       return summary;
     }
 
-    @JsonIgnore
+
     public long getTotalRowCount() {
       return summary.totalRowCount;
     }
 
-    @JsonIgnore
+
     public long getTotalNullCount(String[] columnName) {
       return getColumnTypeInfo(columnName).totalNullCount;
     }
 
-    @JsonIgnore
+
     public boolean isAllColumns() {
       return summary.isAllColumns();
     }
 
-    @JsonIgnore
+
     public List<String[]> getInterestingColumns() {
       return summary.getInterestingColumns();
     }
+
+
+    public ConcurrentHashMap getColumnTypeInfoMap() {
+      return summary.columnTypeInfo;
+    }
+
   }
 
   /**
@@ -486,7 +494,10 @@ public class Metadata_V4 {
     }
   }
 
+  @JsonTypeName (V4)
   public static class Summary{
+
+    @JsonProperty(value = "metadata_version") private String metadataVersion;
     /*
      ColumnTypeInfo is schema information from all the files and row groups, merged into
      one. To get this info, we pass the ParquetTableMetadata object all the way dow to the
@@ -495,7 +506,6 @@ public class Metadata_V4 {
     @JsonProperty public ConcurrentHashMap<ColumnTypeMetadata_v4.Key, ColumnTypeMetadata_v4> columnTypeInfo;
     @JsonProperty List<Path> directories;
     @JsonProperty String drillVersion;
-    @JsonProperty(value = "metadata_version", access = JsonProperty.Access.WRITE_ONLY) private String metadataVersion;
     @JsonProperty long totalRowCount;
     @JsonProperty boolean allColumns;
     @JsonProperty List<String[]> interestingColumns;
@@ -520,11 +530,16 @@ public class Metadata_V4 {
       return columnTypeInfo.get(new ColumnTypeMetadata_v4.Key(name));
     }
 
+    public ColumnTypeMetadata_v4 getColumnTypeInfo(ColumnTypeMetadata_v4.Key key) {
+      return columnTypeInfo.get(key);
+    }
+
 
     public List<Path> getDirectories() {
       return directories;
     }
 
+    @JsonIgnore
     public String getMetadataVersion() {
       return metadataVersion;
     }
@@ -538,22 +553,22 @@ public class Metadata_V4 {
     }
   }
 
-  public static class ParquetColumnMetadata {
+//  @JsonTypeName (V4)
+  public static class FileMetadata {
+
     @JsonProperty List<ParquetFileMetadata_v4> files;
 
-    public ParquetColumnMetadata() {
-
+    public FileMetadata() {
     }
 
+    @JsonIgnore
     public List<ParquetFileMetadata_v4> getFiles() {
       return files;
     }
 
+    @JsonIgnore
     public void assignFiles(List<? extends ParquetFileMetadata> newFiles) {
       this.files = (List<ParquetFileMetadata_v4>) newFiles;
     }
   }
-
-
-
 }

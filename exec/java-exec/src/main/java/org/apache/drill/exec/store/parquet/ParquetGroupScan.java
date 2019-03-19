@@ -239,16 +239,18 @@ public class ParquetGroupScan extends AbstractParquetGroupScan {
   @Override
   protected void initInternal() throws IOException {
     FileSystem processUserFileSystem = ImpersonationUtil.createFileSystem(ImpersonationUtil.getProcessUserName(), fs.getConf());
-    Path metaPath = null;
+    List<Path> metaPaths = new ArrayList<>();
     if (entries.size() == 1 && parquetTableMetadata == null) {
       Path p = Path.getPathWithoutSchemeAndAuthority(entries.get(0).getPath());
       if (fs.isDirectory(p)) {
         // Using the metadata file makes sense when querying a directory; otherwise
         // if querying a single file we can look up the metadata directly from the file
-        metaPath = new Path(p, Metadata.METADATA_FILENAME);
+        metaPaths.clear();
+        metaPaths.add(new Path(p, Metadata.METADATA_SUMMARY_FILENAME));
+        metaPaths.add(new Path(p, Metadata.METADATA_FILENAME));
       }
-      if (!metaContext.isMetadataCacheCorrupted() && metaPath != null && fs.exists(metaPath)) {
-        parquetTableMetadata = Metadata.readBlockMeta(processUserFileSystem, metaPath, metaContext, readerConfig);
+      if (!metaContext.isMetadataCacheCorrupted() && !metaPaths.isEmpty() && fileExists(fs, metaPaths)) {
+        parquetTableMetadata = Metadata.readBlockMeta(processUserFileSystem, metaPaths, metaContext, readerConfig);
         if (parquetTableMetadata != null) {
           usedMetadataCache = true;
         }
@@ -258,11 +260,13 @@ public class ParquetGroupScan extends AbstractParquetGroupScan {
       }
     } else {
       Path p = Path.getPathWithoutSchemeAndAuthority(selectionRoot);
-      metaPath = new Path(p, Metadata.METADATA_FILENAME);
+      metaPaths.clear();
+      metaPaths.add(new Path(p, Metadata.METADATA_SUMMARY_FILENAME));
+      metaPaths.add(new Path(p, Metadata.METADATA_FILENAME));
       if (!metaContext.isMetadataCacheCorrupted() && fs.isDirectory(selectionRoot)
-          && fs.exists(metaPath)) {
+          && fileExists(fs, metaPaths)) {
         if (parquetTableMetadata == null) {
-          parquetTableMetadata = Metadata.readBlockMeta(processUserFileSystem, metaPath, metaContext, readerConfig);
+          parquetTableMetadata = Metadata.readBlockMeta(processUserFileSystem, metaPaths, metaContext, readerConfig);
         }
         if (parquetTableMetadata != null) {
           usedMetadataCache = true;
@@ -291,6 +295,14 @@ public class ParquetGroupScan extends AbstractParquetGroupScan {
     }
   }
 
+  public boolean fileExists(DrillFileSystem fs, List<Path> paths) throws IOException {
+    for (Path path : paths) {
+      if (!fs.exists(path)) {
+        return false;
+      }
+    }
+    return true;
+  }
   @Override
   protected AbstractParquetGroupScan cloneWithFileSelection(Collection<Path> filePaths) throws IOException {
     FileSelection newSelection = new FileSelection(null, new ArrayList<>(filePaths), getSelectionRoot(), cacheFileRoot, false);
@@ -328,7 +340,8 @@ public class ParquetGroupScan extends AbstractParquetGroupScan {
 
     // use the cacheFileRoot if provided (e.g after partition pruning)
     Path metaFilePath = new Path(cacheFileRoot != null ? cacheFileRoot : selectionRoot, Metadata.METADATA_FILENAME);
-    if (!fs.exists(metaFilePath)) { // no metadata cache
+    Path metaSummaryPath = new Path(cacheFileRoot != null ? cacheFileRoot : selectionRoot, Metadata.METADATA_SUMMARY_FILENAME);
+    if (!fs.exists(metaFilePath) || !fs.exists(metaSummaryPath)) { // no metadata cache
       if (selection.isExpandedPartial()) {
         logger.error("'{}' metadata file does not exist, but metadata directories cache file is present", metaFilePath);
         metaContext.setMetadataCacheCorrupted(true);
@@ -336,8 +349,10 @@ public class ParquetGroupScan extends AbstractParquetGroupScan {
 
       return selection;
     }
-
-    return expandSelectionFromMetadataCache(selection, metaFilePath);
+    List<Path> metaFilePaths = new ArrayList<>();
+    metaFilePaths.add(metaSummaryPath);
+    metaFilePaths.add(metaFilePath);
+    return expandSelectionFromMetadataCache(selection, metaFilePaths);
   }
 
   /**
@@ -362,20 +377,20 @@ public class ParquetGroupScan extends AbstractParquetGroupScan {
    * This function also initializes a few of ParquetGroupScan's fields as appropriate.
    *
    * @param selection initial file selection
-   * @param metaFilePath metadata cache file path
+   * @param metaFilePaths metadata cache file path
    * @return file selection read from cache
    *
    * @throws org.apache.drill.common.exceptions.UserException when the updated selection is empty,
    * this happens if the user selects an empty folder.
    */
-  private FileSelection expandSelectionFromMetadataCache(FileSelection selection, Path metaFilePath) throws IOException {
+  private FileSelection expandSelectionFromMetadataCache(FileSelection selection, List<Path> metaFilePaths) throws IOException {
     // get the metadata for the root directory by reading the metadata file
     // parquetTableMetadata contains the metadata for all files in the selection root folder, but we need to make sure
     // we only select the files that are part of selection (by setting fileSet appropriately)
 
     // get (and set internal field) the metadata for the directory by reading the metadata file
     FileSystem processUserFileSystem = ImpersonationUtil.createFileSystem(ImpersonationUtil.getProcessUserName(), fs.getConf());
-    parquetTableMetadata = Metadata.readBlockMeta(processUserFileSystem, metaFilePath, metaContext, readerConfig);
+    parquetTableMetadata = Metadata.readBlockMeta(processUserFileSystem, metaFilePaths, metaContext, readerConfig);
     if (ignoreExpandingSelection(parquetTableMetadata)) {
       return selection;
     }
@@ -415,8 +430,10 @@ public class ParquetGroupScan extends AbstractParquetGroupScan {
         Path cacheFileRoot = status.getPath();
         if (status.isDirectory()) {
           //TODO [DRILL-4496] read the metadata cache files in parallel
-          final Path metaPath = new Path(cacheFileRoot, Metadata.METADATA_FILENAME);
-          final ParquetTableMetadataBase metadata = Metadata.readBlockMeta(processUserFileSystem, metaPath, metaContext, readerConfig);
+          List<Path> metaPaths = new ArrayList<>();
+          metaPaths.add(new Path(cacheFileRoot, Metadata.METADATA_SUMMARY_FILENAME));
+          metaPaths.add(new Path(cacheFileRoot, Metadata.METADATA_FILENAME));
+          final ParquetTableMetadataBase metadata = Metadata.readBlockMeta(processUserFileSystem, metaPaths, metaContext, readerConfig);
           if (ignoreExpandingSelection(metadata)) {
             return selection;
           }

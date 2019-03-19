@@ -108,7 +108,7 @@ public class MetadataPathUtils {
       directoriesWithRelativePaths.add(relativize(baseDir, directory));
     }
     List<ParquetFileMetadata_v4> filesWithRelativePaths = Lists.newArrayList();
-    for (ParquetFileMetadata_v4 file : tableMetadataWithAbsolutePaths.parquetColumnMetadata.files) {
+    for (ParquetFileMetadata_v4 file : tableMetadataWithAbsolutePaths.fileMetadata.files) {
       filesWithRelativePaths.add(new ParquetFileMetadata_v4(
           relativize(baseDir, file.getPath()), file.length, file.rowGroups));
     }
