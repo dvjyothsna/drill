@@ -198,7 +198,7 @@ public class Metadata_V4 {
     }
 
 
-    public ConcurrentHashMap getColumnTypeInfoMap() {
+    public ConcurrentHashMap<ColumnTypeMetadata_v4.Key, ColumnTypeMetadata_v4> getColumnTypeInfoMap() {
       return summary.columnTypeInfo;
     }
 

@@ -263,8 +263,7 @@ public class ParquetGroupScan extends AbstractParquetGroupScan {
       metaPaths.clear();
       metaPaths.add(new Path(p, Metadata.METADATA_SUMMARY_FILENAME));
       metaPaths.add(new Path(p, Metadata.METADATA_FILENAME));
-      if (!metaContext.isMetadataCacheCorrupted() && fs.isDirectory(selectionRoot)
-          && fileExists(fs, metaPaths)) {
+      if (!metaContext.isMetadataCacheCorrupted() && fs.isDirectory(selectionRoot) && fileExists(fs, metaPaths)) {
         if (parquetTableMetadata == null) {
           parquetTableMetadata = Metadata.readBlockMeta(processUserFileSystem, metaPaths, metaContext, readerConfig);
         }
@@ -296,6 +295,9 @@ public class ParquetGroupScan extends AbstractParquetGroupScan {
   }
 
   public boolean fileExists(DrillFileSystem fs, List<Path> paths) throws IOException {
+    if (paths.isEmpty()) {
+      return false;
+    }
     for (Path path : paths) {
       if (!fs.exists(path)) {
         return false;
@@ -433,6 +435,7 @@ public class ParquetGroupScan extends AbstractParquetGroupScan {
           List<Path> metaPaths = new ArrayList<>();
           metaPaths.add(new Path(cacheFileRoot, Metadata.METADATA_SUMMARY_FILENAME));
           metaPaths.add(new Path(cacheFileRoot, Metadata.METADATA_FILENAME));
+
           final ParquetTableMetadataBase metadata = Metadata.readBlockMeta(processUserFileSystem, metaPaths, metaContext, readerConfig);
           if (ignoreExpandingSelection(metadata)) {
             return selection;

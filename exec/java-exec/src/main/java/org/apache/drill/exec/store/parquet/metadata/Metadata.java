@@ -500,7 +500,6 @@ public class Metadata {
 
         //Update the total null count for each row group
         ColumnTypeMetadata_v4 prevColumnTypeMetadata = parquetTableMetadata.getColumnTypeInfo(columnTypeMetadata.name);
-        System.out.println("***************" + prevColumnTypeMetadata);
         if (prevColumnTypeMetadata != null) {
           columnTypeMetadata.totalNullCount = columnTypeMetadata.totalNullCount + prevColumnTypeMetadata.totalNullCount;
         }
@@ -589,6 +588,7 @@ public class Metadata {
     jsonFactory.configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, false);
     ObjectMapper mapper = new ObjectMapper(jsonFactory);
     SimpleModule module = new SimpleModule();
+    module.addSerializer(Path.class, new PathSerDe.Se());
     if (parquetMetadata instanceof Metadata_V4.FileMetadata) {
       module.addSerializer(ColumnMetadata_v4.class, new ColumnMetadata_v4.Serializer());
     }
@@ -629,14 +629,13 @@ public class Metadata {
 
     final SimpleModule serialModule = new SimpleModule();
     serialModule.addDeserializer(SchemaPath.class, new SchemaPath.De());
-    serialModule.addKeyDeserializer(Metadata_V2.ColumnTypeMetadata_v2.Key.class, new Metadata_V2.ColumnTypeMetadata_v2.Key.DeSerializer());
-    serialModule.addKeyDeserializer(Metadata_V3.ColumnTypeMetadata_v3.Key.class, new Metadata_V3.ColumnTypeMetadata_v3.Key.DeSerializer());
+//    serialModule.addKeyDeserializer(Metadata_V2.ColumnTypeMetadata_v2.Key.class, new Metadata_V2.ColumnTypeMetadata_v2.Key.DeSerializer());
+//    serialModule.addKeyDeserializer(Metadata_V3.ColumnTypeMetadata_v3.Key.class, new Metadata_V3.ColumnTypeMetadata_v3.Key.DeSerializer());
     serialModule.addKeyDeserializer(ColumnTypeMetadata_v4.Key.class, new ColumnTypeMetadata_v4.Key.DeSerializer());
 
     AfterburnerModule module = new AfterburnerModule();
     module.setUseOptimizedBeanDeserializer(true);
 
-    System.out.println("***************"+ path.toString().endsWith("v4"));
     boolean iscolumnMetadata = path.toString().endsWith(METADATA_FILENAME);
     boolean isSummary = path.toString().endsWith(METADATA_SUMMARY_FILENAME);
     mapper.registerModule(serialModule);
@@ -677,12 +676,12 @@ public class Metadata {
           if (new MetadataVersion(parquetTableMetadata.getMetadataVersion()).compareTo(new MetadataVersion(4, 0)) >= 0) {
             ((ParquetTableMetadata_v4) parquetTableMetadata).updateRelativePaths(metadataParentDirPath);
           }
-        }
-        if (!alreadyCheckedModification && tableModified(parquetTableMetadata.getDirectories(), path, metadataParentDir, metaContext, fs)) {
-          // TODO change with current columns in existing metadata (auto refresh feature)
-          parquetTableMetadata =
-              (createMetaFilesRecursively(Path.getPathWithoutSchemeAndAuthority(path.getParent()), fs, true, null)).getLeft();
-          newMetadata = true;
+          if (!alreadyCheckedModification && tableModified(parquetTableMetadata.getDirectories(), path, metadataParentDir, metaContext, fs)) {
+            // TODO change with current columns in existing metadata (auto refresh feature)
+            parquetTableMetadata =
+                    (createMetaFilesRecursively(Path.getPathWithoutSchemeAndAuthority(path.getParent()), fs, true, null)).getLeft();
+            newMetadata = true;
+          }
         }
 
         // DRILL-5009: Remove the RowGroup if it is empty

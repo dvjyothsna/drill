@@ -44,6 +44,9 @@ import java.util.concurrent.TimeUnit;
 
 import static org.apache.drill.exec.store.parquet.metadata.Metadata_V3.ColumnTypeMetadata_v3;
 import static org.apache.drill.exec.store.parquet.metadata.Metadata_V3.ParquetTableMetadata_v3;
+import static org.apache.drill.exec.store.parquet.metadata.Metadata_V4.ColumnTypeMetadata_v4;
+import static org.apache.drill.exec.store.parquet.metadata.Metadata_V4.ParquetTableMetadata_v4;
+
 import static org.apache.drill.exec.store.parquet.metadata.MetadataBase.ColumnMetadata;
 import static org.apache.drill.exec.store.parquet.metadata.MetadataBase.ParquetTableMetadataBase;
 
@@ -105,6 +108,15 @@ public class ParquetMetaStatCollector implements  ColumnStatCollector {
           statisticsBuilder.setScale(columnTypeInfo.scale);
           statisticsBuilder.setPrecision(columnTypeInfo.precision);
         }
+
+        // ColumnTypeMetadata_v4 stores information about scale and precision
+        if (parquetTableMetadata instanceof ParquetTableMetadata_v4) {
+          ColumnTypeMetadata_v4 columnTypeInfo = ((ParquetTableMetadata_v4) parquetTableMetadata)
+                  .getColumnTypeInfo(columnMetadata.getName());
+          statisticsBuilder.setScale(columnTypeInfo.scale);
+          statisticsBuilder.setPrecision(columnTypeInfo.precision);
+        }
+
 
         statMap.put(field, statisticsBuilder.build());
 

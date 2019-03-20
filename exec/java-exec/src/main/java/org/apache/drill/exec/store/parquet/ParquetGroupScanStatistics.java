@@ -169,8 +169,7 @@ public class ParquetGroupScanStatistics {
         ColumnTypeMetadata_v4 columnTypeInfo = ((ParquetTableMetadata_v4) parquetTableMetadata).getColumnTypeInfo(columnMetadata.getName());
         scale = columnTypeInfo.scale;
         precision = columnTypeInfo.precision;
-      }
-      if (parquetTableMetadata instanceof ParquetTableMetadata_v3) {
+      } else if (parquetTableMetadata instanceof ParquetTableMetadata_v3) {
         ColumnTypeMetadata_v3 columnTypeInfo = ((ParquetTableMetadata_v3) parquetTableMetadata)
             .getColumnTypeInfo(columnMetadata.getName());
         scale = columnTypeInfo.scale;

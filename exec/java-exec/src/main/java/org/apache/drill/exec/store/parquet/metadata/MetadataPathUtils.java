@@ -21,8 +21,8 @@ import org.apache.drill.shaded.guava.com.google.common.collect.Lists;
 import org.apache.drill.common.util.DrillVersionInfo;
 import org.apache.hadoop.fs.Path;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.ArrayList;
 
 import static org.apache.drill.exec.store.parquet.metadata.MetadataVersion.Constants.SUPPORTED_VERSIONS;
 import static org.apache.drill.exec.store.parquet.metadata.Metadata_V4.ParquetFileMetadata_v4;
@@ -103,12 +103,12 @@ public class MetadataPathUtils {
    */
   public static ParquetTableMetadata_v4 createMetadataWithRelativePaths(
       ParquetTableMetadata_v4 tableMetadataWithAbsolutePaths, Path baseDir) {
-    List<Path> directoriesWithRelativePaths = Lists.newArrayList();
+    List<Path> directoriesWithRelativePaths = new ArrayList<>();
     for (Path directory : tableMetadataWithAbsolutePaths.getDirectories()) {
       directoriesWithRelativePaths.add(relativize(baseDir, directory));
     }
     List<ParquetFileMetadata_v4> filesWithRelativePaths = Lists.newArrayList();
-    for (ParquetFileMetadata_v4 file : tableMetadataWithAbsolutePaths.fileMetadata.files) {
+    for (ParquetFileMetadata_v4 file : (List<ParquetFileMetadata_v4>) tableMetadataWithAbsolutePaths.getFiles()) {
       filesWithRelativePaths.add(new ParquetFileMetadata_v4(
           relativize(baseDir, file.getPath()), file.length, file.rowGroups));
     }
