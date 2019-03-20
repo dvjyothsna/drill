@@ -25,7 +25,6 @@ import org.apache.drill.common.types.Types;
 import org.apache.drill.exec.planner.physical.PlannerSettings;
 import org.apache.drill.exec.server.options.OptionManager;
 import org.apache.drill.exec.store.parquet.metadata.MetadataVersion;
-import org.apache.drill.exec.store.parquet.metadata.Metadata_V4;
 import org.apache.drill.exec.util.Utilities;
 import org.apache.drill.exec.work.ExecErrorConstants;
 import org.apache.drill.shaded.guava.com.google.common.base.Stopwatch;
