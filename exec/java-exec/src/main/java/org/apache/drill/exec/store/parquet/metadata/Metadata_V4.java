@@ -202,6 +202,10 @@ public class Metadata_V4 {
       return summary.columnTypeInfo;
     }
 
+    public void setRowCount(long rowCount) {
+       summary.totalRowCount = rowCount;
+    }
+
   }
 
   /**

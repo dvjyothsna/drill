@@ -483,6 +483,8 @@ public class Metadata {
     for (BlockMetaData rowGroup : metadata.getBlocks()) {
       List<ColumnMetadata_v4> columnMetadataList = new ArrayList<>();
       long length = 0;
+      long totalRowCount = parquetTableMetadata.getTotalRowCount() + rowGroup.getRowCount();
+      parquetTableMetadata.setRowCount(totalRowCount);
       parquetTableMetadata.summary.totalRowCount = parquetTableMetadata.getTotalRowCount() + rowGroup.getRowCount();
       for (ColumnChunkMetaData col : rowGroup.getColumns()) {
         String[] columnName = col.getPath().toArray();
