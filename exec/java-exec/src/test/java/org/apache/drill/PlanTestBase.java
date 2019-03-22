@@ -336,10 +336,13 @@ public class PlanTestBase extends BaseTestQuery {
       throw new RuntimeException(e);
     }
 
-    File metaFile = table.startsWith(tmpDir) ? FileUtils.getFile(table, Metadata.METADATA_FILENAME)
-        : FileUtils.getFile(tmpDir, table, Metadata.METADATA_FILENAME);
-    assertTrue(String.format("There is no metadata cache file for the %s table", table),
-        Files.exists(metaFile.toPath()));
+    for (String filename: Metadata.CURRENT_METADATA_FILENAMES) {
+      File metaFile = table.startsWith(tmpDir) ? FileUtils.getFile(table, filename)
+              : FileUtils.getFile(tmpDir, table, filename);
+      assertTrue(String.format("There is no metadata cache file for the %s table", table),
+              Files.exists(metaFile.toPath()));
+    }
+
   }
 
   /*

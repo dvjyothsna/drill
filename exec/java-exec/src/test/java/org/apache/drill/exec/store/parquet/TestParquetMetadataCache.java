@@ -624,7 +624,7 @@ public class TestParquetMetadataCache extends PlanTestBase {
       test("use dfs");
       test("refresh table metadata `%s`", rootMetaCorruptedTable);
       checkForMetadataFile(rootMetaCorruptedTable);
-      File rootMetadataFile = FileUtils.getFile(dataDir, Metadata.METADATA_FILENAME);
+      File rootMetadataFile = FileUtils.getFile(dataDir, Metadata.FILE_METADATA_FILENAME);
       assertTrue(String.format("Metadata cache file '%s' isn't deleted", rootMetadataFile.getPath()), rootMetadataFile.delete());
 
       setTimestampToZero(dataDir);
@@ -654,8 +654,8 @@ public class TestParquetMetadataCache extends PlanTestBase {
       test("use dfs");
       test("refresh table metadata `%s`", innerMetaCorruptedTable);
       checkForMetadataFile(innerMetaCorruptedTable);
-      File firstInnerMetadataFile = FileUtils.getFile(dataDir, "1994", Metadata.METADATA_FILENAME);
-      File secondInnerMetadataFile = FileUtils.getFile(dataDir, "1994", "Q3", Metadata.METADATA_FILENAME);
+      File firstInnerMetadataFile = FileUtils.getFile(dataDir, "1994", Metadata.FILE_METADATA_FILENAME);
+      File secondInnerMetadataFile = FileUtils.getFile(dataDir, "1994", "Q3", Metadata.FILE_METADATA_FILENAME);
       assertTrue(String.format("Metadata cache file '%s' isn't deleted", firstInnerMetadataFile.getPath()),
           firstInnerMetadataFile.delete());
       assertTrue(String.format("Metadata cache file '%s' isn't deleted", secondInnerMetadataFile.getPath()),

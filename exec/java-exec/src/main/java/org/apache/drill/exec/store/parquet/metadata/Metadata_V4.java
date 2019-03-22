@@ -192,12 +192,6 @@ public class Metadata_V4 {
       return summary.isAllColumns();
     }
 
-
-    public List<String[]> getInterestingColumns() {
-      return summary.getInterestingColumns();
-    }
-
-
     public ConcurrentHashMap<ColumnTypeMetadata_v4.Key, ColumnTypeMetadata_v4> getColumnTypeInfoMap() {
       return summary.columnTypeInfo;
     }
@@ -296,6 +290,7 @@ public class Metadata_V4 {
     @JsonProperty public int repetitionLevel;
     @JsonProperty public int definitionLevel;
     @JsonProperty public long totalNullCount = 0;
+    @JsonProperty public boolean isInteresting = false;
 
     // Key to find by name only
     @JsonIgnore private Key key;
@@ -303,7 +298,7 @@ public class Metadata_V4 {
     public ColumnTypeMetadata_v4() {
     }
 
-    public ColumnTypeMetadata_v4(String[] name, PrimitiveType.PrimitiveTypeName primitiveType, OriginalType originalType, int precision, int scale, int repetitionLevel, int definitionLevel, long totalNullCount) {
+    public ColumnTypeMetadata_v4(String[] name, PrimitiveType.PrimitiveTypeName primitiveType, OriginalType originalType, int precision, int scale, int repetitionLevel, int definitionLevel, long totalNullCount, boolean isInteresting) {
       this.name = name;
       this.primitiveType = primitiveType;
       this.originalType = originalType;
@@ -313,6 +308,7 @@ public class Metadata_V4 {
       this.definitionLevel = definitionLevel;
       this.key = new Key(name);
       this.totalNullCount = totalNullCount;
+      this.isInteresting = isInteresting;
     }
 
     @JsonIgnore private Key key() {
@@ -512,8 +508,6 @@ public class Metadata_V4 {
     @JsonProperty String drillVersion;
     @JsonProperty long totalRowCount;
     @JsonProperty boolean allColumns;
-    @JsonProperty List<String[]> interestingColumns;
-
 
     public Summary() {
 
@@ -550,10 +544,6 @@ public class Metadata_V4 {
 
     public boolean isAllColumns() {
       return allColumns;
-    }
-
-    public List<String[]> getInterestingColumns() {
-      return interestingColumns;
     }
   }
 

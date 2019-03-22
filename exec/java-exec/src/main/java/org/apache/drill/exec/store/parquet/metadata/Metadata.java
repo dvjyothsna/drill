@@ -94,10 +94,12 @@ import static org.apache.drill.exec.store.parquet.metadata.Metadata_V4.FileMetad
 public class Metadata {
   private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(Metadata.class);
 
-  public static final String[] OLD_METADATA_FILENAMES = {".drill.parquet_metadata.v2", ".drill.parquet_metadata"};
-  public static final String METADATA_FILENAME = ".drill.parquet_file_metadata";
+  public static final String[] OLD_METADATA_FILENAMES = {".drill.parquet_metadata", ".drill.parquet_metadata.v2"};
+  public static final String METADATA_FILENAME = ".drill.parquet_metadata";
   public static final String METADATA_DIRECTORIES_FILENAME = ".drill.parquet_metadata_directories";
+  public static final String FILE_METADATA_FILENAME = ".drill.parquet_file_metadata";
   public static final String METADATA_SUMMARY_FILENAME = ".drill.parquet_metadata_summary";
+  public static final String[] CURRENT_METADATA_FILENAMES = {METADATA_SUMMARY_FILENAME, FILE_METADATA_FILENAME};
 
   private final ParquetReaderConfig readerConfig;
 
@@ -306,7 +308,7 @@ public class Metadata {
     //  relative paths in the metadata are only necessary for meta cache files.
     ParquetTableMetadata_v4 metadataTableWithRelativePaths =
         MetadataPathUtils.createMetadataWithRelativePaths(parquetTableMetadata, path);
-    writeFile(metadataTableWithRelativePaths.fileMetadata, new Path(path, METADATA_FILENAME), fs);
+    writeFile(metadataTableWithRelativePaths.fileMetadata, new Path(path, FILE_METADATA_FILENAME), fs);
     writeFile(metadataTableWithRelativePaths.getSummary(), new Path(path, METADATA_SUMMARY_FILENAME), fs);
     Summary summaryWithRelativePaths = metadataTableWithRelativePaths.getSummary();
 
@@ -514,7 +516,7 @@ public class Metadata {
         long totalNullCount = stats.getNumNulls();
         ColumnTypeMetadata_v4 columnTypeMetadata =
             new ColumnTypeMetadata_v4(columnName, col.getPrimitiveType().getPrimitiveTypeName(), colTypeInfo.originalType,
-                colTypeInfo.precision, colTypeInfo.scale, colTypeInfo.repetitionLevel, colTypeInfo.definitionLevel, totalNullCount);
+                colTypeInfo.precision, colTypeInfo.scale, colTypeInfo.repetitionLevel, colTypeInfo.definitionLevel, totalNullCount, true);
 
         if (parquetTableMetadata.getSummary().columnTypeInfo == null) {
           parquetTableMetadata.summary.columnTypeInfo = new ConcurrentHashMap<>();
@@ -637,14 +639,14 @@ public class Metadata {
 
     final SimpleModule serialModule = new SimpleModule();
     serialModule.addDeserializer(SchemaPath.class, new SchemaPath.De());
-//    serialModule.addKeyDeserializer(Metadata_V2.ColumnTypeMetadata_v2.Key.class, new Metadata_V2.ColumnTypeMetadata_v2.Key.DeSerializer());
-//    serialModule.addKeyDeserializer(Metadata_V3.ColumnTypeMetadata_v3.Key.class, new Metadata_V3.ColumnTypeMetadata_v3.Key.DeSerializer());
+    serialModule.addKeyDeserializer(Metadata_V2.ColumnTypeMetadata_v2.Key.class, new Metadata_V2.ColumnTypeMetadata_v2.Key.DeSerializer());
+    serialModule.addKeyDeserializer(Metadata_V3.ColumnTypeMetadata_v3.Key.class, new Metadata_V3.ColumnTypeMetadata_v3.Key.DeSerializer());
     serialModule.addKeyDeserializer(ColumnTypeMetadata_v4.Key.class, new ColumnTypeMetadata_v4.Key.DeSerializer());
 
     AfterburnerModule module = new AfterburnerModule();
     module.setUseOptimizedBeanDeserializer(true);
 
-    boolean iscolumnMetadata = path.toString().endsWith(METADATA_FILENAME);
+    boolean isFileMetadata = path.toString().endsWith(FILE_METADATA_FILENAME);
     boolean isSummary = path.toString().endsWith(METADATA_SUMMARY_FILENAME);
     mapper.registerModule(serialModule);
     mapper.registerModule(module);
@@ -667,7 +669,7 @@ public class Metadata {
           newMetadata = true;
         }
       } else {
-        if (iscolumnMetadata) {
+        if (isFileMetadata) {
           parquetTableMetadata.assignFiles((mapper.readValue(is, FileMetadata.class)).getFiles());
         } else if (isSummary) {
           Summary summary = mapper.readValue(is, Summary.class);
@@ -675,6 +677,14 @@ public class Metadata {
           parquetTableMetadata = (ParquetTableMetadataBase) parquetTableMetadata_v4;
         } else {
           parquetTableMetadata = mapper.readValue(is, ParquetTableMetadataBase.class);
+          if (new MetadataVersion(parquetTableMetadata.getMetadataVersion()).compareTo(new MetadataVersion(3, 0)) >= 0) {
+            ((Metadata_V3.ParquetTableMetadata_v3) parquetTableMetadata).updateRelativePaths(metadataParentDirPath);
+          }
+          if (!alreadyCheckedModification && tableModified((parquetTableMetadata.getDirectories()), path, metadataParentDir, metaContext, fs)) {
+            parquetTableMetadata =
+                    (createMetaFilesRecursivelyAsProcessUser(Path.getPathWithoutSchemeAndAuthority(path.getParent()), fs, true, null)).getLeft();
+            newMetadata = true;
+          }
         }
         if (timer != null) {
           logger.debug("Took {} ms to read metadata from cache file", timer.elapsed(TimeUnit.MILLISECONDS));
