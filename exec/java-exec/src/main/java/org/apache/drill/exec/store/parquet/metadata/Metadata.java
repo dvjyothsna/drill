@@ -165,6 +165,9 @@ public class Metadata {
                                                                  MetadataContext metaContext,
                                                                  ParquetReaderConfig readerConfig) {
     Metadata metadata = new Metadata(readerConfig);
+    if (paths.isEmpty()) {
+      metaContext.setMetadataCacheCorrupted(true);
+    }
     for (Path path: paths) {
       if (ignoreReadingMetadata(metaContext, path)) {
         return null;
