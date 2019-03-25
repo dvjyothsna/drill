@@ -743,7 +743,7 @@ public class Metadata {
       Set<String> interestingColumns = new HashSet<String>();
       for (ColumnTypeMetadata_v4 columnTypeMetadata_v4: summary.columnTypeInfo.values()) {
         if (columnTypeMetadata_v4.isInteresting) {
-          interestingColumns.add(columnTypeMetadata_v4.name.toString());
+          interestingColumns.add(String.join("", columnTypeMetadata_v4.name));
         }
       }
       return interestingColumns;
