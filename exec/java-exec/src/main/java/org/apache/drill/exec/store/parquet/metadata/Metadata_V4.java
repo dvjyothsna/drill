@@ -200,6 +200,10 @@ public class Metadata_V4 {
        summary.totalRowCount = rowCount;
     }
 
+    public void setAllColumns(boolean allColumns) {
+       summary.allColumns = allColumns;
+    }
+
   }
 
   /**
@@ -544,6 +548,10 @@ public class Metadata_V4 {
 
     public boolean isAllColumns() {
       return allColumns;
+    }
+
+    public void setAllColumns(boolean allColumns) {
+      this.allColumns = allColumns;
     }
   }
 

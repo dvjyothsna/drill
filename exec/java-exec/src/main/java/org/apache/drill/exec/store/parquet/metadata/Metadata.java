@@ -24,6 +24,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.module.afterburner.AfterburnerModule;
+import java.util.HashSet;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.drill.common.collections.Collectors;
@@ -31,6 +32,7 @@ import org.apache.drill.common.expression.SchemaPath;
 import org.apache.drill.common.util.DrillVersionInfo;
 import org.apache.drill.exec.serialization.PathSerDe;
 import org.apache.drill.exec.store.TimedCallable;
+import org.apache.drill.exec.store.dfs.DrillFileSystem;
 import org.apache.drill.exec.store.dfs.MetadataContext;
 import org.apache.drill.exec.store.parquet.ParquetReaderConfig;
 import org.apache.drill.exec.store.parquet.ParquetReaderUtility;
@@ -510,6 +512,9 @@ public class Metadata {
       long length = 0;
       long totalRowCount = parquetTableMetadata.getTotalRowCount() + rowGroup.getRowCount();
       parquetTableMetadata.setRowCount(totalRowCount);
+      if (allColumns || columnSet == null) {
+        parquetTableMetadata.setAllColumns(true);
+      }
       for (ColumnChunkMetaData col : rowGroup.getColumns()) {
         String[] columnName = col.getPath().toArray();
         SchemaPath columnSchemaName = SchemaPath.getCompoundPath(columnName);
@@ -529,7 +534,6 @@ public class Metadata {
         if (prevColumnTypeMetadata != null) {
           columnTypeMetadata.totalNullCount = columnTypeMetadata.totalNullCount + prevColumnTypeMetadata.totalNullCount;
         }
-        parquetTableMetadata.summary.columnTypeInfo.put(new ColumnTypeMetadata_v4.Key(columnTypeMetadata.name), columnTypeMetadata);
 
           if (allColumns || columnSet == null || !allColumns && columnSet != null && columnSet.size() > 0 && columnSet.contains(columnSchemaName.getRootSegmentPath())) {
             // Save the column schema info. We'll merge it into one list
@@ -550,9 +554,12 @@ public class Metadata {
             numNulls = stats.getNumNulls();
             ColumnMetadata_v4 columnMetadata = new ColumnMetadata_v4(columnTypeMetadata.name, col.getPrimitiveType().getPrimitiveTypeName(), minValue, maxValue, numNulls);
             columnMetadataList.add(columnMetadata);
+            columnTypeMetadata.isInteresting = true;
           }
         length += col.getTotalSize();
+        parquetTableMetadata.summary.columnTypeInfo.put(new ColumnTypeMetadata_v4.Key(columnTypeMetadata.name), columnTypeMetadata);
       }
+
 
       // DRILL-5009: Skip the RowGroup if it is empty
       // Note we still read the schema even if there are no values in the RowGroup
@@ -666,8 +673,10 @@ public class Metadata {
         }
         parquetTableMetadataDirs.updateRelativePaths(metadataParentDirPath);
         if (!alreadyCheckedModification && tableModified(parquetTableMetadataDirs.getDirectories(), path, metadataParentDir, metaContext, fs)) {
+          boolean allColumns = getAllColumns(fs, metadataParentDir);
+          Set<String> interestingColumns = getInterestingColumns(fs, metadataParentDir);
           parquetTableMetadataDirs =
-              (createMetaFilesRecursivelyAsProcessUser(Path.getPathWithoutSchemeAndAuthority(path.getParent()), fs, true, null)).getRight();
+              (createMetaFilesRecursivelyAsProcessUser(Path.getPathWithoutSchemeAndAuthority(path.getParent()), fs, allColumns, interestingColumns)).getRight();
           newMetadata = true;
         }
       } else {
@@ -683,8 +692,10 @@ public class Metadata {
             ((Metadata_V3.ParquetTableMetadata_v3) parquetTableMetadata).updateRelativePaths(metadataParentDirPath);
           }
           if (!alreadyCheckedModification && tableModified((parquetTableMetadata.getDirectories()), path, metadataParentDir, metaContext, fs)) {
+            boolean allColumns = getAllColumns(fs, metadataParentDir);
+            Set<String> interestingColumns = getInterestingColumns(fs, metadataParentDir);
             parquetTableMetadata =
-                    (createMetaFilesRecursivelyAsProcessUser(Path.getPathWithoutSchemeAndAuthority(path.getParent()), fs, true, null)).getLeft();
+                    (createMetaFilesRecursivelyAsProcessUser(Path.getPathWithoutSchemeAndAuthority(path.getParent()), fs, allColumns, interestingColumns)).getLeft();
             newMetadata = true;
           }
         }
@@ -692,14 +703,16 @@ public class Metadata {
           logger.debug("Took {} ms to read metadata from cache file", timer.elapsed(TimeUnit.MILLISECONDS));
           timer.stop();
         }
-        if (!isSummary) {
+        if (isFileMetadata) {
           if (new MetadataVersion(parquetTableMetadata.getMetadataVersion()).compareTo(new MetadataVersion(4, 0)) >= 0) {
             ((ParquetTableMetadata_v4) parquetTableMetadata).updateRelativePaths(metadataParentDirPath);
           }
           if (!alreadyCheckedModification && tableModified(parquetTableMetadata.getDirectories(), path, metadataParentDir, metaContext, fs)) {
             // TODO change with current columns in existing metadata (auto refresh feature)
+            boolean allColumns = getAllColumns(fs, metadataParentDir);
+            Set<String> interestingColumns = getInterestingColumns(fs, metadataParentDir);
             parquetTableMetadata =
-                    (createMetaFilesRecursivelyAsProcessUser(Path.getPathWithoutSchemeAndAuthority(path.getParent()), fs, true, null)).getLeft();
+                    (createMetaFilesRecursivelyAsProcessUser(Path.getPathWithoutSchemeAndAuthority(path.getParent()), fs, allColumns, interestingColumns)).getLeft();
             newMetadata = true;
           }
 
@@ -720,6 +733,53 @@ public class Metadata {
     } catch (IOException e) {
       logger.error("Failed to read '{}' metadata file", path, e);
       metaContext.setMetadataCacheCorrupted(true);
+    }
+  }
+
+  private Set<String> getInterestingColumns(FileSystem fs, Path metadataParentDir) {
+    Summary summary = getSummary(fs, metadataParentDir);
+    if (summary == null) {
+      return null;
+    } else {
+      Set<String> interestingColumns = new HashSet<String>();
+      for (ColumnTypeMetadata_v4 columnTypeMetadata_v4: summary.columnTypeInfo.values()) {
+        if (columnTypeMetadata_v4.isInteresting) {
+          interestingColumns.add(columnTypeMetadata_v4.name.toString());
+        }
+      }
+      return interestingColumns;
+    }
+  }
+
+  private boolean getAllColumns(FileSystem fs, Path metadataParentDir) {
+    Summary summary = getSummary(fs, metadataParentDir);
+    if (summary == null) {
+      return true;
+    }
+    return summary.isAllColumns();
+  }
+
+  private Summary getSummary(FileSystem fs, Path metadataParentDir) {
+    Path summaryFile = new Path(metadataParentDir, METADATA_SUMMARY_FILENAME);
+    try {
+      if (!fs.exists(summaryFile)) {
+        return null;
+      } else {
+        ObjectMapper mapper = new ObjectMapper();
+        final SimpleModule serialModule = new SimpleModule();
+        serialModule.addDeserializer(SchemaPath.class, new SchemaPath.De());
+        serialModule.addKeyDeserializer(ColumnTypeMetadata_v4.Key.class, new ColumnTypeMetadata_v4.Key.DeSerializer());
+        AfterburnerModule module = new AfterburnerModule();
+        module.setUseOptimizedBeanDeserializer(true);
+        mapper.registerModule(serialModule);
+        mapper.registerModule(module);
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        InputStream is = fs.open(summaryFile);
+        Summary summary = mapper.readValue(is, Summary.class);
+        return summary;
+        }
+    } catch (IOException e) {
+      return null;
     }
   }
 
