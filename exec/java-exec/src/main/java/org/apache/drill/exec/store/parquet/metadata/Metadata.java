@@ -257,6 +257,7 @@ public class Metadata {
         new ConcurrentHashMap<>();
     FileStatus fileStatus = fs.getFileStatus(path);
     long dirTotalRowCount = 0;
+    boolean allColumnsInteresting = true;
     assert fileStatus.isDirectory() : "Expected directory";
 
     final Map<FileStatus, FileSystem> childFiles = new LinkedHashMap<>();
@@ -278,12 +279,17 @@ public class Metadata {
             if (columnTypeMetadata_v4 == null) {
               columnTypeMetadata_v4 = subTableColumnTypeInfo.get(key);
             } else {
-              columnTypeMetadata_v4.totalNullCount = columnTypeMetadata_v4.totalNullCount + subTableColumnTypeInfo.get(key).totalNullCount;
+              if (subTableColumnTypeInfo.get(key).totalNullCount < 0 || columnTypeMetadata_v4.totalNullCount < 0) {
+                columnTypeMetadata_v4.totalNullCount = -1;
+              } else {
+                columnTypeMetadata_v4.totalNullCount = columnTypeMetadata_v4.totalNullCount + subTableColumnTypeInfo.get(key).totalNullCount;
+              }
             }
             columnTypeInfoSet.put(key, columnTypeMetadata_v4);
           }
         }
         dirTotalRowCount = dirTotalRowCount + subTableMetadata.getTotalRowCount();
+        allColumnsInteresting = subTableMetadata.isAllColumns();
       } else {
         childFiles.put(file, fs);
       }
@@ -305,6 +311,7 @@ public class Metadata {
     }
     summary.columnTypeInfo.putAll(columnTypeInfoSet);
     summary.totalRowCount = parquetTableMetadata.getTotalRowCount() + dirTotalRowCount;
+    summary.allColumns = allColumnsInteresting;
     parquetTableMetadata.summary = summary;
     for (String oldName : OLD_METADATA_FILENAMES) {
       fs.delete(new Path(path, oldName), false);
@@ -531,7 +538,11 @@ public class Metadata {
         //Update the total null count for each row group
         ColumnTypeMetadata_v4 prevColumnTypeMetadata = parquetTableMetadata.getColumnTypeInfo(columnTypeMetadata.name);
         if (prevColumnTypeMetadata != null) {
-          columnTypeMetadata.totalNullCount = columnTypeMetadata.totalNullCount + prevColumnTypeMetadata.totalNullCount;
+          if (columnTypeMetadata.totalNullCount < 0 ||  prevColumnTypeMetadata.totalNullCount < 0 ) {
+            columnTypeMetadata.totalNullCount = -1;
+          } else {
+            columnTypeMetadata.totalNullCount = columnTypeMetadata.totalNullCount + prevColumnTypeMetadata.totalNullCount;
+          }
         }
 
           if (allColumns || columnSet == null || !allColumns && columnSet != null && columnSet.size() > 0 && columnSet.contains(columnSchemaName.getRootSegmentPath())) {
