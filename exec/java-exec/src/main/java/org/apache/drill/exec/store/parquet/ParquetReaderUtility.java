@@ -321,7 +321,7 @@ public class ParquetReaderUtility {
     int maxNumColumns = 0;
 
     // Setting Min / Max values for V2, V3 and V4 versions; for versions V4 and above need to do decoding
-    boolean needDecoding = new MetadataVersion(parquetTableMetadata.getMetadataVersion()).compareTo(new MetadataVersion(4, 0)) >= 0;
+    boolean needDecoding = new MetadataVersion(parquetTableMetadata.getMetadataVersion()).compareTo(new MetadataVersion(3, 3)) >= 0;
     for (ParquetFileMetadata file : parquetTableMetadata.getFiles()) {
       if ( timer != null ) { // for debugging only
         maxRowGroups = Math.max(maxRowGroups, file.getRowGroups().size());
