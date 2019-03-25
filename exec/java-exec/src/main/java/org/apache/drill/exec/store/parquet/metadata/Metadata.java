@@ -97,8 +97,8 @@ public class Metadata {
   public static final String[] OLD_METADATA_FILENAMES = {".drill.parquet_metadata", ".drill.parquet_metadata.v2"};
   public static final String METADATA_FILENAME = ".drill.parquet_metadata";
   public static final String METADATA_DIRECTORIES_FILENAME = ".drill.parquet_metadata_directories";
-  public static final String FILE_METADATA_FILENAME = ".drill.parquet_file_metadata";
-  public static final String METADATA_SUMMARY_FILENAME = ".drill.parquet_metadata_summary";
+  public static final String FILE_METADATA_FILENAME = ".drill.parquet_file_metadata.v4";
+  public static final String METADATA_SUMMARY_FILENAME = ".drill.parquet_summary_metadata.v4";
   public static final String[] CURRENT_METADATA_FILENAMES = {METADATA_SUMMARY_FILENAME, FILE_METADATA_FILENAME};
 
   private final ParquetReaderConfig readerConfig;
@@ -510,7 +510,6 @@ public class Metadata {
       long length = 0;
       long totalRowCount = parquetTableMetadata.getTotalRowCount() + rowGroup.getRowCount();
       parquetTableMetadata.setRowCount(totalRowCount);
-      parquetTableMetadata.summary.totalRowCount = parquetTableMetadata.getTotalRowCount() + rowGroup.getRowCount();
       for (ColumnChunkMetaData col : rowGroup.getColumns()) {
         String[] columnName = col.getPath().toArray();
         SchemaPath columnSchemaName = SchemaPath.getCompoundPath(columnName);

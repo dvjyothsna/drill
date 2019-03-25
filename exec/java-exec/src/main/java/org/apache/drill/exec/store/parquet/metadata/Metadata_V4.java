@@ -506,7 +506,7 @@ public class Metadata_V4 {
     @JsonProperty public ConcurrentHashMap<ColumnTypeMetadata_v4.Key, ColumnTypeMetadata_v4> columnTypeInfo;
     @JsonProperty List<Path> directories;
     @JsonProperty String drillVersion;
-    @JsonProperty long totalRowCount;
+    @JsonProperty long totalRowCount = 0;
     @JsonProperty boolean allColumns;
 
     public Summary() {

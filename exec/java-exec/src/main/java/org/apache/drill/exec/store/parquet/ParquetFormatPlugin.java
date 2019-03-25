@@ -301,8 +301,12 @@ public class ParquetFormatPlugin implements FormatPlugin {
       return new Path(dir.getPath(), Metadata.METADATA_FILENAME);
     }
 
+    private Path getCurrentMetadataPath(FileStatus dir) {
+      return new Path(dir.getPath(), Metadata.FILE_METADATA_FILENAME);
+    }
+
     private boolean metaDataFileExists(FileSystem fs, FileStatus dir) throws IOException {
-      return fs.exists(getMetadataPath(dir));
+      return fs.exists(getMetadataPath(dir)) || fs.exists(getCurrentMetadataPath(dir));
     }
 
     boolean isDirReadable(DrillFileSystem fs, FileStatus dir) {
