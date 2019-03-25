@@ -74,13 +74,14 @@ public class Metadata_V4 {
     }
 
     public ParquetTableMetadata_v4(String metadataVersion, ParquetTableMetadataBase parquetTableMetadata,
-                                   List<ParquetFileMetadata_v4> files, List<Path> directories, String drillVersion, long totalRowCount) {
+                                   List<ParquetFileMetadata_v4> files, List<Path> directories, String drillVersion, long totalRowCount, boolean allColumns) {
       this.summary.metadataVersion = metadataVersion;
       this.fileMetadata.files = files;
       this.summary.directories = directories;
       this.summary.columnTypeInfo = ((ParquetTableMetadata_v4) parquetTableMetadata).summary.columnTypeInfo;
       this.summary.drillVersion = drillVersion;
       this.summary.totalRowCount = totalRowCount;
+      this.summary.allColumns = allColumns;
     }
 
     public ParquetTableMetadata_v4(String metadataVersion, List<ParquetFileMetadata_v4> files, List<Path> directories,

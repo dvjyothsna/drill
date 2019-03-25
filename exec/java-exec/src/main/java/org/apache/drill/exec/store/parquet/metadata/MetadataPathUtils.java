@@ -113,7 +113,7 @@ public class MetadataPathUtils {
           relativize(baseDir, file.getPath()), file.length, file.rowGroups));
     }
     return new ParquetTableMetadata_v4(SUPPORTED_VERSIONS.last().toString(), tableMetadataWithAbsolutePaths,
-        filesWithRelativePaths, directoriesWithRelativePaths, DrillVersionInfo.getVersion(), tableMetadataWithAbsolutePaths.getTotalRowCount());
+        filesWithRelativePaths, directoriesWithRelativePaths, DrillVersionInfo.getVersion(), tableMetadataWithAbsolutePaths.getTotalRowCount(), tableMetadataWithAbsolutePaths.isAllColumns());
   }
 
   /**
