@@ -522,7 +522,7 @@ public class Metadata {
         long totalNullCount = stats.getNumNulls();
         ColumnTypeMetadata_v4 columnTypeMetadata =
             new ColumnTypeMetadata_v4(columnName, col.getPrimitiveType().getPrimitiveTypeName(), colTypeInfo.originalType,
-                colTypeInfo.precision, colTypeInfo.scale, colTypeInfo.repetitionLevel, colTypeInfo.definitionLevel, totalNullCount, true);
+                colTypeInfo.precision, colTypeInfo.scale, colTypeInfo.repetitionLevel, colTypeInfo.definitionLevel, totalNullCount, false);
 
         if (parquetTableMetadata.getSummary().columnTypeInfo == null) {
           parquetTableMetadata.summary.columnTypeInfo = new ConcurrentHashMap<>();
