@@ -553,7 +553,7 @@ public class Metadata {
         long totalNullCount = stats.getNumNulls();
         ColumnTypeMetadata_v4 columnTypeMetadata =
             new ColumnTypeMetadata_v4(columnName, col.getPrimitiveType().getPrimitiveTypeName(), colTypeInfo.originalType,
-                colTypeInfo.precision, colTypeInfo.scale, colTypeInfo.repetitionLevel, colTypeInfo.definitionLevel, totalNullCount, false);
+                colTypeInfo.precision, colTypeInfo.scale, colTypeInfo.repetitionLevel, colTypeInfo.definitionLevel, 0, false);
         if (parquetTableMetadata.getSummary().columnTypeInfo == null) {
           parquetTableMetadata.summary.columnTypeInfo = new ConcurrentHashMap<>();
         }
@@ -791,7 +791,7 @@ public class Metadata {
     return summary.isAllColumns();
   }
 
-  private Summary getSummary(FileSystem fs, Path metadataParentDir) {
+  public static Summary getSummary(FileSystem fs, Path metadataParentDir) {
     Path summaryFile = new Path(metadataParentDir, METADATA_SUMMARY_FILENAME);
     try {
       if (!fs.exists(summaryFile)) {
