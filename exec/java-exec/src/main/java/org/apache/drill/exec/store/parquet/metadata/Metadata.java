@@ -311,7 +311,11 @@ public class Metadata {
         }
         for (ColumnTypeMetadata_v4.Key columnName: totalNullCountMap.keySet()) {
           ColumnTypeMetadata_v4 columnTypeMetadata_v4 = columnTypeInfoSet.get(columnName);
-          columnTypeMetadata_v4.totalNullCount = totalNullCountMap.get(columnName) + columnTypeMetadata_v4.totalNullCount;
+          if ( columnTypeMetadata_v4.totalNullCount < 0 || totalNullCountMap.get(columnName) < 0) {
+            columnTypeMetadata_v4.totalNullCount = NULL_COUNT_NOT_EXISTS;
+          } else {
+            columnTypeMetadata_v4.totalNullCount = totalNullCountMap.get(columnName) + columnTypeMetadata_v4.totalNullCount;
+          }
           columnTypeInfoSet.put(columnName, columnTypeMetadata_v4);
         }
       }
