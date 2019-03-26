@@ -309,8 +309,11 @@ public class Metadata {
     if (summary.columnTypeInfo == null) {
       summary.columnTypeInfo = new ConcurrentHashMap<>();
     }
+
+    dirTotalRowCount = parquetTableMetadata.getTotalRowCount() + dirTotalRowCount;
+    summary.setTotalRowCount(dirTotalRowCount);
     summary.columnTypeInfo.putAll(columnTypeInfoSet);
-    summary.totalRowCount = parquetTableMetadata.getTotalRowCount() + dirTotalRowCount;
+//    summary.totalRowCount = parquetTableMetadata.getTotalRowCount() + dirTotalRowCount;
     summary.allColumns = allColumnsInteresting;
     parquetTableMetadata.summary = summary;
     for (String oldName : OLD_METADATA_FILENAMES) {
@@ -517,7 +520,7 @@ public class Metadata {
       List<ColumnMetadata_v4> columnMetadataList = new ArrayList<>();
       long length = 0;
       long totalRowCount = parquetTableMetadata.getTotalRowCount() + rowGroup.getRowCount();
-      parquetTableMetadata.setRowCount(totalRowCount);
+      parquetTableMetadata.setTotalRowCount(totalRowCount);
       if (allColumns || columnSet == null) {
         parquetTableMetadata.setAllColumns(true);
       }

@@ -92,6 +92,7 @@ public class Metadata_V4 {
       this.summary.directories = directories;
       this.summary.columnTypeInfo = columnTypeInfo;
       this.summary.drillVersion = drillVersion;
+      this.summary.totalRowCount = totalRowCount;
     }
 
     public ColumnTypeMetadata_v4 getColumnTypeInfo(String[] name) {
@@ -197,8 +198,8 @@ public class Metadata_V4 {
       return summary.columnTypeInfo;
     }
 
-    public void setRowCount(long rowCount) {
-       summary.totalRowCount = rowCount;
+    public void setTotalRowCount(long totalRowCount) {
+       summary.setTotalRowCount(totalRowCount);
     }
 
     public void setAllColumns(boolean allColumns) {
@@ -553,6 +554,10 @@ public class Metadata_V4 {
 
     public void setAllColumns(boolean allColumns) {
       this.allColumns = allColumns;
+    }
+
+    public void setTotalRowCount(Long totalRowCount) {
+      this.totalRowCount = totalRowCount;
     }
   }
 
