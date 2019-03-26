@@ -557,7 +557,7 @@ public class Metadata {
         //Update the total null count from each row group
         totalNullCountMap.putIfAbsent(columnTypeMetadataKey, DEFAULT_NULL_COUNT);
         if (totalNullCountMap.get(columnTypeMetadataKey) < 0 || totalNullCount < 0) {
-          totalNullCountMap.put(columnTypeMetadataKey , NULL_COUNT_NOT_EXISTS);
+          totalNullCountMap.put(columnTypeMetadataKey, NULL_COUNT_NOT_EXISTS);
         } else {
           long nullCount = totalNullCountMap.get(columnTypeMetadataKey) + totalNullCount;
           totalNullCountMap.put(columnTypeMetadataKey, nullCount);
