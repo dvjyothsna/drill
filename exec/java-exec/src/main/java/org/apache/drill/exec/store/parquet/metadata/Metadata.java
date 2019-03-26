@@ -314,7 +314,7 @@ public class Metadata {
           if ( columnTypeMetadata_v4.totalNullCount < 0 || totalNullCountMap.get(columnName) < 0) {
             columnTypeMetadata_v4.totalNullCount = NULL_COUNT_NOT_EXISTS;
           } else {
-            columnTypeMetadata_v4.totalNullCount = totalNullCountMap.get(columnName) + columnTypeMetadata_v4.totalNullCount;
+            columnTypeMetadata_v4.totalNullCount = columnTypeMetadata_v4.totalNullCount + totalNullCountMap.get(columnName);
           }
           columnTypeInfoSet.put(columnName, columnTypeMetadata_v4);
         }
@@ -509,7 +509,7 @@ public class Metadata {
     final ParquetMetadata metadata;
     final UserGroupInformation processUserUgi = ImpersonationUtil.getProcessUserUGI();
     final Configuration conf = new Configuration(fs.getConf());
-    Map<ColumnTypeMetadata_v4.Key, Long> totalNullCountMap = new HashMap<ColumnTypeMetadata_v4.Key, Long>();
+    Map<ColumnTypeMetadata_v4.Key, Long> totalNullCountMap = new HashMap<>();
     long totalRowCount = 0;
     try {
       metadata = processUserUgi.doAs((PrivilegedExceptionAction<ParquetMetadata>)() -> {
