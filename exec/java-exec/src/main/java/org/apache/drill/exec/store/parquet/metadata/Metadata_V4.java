@@ -181,7 +181,7 @@ public class Metadata_V4 {
 
 
     public long getTotalRowCount() {
-      return summary.totalRowCount;
+      return summary.getTotalRowCount();
     }
 
 
@@ -559,6 +559,10 @@ public class Metadata_V4 {
     public void setTotalRowCount(Long totalRowCount) {
       this.totalRowCount = totalRowCount;
     }
+
+    public Long getTotalRowCount() {
+      return this.totalRowCount;
+    }
   }
 
 //  @JsonTypeName (V4)
@@ -578,5 +582,34 @@ public class Metadata_V4 {
     public void assignFiles(List<? extends ParquetFileMetadata> newFiles) {
       this.files = (List<ParquetFileMetadata_v4>) newFiles;
     }
+  }
+
+  public static class ParquetFileAndGlobalMetadata {
+
+    ParquetFileMetadata_v4 fileMetadata;
+    Map<ColumnTypeMetadata_v4.Key, Long> totalNullCountMap;
+    long fileRowCount;
+
+    public ParquetFileAndGlobalMetadata() {
+    }
+
+    public ParquetFileAndGlobalMetadata(ParquetFileMetadata_v4 fileMetadata, Map<ColumnTypeMetadata_v4.Key, Long> totalNullCountMap, long fileRowCount ) {
+      this.fileMetadata = fileMetadata;
+      this.totalNullCountMap = totalNullCountMap;
+      this.fileRowCount = fileRowCount;
+    }
+
+    public ParquetFileMetadata_v4 getFileMetadata() {
+      return this.fileMetadata;
+    }
+
+    public long getFileRowCount() {
+      return this.fileRowCount;
+    }
+
+    public Map<ColumnTypeMetadata_v4.Key, Long> getTotalNullCountMap() {
+      return totalNullCountMap;
+    }
+
   }
 }
