@@ -144,6 +144,8 @@ public class TestParquetMetadataCache extends PlanTestBase {
     test("use dfs");
     test("create table `%s/t1` as select * from cp.`tpch/nation.parquet`", tableName);
     test("create table `%s/t2` as select * from cp.`tpch/nation.parquet`", tableName);
+    test("create table `%s/t3` as select * from cp.`tpch/nation.parquet`", tableName);
+    test("create table `%s/t4` as select * from cp.`tpch/nation.parquet`", tableName);
     test("refresh table metadata %s", tableName);
     checkForMetadataFile(tableName);
     String query = String.format("select * from %s", tableName);
@@ -955,5 +957,19 @@ public class TestParquetMetadataCache extends PlanTestBase {
     int expectedRowCount = 20;
     int actualRowCount = testSql(query);
     assertEquals(expectedRowCount, actualRowCount);
+  }
+
+  @Test
+  public void testTotalRowCount() throws Exception {
+    String tableName = "nation_ctas";
+    test("use dfs");
+    test("create table `%s/t1` as select * from cp.`tpch/nation.parquet`", tableName);
+    test("create table `%s/t2` as select * from cp.`tpch/nation.parquet`", tableName);
+    test("create table `%s/t3` as select * from cp.`tpch/nation.parquet`", tableName);
+    test("create table `%s/t4` as select * from cp.`tpch/nation.parquet`", tableName);
+    test("refresh table metadata %s", tableName);
+    checkForMetadataFile(tableName);
+    createMetadataDir(tableName);
+
   }
 }

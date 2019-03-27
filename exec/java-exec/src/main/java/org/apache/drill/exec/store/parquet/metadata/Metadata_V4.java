@@ -44,7 +44,7 @@ public class Metadata_V4 {
 
   public static class ParquetTableMetadata_v4 extends ParquetTableMetadataBase {
 
-    Summary summary = new Summary();
+    MetadataSummary metadataSummary = new MetadataSummary();
     FileMetadata fileMetadata = new FileMetadata();
 
 
@@ -60,53 +60,53 @@ public class Metadata_V4 {
 //     * @param drillVersion  apache drill version
 //     */
 //    public ParquetTableMetadata_v4(String metadataVersion, String drillVersion) {
-//      this.summary.metadataVersion = metadataVersion;
-//      this.summary.drillVersion = drillVersion;
+//      this.metadataSummary.metadataVersion = metadataVersion;
+//      this.metadataSummary.drillVersion = drillVersion;
 //    }
 
-    public ParquetTableMetadata_v4(Summary summary) {
-      this.summary = summary;
+    public ParquetTableMetadata_v4(MetadataSummary metadataSummary) {
+      this.metadataSummary = metadataSummary;
     }
 
-    public ParquetTableMetadata_v4(Summary summary, FileMetadata files) {
-      this.summary = summary;
+    public ParquetTableMetadata_v4(MetadataSummary metadataSummary, FileMetadata files) {
+      this.metadataSummary = metadataSummary;
       this.fileMetadata = files;
     }
 
     public ParquetTableMetadata_v4(String metadataVersion, ParquetTableMetadataBase parquetTableMetadata,
                                    List<ParquetFileMetadata_v4> files, List<Path> directories, String drillVersion, long totalRowCount, boolean allColumns) {
-      this.summary.metadataVersion = metadataVersion;
+      this.metadataSummary.metadataVersion = metadataVersion;
       this.fileMetadata.files = files;
-      this.summary.directories = directories;
-      this.summary.columnTypeInfo = ((ParquetTableMetadata_v4) parquetTableMetadata).summary.columnTypeInfo;
-      this.summary.drillVersion = drillVersion;
-      this.summary.totalRowCount = totalRowCount;
-      this.summary.allColumns = allColumns;
+      this.metadataSummary.directories = directories;
+      this.metadataSummary.columnTypeInfo = ((ParquetTableMetadata_v4) parquetTableMetadata).metadataSummary.columnTypeInfo;
+      this.metadataSummary.drillVersion = drillVersion;
+      this.metadataSummary.totalRowCount = totalRowCount;
+      this.metadataSummary.allColumns = allColumns;
     }
 
     public ParquetTableMetadata_v4(String metadataVersion, List<ParquetFileMetadata_v4> files, List<Path> directories,
                                    ConcurrentHashMap<ColumnTypeMetadata_v4.Key, ColumnTypeMetadata_v4> columnTypeInfo,
                                    String drillVersion, long totalRowCount) {
-      this.summary.metadataVersion = metadataVersion;
+      this.metadataSummary.metadataVersion = metadataVersion;
       this.fileMetadata.files = files;
-      this.summary.directories = directories;
-      this.summary.columnTypeInfo = columnTypeInfo;
-      this.summary.drillVersion = drillVersion;
-      this.summary.totalRowCount = totalRowCount;
+      this.metadataSummary.directories = directories;
+      this.metadataSummary.columnTypeInfo = columnTypeInfo;
+      this.metadataSummary.drillVersion = drillVersion;
+      this.metadataSummary.totalRowCount = totalRowCount;
     }
 
     public ColumnTypeMetadata_v4 getColumnTypeInfo(String[] name) {
-      return summary.getColumnTypeInfo(name);
+      return metadataSummary.getColumnTypeInfo(name);
     }
 
     @JsonIgnore
     @Override public List<Path> getDirectories() {
-      return summary.getDirectories();
+      return metadataSummary.getDirectories();
     }
 
     @JsonIgnore
     public ColumnTypeMetadata_v4 getColumnTypeInfo(ColumnTypeMetadata_v4.Key key) {
-      return summary.getColumnTypeInfo(key);
+      return metadataSummary.getColumnTypeInfo(key);
     }
 
     @Override
@@ -115,7 +115,7 @@ public class Metadata_V4 {
     }
 
      @Override public String getMetadataVersion() {
-      return summary.getMetadataVersion();
+      return metadataSummary.getMetadataVersion();
     }
 
     /**
@@ -124,7 +124,7 @@ public class Metadata_V4 {
      */
      public void updateRelativePaths(String baseDir) {
       // update directories paths to absolute ones
-      this.summary.directories = MetadataPathUtils.convertToAbsolutePaths(summary.directories, baseDir);
+      this.metadataSummary.directories = MetadataPathUtils.convertToAbsolutePaths(metadataSummary.directories, baseDir);
 
       // update files paths to absolute ones
       this.fileMetadata.files = MetadataPathUtils.convertToFilesWithAbsolutePathsv4(fileMetadata.files, baseDir);
@@ -166,22 +166,22 @@ public class Metadata_V4 {
     }
 
      @Override public ParquetTableMetadataBase clone() {
-      return new ParquetTableMetadata_v4(summary, fileMetadata);
+      return new ParquetTableMetadata_v4(metadataSummary, fileMetadata);
     }
 
      @Override
     public String getDrillVersion() {
-      return summary.drillVersion;
+      return metadataSummary.drillVersion;
     }
 
 
-    public Summary getSummary(){
-      return summary;
+    public MetadataSummary getSummary(){
+      return metadataSummary;
     }
 
 
     public long getTotalRowCount() {
-      return summary.getTotalRowCount();
+      return metadataSummary.getTotalRowCount();
     }
 
 
@@ -191,19 +191,19 @@ public class Metadata_V4 {
 
 
     public boolean isAllColumns() {
-      return summary.isAllColumns();
+      return metadataSummary.isAllColumns();
     }
 
     public ConcurrentHashMap<ColumnTypeMetadata_v4.Key, ColumnTypeMetadata_v4> getColumnTypeInfoMap() {
-      return summary.columnTypeInfo;
+      return metadataSummary.columnTypeInfo;
     }
 
     public void setTotalRowCount(long totalRowCount) {
-       summary.setTotalRowCount(totalRowCount);
+       metadataSummary.setTotalRowCount(totalRowCount);
     }
 
     public void setAllColumns(boolean allColumns) {
-       summary.allColumns = allColumns;
+       metadataSummary.allColumns = allColumns;
     }
 
   }
@@ -501,7 +501,7 @@ public class Metadata_V4 {
   }
 
   @JsonTypeName (V4)
-  public static class Summary{
+  public static class MetadataSummary {
 
     @JsonProperty(value = "metadata_version") private String metadataVersion;
     /*
@@ -515,16 +515,16 @@ public class Metadata_V4 {
     @JsonProperty long totalRowCount = 0;
     @JsonProperty boolean allColumns;
 
-    public Summary() {
+    public MetadataSummary() {
 
     }
 
-    public Summary(String metadataVersion, String drillVersion) {
+    public MetadataSummary(String metadataVersion, String drillVersion) {
       this.metadataVersion = metadataVersion;
       this.drillVersion = drillVersion;
     }
 
-    public Summary(String metadataVersion, String drillVersion, List<Path> directories) {
+    public MetadataSummary(String metadataVersion, String drillVersion, List<Path> directories) {
       this.metadataVersion = metadataVersion;
       this.drillVersion = drillVersion;
       this.directories = directories;

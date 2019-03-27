@@ -17,6 +17,7 @@
  */
 package org.apache.drill;
 
+import java.nio.file.Paths;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -467,5 +468,32 @@ public class PlanTestBase extends BaseTestQuery {
     }
 
     return builder.toString();
+  }
+
+  /**
+   * Helper method for checking the metadata file existence
+   *
+   * @param table table name or table path
+   */
+  public static void createMetadataDir(String table) {
+    final String tmpDir;
+
+    try {
+      tmpDir = dirTestWatcher.getRootDir().getCanonicalPath();
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+
+    File metadataDir = dirTestWatcher.makeRootSubDir(Paths.get(tmpDir+table+"/metadataDir"));
+
+
+//    for (String filename: Metadata.CURRENT_METADATA_FILENAMES) {
+//      File metaFile = table.startsWith(tmpDir) ? FileUtils.getFile(table, filename)
+//              : FileUtils.getFile(tmpDir, table, filename);
+//      assertTrue(String.format("There is no metadata cache file for the %s table", table),
+//              Files.exists(metaFile.toPath()));
+////      FileUtils.copyFile(metaFile, );
+//    }
+
   }
 }
