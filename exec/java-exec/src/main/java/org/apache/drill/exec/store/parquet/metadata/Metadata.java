@@ -572,7 +572,8 @@ public class Metadata {
           long nullCount = totalNullCountMap.get(columnTypeMetadataKey) + totalNullCount;
           totalNullCountMap.put(columnTypeMetadataKey, nullCount);
         }
-        if (allColumnsInteresting || columnSet == null || !allColumnsInteresting && columnSet != null && columnSet.size() > 0 && columnSet.contains(columnSchemaName.getRootSegmentPath())) {
+        // Store column metadata only if allColumns is set to true or if the column belongs to the subset of columns specified in the refresh command
+        if (allColumnsInteresting || columnSet == null || columnSet.contains(columnSchemaName.getRootSegmentPath())) {
           // Save the column schema info. We'll merge it into one list
           Object minValue = null;
           Object maxValue = null;
