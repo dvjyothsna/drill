@@ -730,11 +730,6 @@ public class Metadata {
             ((Metadata_V3.ParquetTableMetadata_v3) parquetTableMetadata).updateRelativePaths(metadataParentDirPath);
           }
           if (!alreadyCheckedModification && tableModified((parquetTableMetadata.getDirectories()), path, metadataParentDir, metaContext, fs)) {
-            boolean allColumns = getAllColumns(fs, metadataParentDir, true);
-            Set<String> interestingColumns = null;
-            if (!allColumns) {
-              interestingColumns = getInterestingColumns(fs, metadataParentDir, true);
-            }
             parquetTableMetadata =
                     (createMetaFilesRecursivelyAsProcessUser(Path.getPathWithoutSchemeAndAuthority(path.getParent()), fs, true, null, true)).getLeft();
             newMetadata = true;
@@ -750,11 +745,6 @@ public class Metadata {
           }
           if (!alreadyCheckedModification && tableModified(parquetTableMetadata.getDirectories(), path, metadataParentDir, metaContext, fs)) {
             // TODO change with current columns in existing metadata (auto refresh feature)
-            boolean allColumns = getAllColumns(fs, metadataParentDir, true);
-            Set<String> interestingColumns = null;
-            if (!allColumns) {
-              interestingColumns = getInterestingColumns(fs, metadataParentDir,true);
-            }
             parquetTableMetadata =
                     (createMetaFilesRecursivelyAsProcessUser(Path.getPathWithoutSchemeAndAuthority(path.getParent()), fs, true, null, true)).getLeft();
             newMetadata = true;

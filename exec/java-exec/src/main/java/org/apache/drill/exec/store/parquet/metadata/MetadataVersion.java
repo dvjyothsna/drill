@@ -146,7 +146,7 @@ public class MetadataVersion implements Comparable<MetadataVersion> {
     public static final String V3_3 = "3.3";
 
   /**
-   *  Version 4: Split the metadata cache file into summary anf file metadata
+   *  Version 4: Split the metadata cache file into summary and file metadata
    */
   public static final String V4 = "4";
 
