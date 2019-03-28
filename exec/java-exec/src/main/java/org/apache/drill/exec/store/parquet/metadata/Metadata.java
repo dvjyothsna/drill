@@ -238,10 +238,10 @@ public class Metadata {
       fs.getConf());
     Path metadataParentDir  = path.getParent();
     if (autoRefreshTriggered) {
-      allColumns = getAllColumns(fs, metadataParentDir, true);
+      allColumns = getAllColumns(fs, path, true);
       columnSet = null;
       if (!allColumns) {
-        columnSet = getInterestingColumns(fs, metadataParentDir, true);
+        columnSet = getInterestingColumns(fs, path, true);
       }
     }
     return createMetaFilesRecursively(path, processUserFileSystem, allColumns, columnSet);
@@ -326,6 +326,7 @@ public class Metadata {
           }
           columnTypeInfoSet.put(columnName, columnTypeMetadata_v4);
         }
+        allColumnsInteresting = parquetTableMetadata.getSummary().isAllColumns();
       }
     }
 

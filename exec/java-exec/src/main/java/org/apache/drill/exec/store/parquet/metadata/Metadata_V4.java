@@ -513,7 +513,7 @@ public class Metadata_V4 {
     @JsonProperty List<Path> directories;
     @JsonProperty String drillVersion;
     @JsonProperty long totalRowCount = 0;
-    @JsonProperty boolean allColumns;
+    @JsonProperty boolean allColumns = false;
 
     public MetadataSummary() {
 

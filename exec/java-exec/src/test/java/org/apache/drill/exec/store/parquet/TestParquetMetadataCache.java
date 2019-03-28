@@ -17,6 +17,7 @@
  */
 package org.apache.drill.exec.store.parquet;
 
+import static java.lang.Thread.sleep;
 import org.apache.commons.io.filefilter.FalseFileFilter;
 import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.apache.drill.PlanTestBase;
@@ -159,7 +160,7 @@ public class TestParquetMetadataCache extends PlanTestBase {
     test("create table `%s/t1` as select * from cp.`tpch/nation.parquet`", tableName);
     test("refresh table metadata %s", tableName);
     checkForMetadataFile(tableName);
-    Thread.sleep(1000);
+    sleep(1000);
     test("create table `%s/t2` as select * from cp.`tpch/nation.parquet`", tableName);
     int rowCount = testSql(String.format("select * from %s", tableName));
     Assert.assertEquals(50, rowCount);
@@ -999,7 +1000,6 @@ public class TestParquetMetadataCache extends PlanTestBase {
   }
 
 
-  @Ignore
   @Test
   public void testTotalRowCountAddDirectory() throws Exception {
     String tableName = "nation_ctas_rowcount2";
@@ -1011,25 +1011,225 @@ public class TestParquetMetadataCache extends PlanTestBase {
     test("create table `%s/t4` as select * from cp.`tpch/nation.parquet`", tableName);
 
     test("refresh table metadata %s", tableName);
-
+    sleep(1000);
     test("create table `%s/t5` as select * from cp.`tpch/nation.parquet`", tableName);
 
-    String query = "select count(*) as count from nation_ctas_rowcount2";
+    String query = String.format("select count(*) as count from `%s`", tableName);
+    String rowCountQuery = String.format("select t.totalRowCount as rowCount from `%s/metadataDir/summary_meta.json` as t", tableName);
+
     testBuilder()
             .sqlQuery(query)
             .unOrdered()
             .baselineColumns("count")
             .baselineValues(125L)
             .go();
-
     checkForMetadataFile(tableName);
     createMetadataDir(tableName);
-
     testBuilder()
-            .sqlQuery("select t.totalRowCount as rowCount from `%s/metadataDir/summary_meta.json` as t", tableName)
+            .sqlQuery(rowCountQuery)
             .unOrdered()
             .baselineColumns("rowCount")
             .baselineValues(125L)
+            .go();
+  }
+
+
+  @Test
+  public void testTotalRowCountAddSubDir() throws Exception {
+    String tableName = "nation_ctas_rowcount3";
+    test("use dfs");
+
+    test("create table `%s/t1` as select * from cp.`tpch/nation.parquet`", tableName);
+    test("create table `%s/t2` as select * from cp.`tpch/nation.parquet`", tableName);
+    test("create table `%s/t3` as select * from cp.`tpch/nation.parquet`", tableName);
+    test("create table `%s/t4` as select * from cp.`tpch/nation.parquet`", tableName);
+
+    test("refresh table metadata %s", tableName);
+    sleep(1000);
+    tableName = tableName + "/t1";
+    test("create table `%s/t5` as select * from cp.`tpch/nation.parquet`", tableName);
+    String query = String.format("select count(*) as count from `%s`", tableName);
+    String rowCountQuery = String.format("select t.totalRowCount as rowCount from `%s/metadataDir/summary_meta.json` as t", tableName);
+    testBuilder()
+            .sqlQuery(query)
+            .unOrdered()
+            .baselineColumns("count")
+            .baselineValues(50L)
+            .go();
+    checkForMetadataFile(tableName);
+    createMetadataDir(tableName);
+    testBuilder()
+            .sqlQuery(rowCountQuery)
+            .unOrdered()
+            .baselineColumns("rowCount")
+            .baselineValues(50L)
+            .go();
+  }
+
+  @Test
+  public void testTotalRowCountAddSubDir1() throws Exception {
+    String tableName = "nation_ctas_rowcount4";
+    test("use dfs");
+
+    test("create table `%s/t1` as select * from cp.`tpch/nation.parquet`", tableName);
+    test("create table `%s/t2` as select * from cp.`tpch/nation.parquet`", tableName);
+    test("create table `%s/t3` as select * from cp.`tpch/nation.parquet`", tableName);
+    test("create table `%s/t4` as select * from cp.`tpch/nation.parquet`", tableName);
+
+    test("refresh table metadata %s", tableName);
+    sleep(1000);
+    tableName = tableName + "/t1";
+
+    test("create table `%s/t5` as select * from cp.`tpch/nation.parquet`", tableName);
+
+    String query = String.format("select count(*) as count from `%s`", tableName);
+    String rowCountQuery = String.format("select t.totalRowCount as rowCount from `%s/metadataDir/summary_meta.json` as t", tableName);
+    testBuilder()
+            .sqlQuery(query)
+            .unOrdered()
+            .baselineColumns("count")
+            .baselineValues(50L)
+            .go();
+    checkForMetadataFile(tableName);
+    createMetadataDir(tableName);
+    testBuilder()
+            .sqlQuery(rowCountQuery)
+            .unOrdered()
+            .baselineColumns("rowCount")
+            .baselineValues(50L)
+            .go();
+  }
+
+  @Test
+  public void testAutoRefreshRowCount() throws Exception {
+    String tableName = "orders_ctas_refresh5";
+    test("use dfs");
+
+    test("create table `%s/t1` as select * from cp.`tpch/orders.parquet`", tableName);
+    test("create table `%s/t2` as select * from cp.`tpch/orders.parquet`", tableName);
+    test("create table `%s/t3` as select * from cp.`tpch/orders.parquet`", tableName);
+    test("create table `%s/t4` as select * from cp.`tpch/orders.parquet`", tableName);
+    test("refresh table metadata COLUMNS (o_orderdate) %s", tableName);
+    sleep(1000);
+
+    tableName = tableName + "/t1";
+    String query = String.format("select count(*) as count from `%s`", tableName);
+    String rowCountQuery = String.format("select t.totalRowCount as rowCount from `%s/metadataDir/summary_meta.json` as t", tableName);
+    checkForMetadataFile(tableName);
+    createMetadataDir(tableName);
+    dirTestWatcher.copyResourceToRoot(Paths.get("multilevel/parquet/1994/Q1/orders_94_q1.parquet"), Paths.get("orders_ctas_refresh5/t1/q1.parquet"));
+
+    testBuilder()
+            .sqlQuery(query)
+            .unOrdered()
+            .baselineColumns("count")
+            .baselineValues(100L)
+            .go();
+    testBuilder()
+            .sqlQuery(rowCountQuery)
+            .unOrdered()
+            .baselineColumns("rowCount")
+            .baselineValues(100L)
+            .go();
+  }
+
+  @Test
+  public void testRefreshWithInterestingColumn() throws Exception {
+    String tableName = "orders_ctas_refresh";
+    test("use dfs");
+
+    test("create table `%s/t1` as select * from cp.`tpch/orders.parquet`", tableName);
+    test("create table `%s/t2` as select * from cp.`tpch/orders.parquet`", tableName);
+    test("create table `%s/t3` as select * from cp.`tpch/orders.parquet`", tableName);
+    test("create table `%s/t4` as select * from cp.`tpch/orders.parquet`", tableName);
+
+    test("refresh table metadata COLUMNS (o_orderdate) %s", tableName);
+    sleep(1000);
+
+    String rowCountQuery = String.format("select t.allColumns as allColumnsInteresting from `%s/metadataDir/summary_meta.json` as t", tableName);
+    checkForMetadataFile(tableName);
+    createMetadataDir(tableName);
+    testBuilder()
+            .sqlQuery(rowCountQuery)
+            .unOrdered()
+            .baselineColumns("allColumnsInteresting")
+            .baselineValues(false)
+            .go();
+  }
+
+  @Test
+  public void testDefaultRefresh() throws Exception {
+    String tableName = "orders_ctas_refresh1";
+    test("use dfs");
+
+    test("create table `%s/t1` as select * from cp.`tpch/orders.parquet`", tableName);
+    test("create table `%s/t2` as select * from cp.`tpch/orders.parquet`", tableName);
+    test("create table `%s/t3` as select * from cp.`tpch/orders.parquet`", tableName);
+    test("create table `%s/t4` as select * from cp.`tpch/orders.parquet`", tableName);
+
+    test("refresh table metadata %s", tableName);
+    sleep(1000);
+
+    String rowCountQuery = String.format("select t.allColumns as allColumnsInteresting from `%s/metadataDir/summary_meta.json` as t", tableName);
+    checkForMetadataFile(tableName);
+    createMetadataDir(tableName);
+    testBuilder()
+            .sqlQuery(rowCountQuery)
+            .unOrdered()
+            .baselineColumns("allColumnsInteresting")
+            .baselineValues(true)
+            .go();
+  }
+
+  @Test
+  public void testAutoRefreshWithInterestingColumn() throws Exception {
+    String tableName = "orders_ctas_refresh2";
+    test("use dfs");
+
+    test("create table `%s/t1` as select * from cp.`tpch/orders.parquet`", tableName);
+    test("create table `%s/t2` as select * from cp.`tpch/orders.parquet`", tableName);
+    test("create table `%s/t3` as select * from cp.`tpch/orders.parquet`", tableName);
+    test("create table `%s/t4` as select * from cp.`tpch/orders.parquet`", tableName);
+    test("refresh table metadata COLUMNS (o_orderdate) %s", tableName);
+    sleep(1000);
+    test("create table `%s/t5` as select * from cp.`tpch/orders.parquet`", tableName);
+    test("Select count(*) from `%s`", tableName);
+    tableName = tableName + "/t5";
+    checkForMetadataFile(tableName);
+    createMetadataDir(tableName);
+    String rowCountQuery = String.format("select t.allColumns as allColumnsInteresting from `%s/metadataDir/summary_meta.json` as t", tableName);
+    testBuilder()
+            .sqlQuery(rowCountQuery)
+            .unOrdered()
+            .baselineColumns("allColumnsInteresting")
+            .baselineValues(false)
+            .go();
+  }
+
+
+  @Test
+  public void testAutoRefreshWithInterestingColumnFile() throws Exception {
+    String tableName = "orders_ctas_refresh3";
+    test("use dfs");
+
+    test("create table `%s/t1` as select * from cp.`tpch/orders.parquet`", tableName);
+    test("create table `%s/t2` as select * from cp.`tpch/orders.parquet`", tableName);
+    test("create table `%s/t3` as select * from cp.`tpch/orders.parquet`", tableName);
+    test("create table `%s/t4` as select * from cp.`tpch/orders.parquet`", tableName);
+    test("refresh table metadata COLUMNS (o_orderdate) %s", tableName);
+    sleep(1000);
+    test("create table `%s/t5` as select * from cp.`tpch/orders.parquet`", tableName);
+    test("Select count(*) from `%s`", tableName);
+    tableName = tableName + "/t5";
+    checkForMetadataFile(tableName);
+    createMetadataDir(tableName);
+    dirTestWatcher.copyResourceToRoot(Paths.get("multilevel/parquet/1994/Q1/orders_94_q1.parquet"), Paths.get("orders_ctas_refresh3/t5/q1.parquet"));
+    String rowCountQuery = String.format("select t.allColumns as allColumnsInteresting from `%s/metadataDir/summary_meta.json` as t", tableName);
+    testBuilder()
+            .sqlQuery(rowCountQuery)
+            .unOrdered()
+            .baselineColumns("allColumnsInteresting")
+            .baselineValues(false)
             .go();
   }
 
