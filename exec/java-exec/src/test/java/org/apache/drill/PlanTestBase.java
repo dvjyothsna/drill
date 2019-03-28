@@ -471,11 +471,11 @@ public class PlanTestBase extends BaseTestQuery {
   }
 
   /**
-   * Helper method for checking the metadata file existence
+   * Create a temp metadata directory to query the metadata cache files
    *
    * @param table table name or table path
    */
-  public static void createMetadataDir(String table) {
+  public static void createMetadataDir(String table) throws IOException {
     final String tmpDir;
 
     try {
@@ -483,17 +483,17 @@ public class PlanTestBase extends BaseTestQuery {
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
-
-    File metadataDir = dirTestWatcher.makeRootSubDir(Paths.get(tmpDir+table+"/metadataDir"));
-
-
-//    for (String filename: Metadata.CURRENT_METADATA_FILENAMES) {
-//      File metaFile = table.startsWith(tmpDir) ? FileUtils.getFile(table, filename)
-//              : FileUtils.getFile(tmpDir, table, filename);
-//      assertTrue(String.format("There is no metadata cache file for the %s table", table),
-//              Files.exists(metaFile.toPath()));
-////      FileUtils.copyFile(metaFile, );
-//    }
-
+    File metadataDir = dirTestWatcher.makeRootSubDir(Paths.get(tmpDir+"/"+table+"/metadataDir"));
+    File metaFile, newFile;
+    metaFile = table.startsWith(tmpDir) ? FileUtils.getFile(table, Metadata.FILE_METADATA_FILENAME)
+            : FileUtils.getFile(tmpDir, table, Metadata.FILE_METADATA_FILENAME);
+    newFile = new File(tmpDir+"/"+table+"/file_meta.json");
+    FileUtils.copyFile(metaFile, newFile);
+    FileUtils.copyFileToDirectory(newFile, metadataDir);
+    metaFile = table.startsWith(tmpDir) ? FileUtils.getFile(table, Metadata.METADATA_SUMMARY_FILENAME)
+            : FileUtils.getFile(tmpDir, table, Metadata.METADATA_SUMMARY_FILENAME);
+    newFile = new File(tmpDir+"/"+table+"/summary_meta.json");
+    FileUtils.copyFile(metaFile, newFile);
+    FileUtils.copyFileToDirectory(newFile, metadataDir);
   }
 }
