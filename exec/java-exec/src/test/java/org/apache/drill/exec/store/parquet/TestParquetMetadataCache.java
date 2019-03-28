@@ -22,8 +22,6 @@ import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.apache.drill.PlanTestBase;
 import org.apache.drill.categories.UnlikelyTest;
 import org.apache.commons.io.FileUtils;
-import org.apache.drill.exec.proto.UserBitShared;
-import static org.apache.drill.exec.proto.beans.QueryType.SQL;
 import org.apache.drill.exec.record.BatchSchema;
 import org.apache.drill.exec.record.metadata.SchemaBuilder;
 import org.apache.drill.exec.store.parquet.metadata.Metadata;
@@ -1000,6 +998,40 @@ public class TestParquetMetadataCache extends PlanTestBase {
             .go();
   }
 
+
+  @Ignore
+  @Test
+  public void testTotalRowCountAddDirectory() throws Exception {
+    String tableName = "nation_ctas_rowcount2";
+    test("use dfs");
+
+    test("create table `%s/t1` as select * from cp.`tpch/nation.parquet`", tableName);
+    test("create table `%s/t2` as select * from cp.`tpch/nation.parquet`", tableName);
+    test("create table `%s/t3` as select * from cp.`tpch/nation.parquet`", tableName);
+    test("create table `%s/t4` as select * from cp.`tpch/nation.parquet`", tableName);
+
+    test("refresh table metadata %s", tableName);
+
+    test("create table `%s/t5` as select * from cp.`tpch/nation.parquet`", tableName);
+
+    String query = "select count(*) as count from nation_ctas_rowcount2";
+    testBuilder()
+            .sqlQuery(query)
+            .unOrdered()
+            .baselineColumns("count")
+            .baselineValues(125L)
+            .go();
+
+    checkForMetadataFile(tableName);
+    createMetadataDir(tableName);
+
+    testBuilder()
+            .sqlQuery("select t.totalRowCount as rowCount from `%s/metadataDir/summary_meta.json` as t", tableName)
+            .unOrdered()
+            .baselineColumns("rowCount")
+            .baselineValues(125L)
+            .go();
+  }
 
 
 
