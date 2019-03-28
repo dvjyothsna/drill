@@ -1100,6 +1100,7 @@ public class TestParquetMetadataCache extends PlanTestBase {
             .go();
   }
 
+  @Ignore
   @Test
   public void testAutoRefreshRowCount() throws Exception {
     String tableName = "orders_ctas_refresh5";
