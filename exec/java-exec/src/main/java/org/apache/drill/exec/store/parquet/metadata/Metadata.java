@@ -800,7 +800,7 @@ public class Metadata {
       Path metadataDirFile = new Path(metadataParentDir, METADATA_DIRECTORIES_FILENAME);
       MetadataContext metaContext = new MetadataContext();
       try {
-      if (!fs.exists(summaryFile)) {
+      if (!fs.exists(summaryFile) || !fs.exists(metadataDirFile)) {
         return null;
       } else {
         // If the autorefresh is not triggered, check if the cache file is stale and trigger auto-refresh
