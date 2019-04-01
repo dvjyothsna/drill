@@ -43,6 +43,7 @@ import org.apache.drill.exec.store.dfs.FormatSelection;
 import org.apache.drill.exec.store.dfs.NamedFormatPluginConfig;
 import org.apache.drill.exec.store.direct.MetadataDirectGroupScan;
 import org.apache.drill.exec.store.parquet.ParquetFormatConfig;
+import org.apache.drill.exec.store.parquet.ParquetReaderConfig;
 import org.apache.drill.exec.store.parquet.metadata.Metadata;
 import org.apache.drill.exec.store.parquet.metadata.Metadata_V4;
 import org.apache.drill.exec.store.pojo.DynamicPojoRecordReader;
@@ -128,17 +129,15 @@ public class ConvertCountToDirectScanRule extends RelOptRule {
 
     //  Rule is applicable only if the statistics for row count and null count are available from the metadata,
     FormatSelection formatSelection = (FormatSelection) selection;
-    Pair<Boolean, Metadata_V4.Summary> status = checkMetadataForScanStats(drillTable, formatSelection);
+    Pair<Boolean, Metadata_V4.MetadataSummary> status = checkMetadataForScanStats(drillTable, formatSelection);
 
     if (!status.getLeft()) {
-      logger.debug("Rule does not apply since summary metadata was not found.");
+      logger.debug("Rule does not apply since MetadataSummary metadata was not found.");
       return;
     }
 
-    List<Path> fileList = ImmutableList.of(formatSelection.getSelection().getSelectionRoot());
-
     PlannerSettings settings = call.getPlanner().getContext().unwrap(PlannerSettings.class);
-    Metadata_V4.Summary metadataSummary = status.getRight();
+    Metadata_V4.MetadataSummary metadataSummary = status.getRight();
     Map<String, Long> result = collectCounts(settings, metadataSummary, agg, scan, project);
     logger.trace("Calculated the following aggregate counts: ", result);
 
@@ -148,6 +147,9 @@ public class ConvertCountToDirectScanRule extends RelOptRule {
       return;
     }
 
+    List<Path> fileList =
+            ImmutableList.of(Metadata.getSummaryFilePath(formatSelection.getSelection().getSelectionRoot()));
+
     final RelDataType scanRowType = CountToDirectScanUtils.constructDataType(agg, result.keySet());
 
     final DynamicPojoRecordReader<Long> reader = new DynamicPojoRecordReader<>(
@@ -155,7 +157,7 @@ public class ConvertCountToDirectScanRule extends RelOptRule {
         Collections.singletonList((List<Long>) new ArrayList<>(result.values())));
 
     final ScanStats scanStats = new ScanStats(ScanStats.GroupScanProperty.EXACT_ROW_COUNT, 1, 1, scanRowType.getFieldCount());
-    final MetadataDirectGroupScan directScan = new MetadataDirectGroupScan(reader, fileList, scanStats);
+    final MetadataDirectGroupScan directScan = new MetadataDirectGroupScan(reader, fileList, scanStats, true);
 
     final DrillDirectScanRel newScan = new DrillDirectScanRel(scan.getCluster(), scan.getTraitSet().plus(DrillRel.DRILL_LOGICAL),
       directScan, scanRowType);
@@ -166,14 +168,14 @@ public class ConvertCountToDirectScanRule extends RelOptRule {
     call.transformTo(newProject);
   }
 
-  private Pair<Boolean, Metadata_V4.Summary> checkMetadataForScanStats(DrillTable drillTable, FormatSelection formatSelection) {
+  private Pair<Boolean, Metadata_V4.MetadataSummary> checkMetadataForScanStats(DrillTable drillTable, FormatSelection formatSelection) {
 
     // Currently only support metadata rowcount stats for Parquet tables
     FormatPluginConfig formatConfig = formatSelection.getFormat();
     if (!((formatConfig instanceof ParquetFormatConfig)
       || ((formatConfig instanceof NamedFormatPluginConfig)
       && ((NamedFormatPluginConfig) formatConfig).name.equals("parquet")))) {
-      return new ImmutablePair<Boolean, Metadata_V4.Summary>(false, null);
+      return new ImmutablePair<Boolean, Metadata_V4.MetadataSummary>(false, null);
     }
 
     FileSystemPlugin plugin = (FileSystemPlugin) drillTable.getPlugin();
@@ -182,14 +184,14 @@ public class ConvertCountToDirectScanRule extends RelOptRule {
        fs = new DrillFileSystem(plugin.getFormatPlugin(formatSelection.getFormat()).getFsConf());
     } catch (IOException e) {
       logger.warn("Unable to create the file system object for retrieving statistics from metadata cache file ", e);
-      return new ImmutablePair<Boolean, Metadata_V4.Summary>(false, null);
+      return new ImmutablePair<Boolean, Metadata_V4.MetadataSummary>(false, null);
     }
 
     Path selectionRoot = formatSelection.getSelection().getSelectionRoot();
-    Metadata_V4.Summary metadataSummary = Metadata.getSummary(fs, selectionRoot);
+    Metadata_V4.MetadataSummary metadataSummary = Metadata.getSummary(fs, selectionRoot, false, ParquetReaderConfig.builder().build());
 
-    return metadataSummary != null ? new ImmutablePair<Boolean, Metadata_V4.Summary>(true, metadataSummary) :
-      new ImmutablePair<Boolean, Metadata_V4.Summary>(false, null);
+    return metadataSummary != null ? new ImmutablePair<Boolean, Metadata_V4.MetadataSummary>(true, metadataSummary) :
+      new ImmutablePair<Boolean, Metadata_V4.MetadataSummary>(false, null);
   }
 
   /**
@@ -209,7 +211,7 @@ public class ConvertCountToDirectScanRule extends RelOptRule {
    * @param project project relational expression
    * @return result map where key is count column name, value is count value
    */
-  private Map<String, Long> collectCounts(PlannerSettings settings, Metadata_V4.Summary metadataSummary,
+  private Map<String, Long> collectCounts(PlannerSettings settings, Metadata_V4.MetadataSummary metadataSummary,
                                           Aggregate agg, TableScan scan, Project project) {
     final Set<String> implicitColumnsNames = ColumnExplorer.initImplicitFileColumns(settings.getOptions()).keySet();
     final long totalRecordCount = metadataSummary.getTotalRowCount();

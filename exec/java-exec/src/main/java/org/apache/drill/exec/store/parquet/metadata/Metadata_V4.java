@@ -568,6 +568,10 @@ public class Metadata_V4 {
       return columnTypeInfo.get(new ColumnTypeMetadata_v4.Key(name));
     }
 
+    public ColumnTypeMetadata_v4 getColumnTypeInfo( ColumnTypeMetadata_v4.Key key) {
+      return columnTypeInfo.get(key);
+    }
+
     public List<Path> getDirectories() {
       return directories;
     }

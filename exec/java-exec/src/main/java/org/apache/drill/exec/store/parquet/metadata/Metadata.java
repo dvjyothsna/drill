@@ -791,11 +791,15 @@ public class Metadata {
     return metadataSummary.isAllColumnsInteresting();
   }
 
-  public static Metadata_V4.MetadataSummary getSummary(FileSystem fs, Path metadataParentDir, boolean autoRefreshTriggered, ParquetReaderConfig readerConfig) {
-    Path summaryFile = new Path(metadataParentDir, METADATA_SUMMARY_FILENAME);
-    Path metadataDirFile = new Path(metadataParentDir, METADATA_DIRECTORIES_FILENAME);
-    MetadataContext metaContext = new MetadataContext();
-    try {
+  public static Path getSummaryFilePath(Path metadataParentDir) {
+    return new Path(metadataParentDir, METADATA_SUMMARY_FILENAME);
+  }
+
+  public static MetadataSummary getSummary(FileSystem fs, Path metadataParentDir, boolean autoRefreshTriggered, ParquetReaderConfig readerConfig) {
+    Path summaryFile = getSummaryFilePath(metadataParentDir);
+      Path metadataDirFile = new Path(metadataParentDir, METADATA_DIRECTORIES_FILENAME);
+      MetadataContext metaContext = new MetadataContext();
+      try {
       if (!fs.exists(summaryFile)) {
         return null;
       } else {
