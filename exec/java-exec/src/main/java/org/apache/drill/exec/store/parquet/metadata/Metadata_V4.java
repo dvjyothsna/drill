@@ -535,7 +535,7 @@ public class Metadata_V4 {
     private String metadataVersion;
     /*
      ColumnTypeInfo is schema information from all the files and row groups, merged into
-     one. To get this info, we pass the ParquetTableMetadata object all the way dow to the
+     one. To get this info, we pass the ParquetTableMetadata object all the way down to the
      RowGroup and the column type is built there as it is read from the footer.
      */
     @JsonProperty
@@ -568,6 +568,10 @@ public class Metadata_V4 {
       return columnTypeInfo.get(new ColumnTypeMetadata_v4.Key(name));
     }
 
+    public ColumnTypeMetadata_v4 getColumnTypeInfo(ColumnTypeMetadata_v4.Key key) {
+      return columnTypeInfo.get(key);
+    }
+
     public List<Path> getDirectories() {
       return directories;
     }
@@ -594,7 +598,9 @@ public class Metadata_V4 {
     }
   }
 
-  //  @JsonTypeName (V4)
+  /*
+   * A struct that holds list of file metadata in a directory
+   */
   public static class FileMetadata {
 
     @JsonProperty
@@ -615,7 +621,7 @@ public class Metadata_V4 {
   }
 
   /*
-   * A struct thta holds file metadata and row count and null count of a single file
+   * A struct that holds file metadata and row count and null count of a single file
    */
   public static class ParquetFileAndRowCountMetadata {
 

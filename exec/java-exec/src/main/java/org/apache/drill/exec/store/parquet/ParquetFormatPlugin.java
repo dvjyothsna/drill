@@ -298,7 +298,7 @@ public class ParquetFormatPlugin implements FormatPlugin {
     }
 
     private Path getMetadataPath(FileStatus dir) {
-      return new Path(dir.getPath(), Metadata.METADATA_FILENAME);
+      return new Path(dir.getPath(), Metadata.OLD_METADATA_FILENAME);
     }
 
     /**

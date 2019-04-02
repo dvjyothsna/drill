@@ -27,6 +27,7 @@ import org.apache.drill.exec.server.options.OptionManager;
 import org.apache.drill.exec.store.ColumnExplorer;
 import org.apache.drill.exec.store.parquet.metadata.MetadataBase;
 import org.apache.drill.exec.store.parquet.metadata.MetadataVersion;
+import org.apache.drill.exec.store.parquet.metadata.Metadata_V4;
 import org.apache.drill.metastore.BaseMetadata;
 import org.apache.drill.metastore.CollectableColumnStatisticsKind;
 import org.apache.drill.metastore.ColumnStatistics;
@@ -162,15 +163,16 @@ public class ParquetTableMetadataUtils {
   /**
    * Merges list of specified metadata into the map of {@link ColumnStatistics} with columns as keys.
    *
+   * @param <T>                 type of metadata to collect
    * @param metadataList        list of metadata to be merged
    * @param columns             set of columns whose statistics should be merged
    * @param statisticsToCollect kinds of statistics that should be collected
-   * @param <T>                 type of metadata to collect
+   * @param parquetTableMetadata
    * @return list of merged metadata
    */
   @SuppressWarnings("unchecked")
   public static <T extends BaseMetadata> Map<SchemaPath, ColumnStatistics> mergeColumnsStatistics(
-      Collection<T> metadataList, Set<SchemaPath> columns, List<CollectableColumnStatisticsKind> statisticsToCollect) {
+          Collection<T> metadataList, Set<SchemaPath> columns, List<CollectableColumnStatisticsKind> statisticsToCollect, MetadataBase.ParquetTableMetadataBase parquetTableMetadata) {
     Map<SchemaPath, ColumnStatistics> columnsStatistics = new HashMap<>();
 
     for (SchemaPath column : columns) {
@@ -193,6 +195,7 @@ public class ParquetTableMetadataUtils {
       columnsStatistics.put(column, new ColumnStatisticsImpl(statisticsMap, statisticsList.iterator().next().getValueComparator()));
     }
 
+    columnsStatistics = populateColumnStats(columnsStatistics, parquetTableMetadata);
     return columnsStatistics;
   }
 
@@ -201,9 +204,10 @@ public class ParquetTableMetadataUtils {
    *
    * @param rowGroups list of {@link RowGroupMetadata} to be merged
    * @param tableName name of the table
+   * @param parquetTableMetadata
    * @return {@link FileMetadata} instance
    */
-  public static FileMetadata getFileMetadata(List<RowGroupMetadata> rowGroups, String tableName) {
+  public static FileMetadata getFileMetadata(List<RowGroupMetadata> rowGroups, String tableName, MetadataBase.ParquetTableMetadataBase parquetTableMetadata) {
     if (rowGroups.isEmpty()) {
       return null;
     }
@@ -213,7 +217,7 @@ public class ParquetTableMetadataUtils {
     TupleSchema schema = rowGroups.iterator().next().getSchema();
 
     return new FileMetadata(rowGroups.iterator().next().getLocation(), schema,
-      mergeColumnsStatistics(rowGroups, rowGroups.iterator().next().getColumnsStatistics().keySet(), PARQUET_STATISTICS),
+      mergeColumnsStatistics(rowGroups, rowGroups.iterator().next().getColumnsStatistics().keySet(), PARQUET_STATISTICS, parquetTableMetadata),
       fileStatistics, tableName, -1);
   }
 
@@ -225,7 +229,7 @@ public class ParquetTableMetadataUtils {
    * @param tableName       name of the table
    * @return {@link PartitionMetadata} instance
    */
-  public static PartitionMetadata getPartitionMetadata(SchemaPath partitionColumn, List<FileMetadata> files, String tableName) {
+  public static PartitionMetadata getPartitionMetadata(SchemaPath partitionColumn, List<FileMetadata> files, String tableName, MetadataBase.ParquetTableMetadataBase parquetTableMetadata) {
     Set<Path> locations = new HashSet<>();
     Set<SchemaPath> columns = new HashSet<>();
 
@@ -238,7 +242,7 @@ public class ParquetTableMetadataUtils {
     partStatistics.put(TableStatisticsKind.ROW_COUNT.getName(), TableStatisticsKind.ROW_COUNT.mergeStatistics(files));
 
     return new PartitionMetadata(partitionColumn, files.iterator().next().getSchema(),
-        mergeColumnsStatistics(files, columns, PARQUET_STATISTICS), partStatistics, locations, tableName, -1);
+        mergeColumnsStatistics(files, columns, PARQUET_STATISTICS, null), partStatistics, locations, tableName, -1);
   }
 
   /**
@@ -282,7 +286,24 @@ public class ParquetTableMetadataUtils {
       statistics.put(ColumnStatisticsKind.NULLS_COUNT.getName(), nulls);
       columnsStatistics.put(colPath, new ColumnStatisticsImpl(statistics, comparator));
     }
+    columnsStatistics = populateColumnStats(columnsStatistics, tableMetadata);
+    return columnsStatistics;
+  }
 
+  private static Map<SchemaPath, ColumnStatistics> populateColumnStats(Map<SchemaPath, ColumnStatistics> columnsStatistics, MetadataBase.ParquetTableMetadataBase parquetTableMetadata) {
+    if (parquetTableMetadata instanceof Metadata_V4.ParquetTableMetadata_v4) {
+      for (Metadata_V4.ColumnTypeMetadata_v4 columnTypeMetadata : ((Metadata_V4.ParquetTableMetadata_v4) parquetTableMetadata).getColumnTypeInfoMap().values()) {
+        SchemaPath schemaPath = SchemaPath.getCompoundPath(columnTypeMetadata.name);
+        if (!columnsStatistics.containsKey(schemaPath)) {
+          Map<String, Object> statistics = new HashMap<>();
+          statistics.put(ColumnStatisticsKind.NULLS_COUNT.getName(), GroupScan.NO_COLUMN_STATS);
+          PrimitiveType.PrimitiveTypeName primitiveType = columnTypeMetadata.primitiveType;
+          OriginalType originalType = columnTypeMetadata.originalType;
+          Comparator comparator = getComparator(primitiveType, originalType);
+          columnsStatistics.put(schemaPath, new ColumnStatisticsImpl<>(statistics, comparator));
+        }
+      }
+    }
     return columnsStatistics;
   }
 
@@ -662,7 +683,7 @@ public class ParquetTableMetadataUtils {
 
     Map<SchemaPath, ColumnStatistics> columnsStatistics =
       mergeColumnsStatistics(statistics, tableMetadata.getColumnsStatistics().keySet(),
-        ImmutableList.of(ColumnStatisticsKind.NULLS_COUNT));
+        ImmutableList.of(ColumnStatisticsKind.NULLS_COUNT), null);
 
     return tableMetadata.cloneWithStats(columnsStatistics, newStats);
   }

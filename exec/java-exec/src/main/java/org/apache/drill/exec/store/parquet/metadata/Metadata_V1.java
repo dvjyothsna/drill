@@ -90,12 +90,12 @@ public class Metadata_V1 {
       return null;
     }
 
-    @Override
+    @JsonIgnore @Override
     public Integer getScale(String[] columnName) {
       return null;
     }
 
-    @Override
+    @JsonIgnore @Override
     public Integer getPrecision(String[] columnName) {
       return null;
     }

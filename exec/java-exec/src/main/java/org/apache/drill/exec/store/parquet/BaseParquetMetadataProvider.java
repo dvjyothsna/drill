@@ -17,8 +17,11 @@
  */
 package org.apache.drill.exec.store.parquet;
 
+import java.util.Comparator;
 import org.apache.drill.exec.physical.base.GroupScan;
 import org.apache.drill.exec.physical.base.ParquetMetadataProvider;
+import static org.apache.drill.exec.store.parquet.ParquetTableMetadataUtils.getComparator;
+import org.apache.drill.exec.store.parquet.metadata.Metadata_V4;
 import org.apache.drill.metastore.BaseMetadata;
 import org.apache.drill.metastore.ColumnStatisticsImpl;
 import org.apache.drill.metastore.TableMetadata;
@@ -57,6 +60,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.apache.parquet.schema.OriginalType;
+import org.apache.parquet.schema.PrimitiveType;
 
 /**
  * Implementation of {@link ParquetMetadataProvider} which contains base methods for obtaining metadata from
@@ -154,7 +159,7 @@ public abstract class BaseParquetMetadataProvider implements ParquetMetadataProv
           metadata = getRowGroupsMeta();
         }
         tableStatistics.put(TableStatisticsKind.ROW_COUNT.getName(), TableStatisticsKind.ROW_COUNT.mergeStatistics(metadata));
-        columnsStatistics = ParquetTableMetadataUtils.mergeColumnsStatistics(metadata, fields.keySet(), ParquetTableMetadataUtils.PARQUET_STATISTICS);
+        columnsStatistics = ParquetTableMetadataUtils.mergeColumnsStatistics(metadata, fields.keySet(), ParquetTableMetadataUtils.PARQUET_STATISTICS, parquetTableMetadata);
       } else {
         columnsStatistics = new HashMap<>();
         tableStatistics.put(TableStatisticsKind.ROW_COUNT.getName(), getParquetGroupScanStatistics().getRowCount());
@@ -167,6 +172,7 @@ public abstract class BaseParquetMetadataProvider implements ParquetMetadataProv
           columnsStatistics.put(partitionColumn, new ColumnStatisticsImpl(stats, ParquetTableMetadataUtils.getNaturalNullsFirstComparator()));
         }
       }
+      columnsStatistics = populateColumnStats(columnsStatistics);
       tableMetadata = new FileTableMetadata(tableName, tableLocation, schema, columnsStatistics, tableStatistics,
           -1, "root", partitionKeys);
     }
@@ -219,7 +225,7 @@ public abstract class BaseParquetMetadataProvider implements ParquetMetadataProv
 
         for (SchemaPath logicalExpressions : colValFile.rowKeySet()) {
           for (List<FileMetadata> partValues : colValFile.row(logicalExpressions).values()) {
-            partitions.add(ParquetTableMetadataUtils.getPartitionMetadata(logicalExpressions, partValues, tableName));
+            partitions.add(ParquetTableMetadataUtils.getPartitionMetadata(logicalExpressions, partValues, tableName, parquetTableMetadata));
           }
         }
       } else {
@@ -232,7 +238,7 @@ public abstract class BaseParquetMetadataProvider implements ParquetMetadataProv
           }
 
           for (Map.Entry<Object, Collection<Path>> valueLocationsEntry : partitionsForValue.asMap().entrySet()) {
-            HashMap<SchemaPath, ColumnStatistics> columnsStatistics = new HashMap<>();
+            Map<SchemaPath, ColumnStatistics> columnsStatistics = new HashMap<>();
 
             Map<String, Object> statistics = new HashMap<>();
             Object partitionKey = valueLocationsEntry.getKey();
@@ -244,8 +250,8 @@ public abstract class BaseParquetMetadataProvider implements ParquetMetadataProv
             statistics.put(TableStatisticsKind.ROW_COUNT.getName(), GroupScan.NO_COLUMN_STATS);
             columnsStatistics.put(partitionColumn,
                 new ColumnStatisticsImpl<>(statistics,
-                    ParquetTableMetadataUtils.getComparator(getParquetGroupScanStatistics().getTypeForColumn(partitionColumn).getMinorType())));
-
+                    getComparator(getParquetGroupScanStatistics().getTypeForColumn(partitionColumn).getMinorType())));
+//            columnsStatistics = populateColumnStats(columnsStatistics);
             partitions.add(new PartitionMetadata(partitionColumn, getTableMetadata().getSchema(),
                 columnsStatistics, statistics, (Set<Path>) valueLocationsEntry.getValue(), tableName, -1));
           }
@@ -254,6 +260,24 @@ public abstract class BaseParquetMetadataProvider implements ParquetMetadataProv
     }
     return partitions;
   }
+
+  private Map<SchemaPath, ColumnStatistics> populateColumnStats(Map<SchemaPath, ColumnStatistics> columnsStatistics) {
+    if (parquetTableMetadata instanceof Metadata_V4.ParquetTableMetadata_v4) {
+      for (Metadata_V4.ColumnTypeMetadata_v4 columnTypeMetadata : ((Metadata_V4.ParquetTableMetadata_v4) parquetTableMetadata).getColumnTypeInfoMap().values()) {
+        SchemaPath schemaPath = SchemaPath.getCompoundPath(columnTypeMetadata.name);
+        if (!columnsStatistics.containsKey(schemaPath)) {
+          Map<String, Object> statistics = new HashMap<>();
+          statistics.put(ColumnStatisticsKind.NULLS_COUNT.getName(), GroupScan.NO_COLUMN_STATS);
+          PrimitiveType.PrimitiveTypeName primitiveType = columnTypeMetadata.primitiveType;
+          OriginalType originalType = columnTypeMetadata.originalType;
+          Comparator comparator = getComparator(primitiveType, originalType);
+          columnsStatistics.put(schemaPath, new ColumnStatisticsImpl<>(statistics, comparator));
+        }
+      }
+    }
+    return columnsStatistics;
+  }
+
 
   @Override
   public List<PartitionMetadata> getPartitionMetadata(SchemaPath columnName) {
@@ -313,7 +337,7 @@ public abstract class BaseParquetMetadataProvider implements ParquetMetadataProv
           }
         }
 
-        FileMetadata fileMetadata = ParquetTableMetadataUtils.getFileMetadata(fileRowGroups, tableName);
+        FileMetadata fileMetadata = ParquetTableMetadataUtils.getFileMetadata(fileRowGroups, tableName, parquetTableMetadata);
         files.put(fileMetadata.getLocation(), fileMetadata);
       }
     }
@@ -344,4 +368,12 @@ public abstract class BaseParquetMetadataProvider implements ParquetMetadataProv
   }
 
   protected abstract void initInternal() throws IOException;
+
+  @Override
+  public Metadata_V4.MetadataSummary getSummary() {
+    if (parquetTableMetadata instanceof Metadata_V4.ParquetTableMetadata_v4) {
+      return ((Metadata_V4.ParquetTableMetadata_v4) parquetTableMetadata).getSummary();
+    }
+    return null;
+  }
 }

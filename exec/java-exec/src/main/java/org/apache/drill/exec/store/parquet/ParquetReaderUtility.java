@@ -17,6 +17,7 @@
  */
 package org.apache.drill.exec.store.parquet;
 
+import java.util.ArrayList;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.drill.common.exceptions.UserException;
 import org.apache.drill.common.expression.SchemaPath;
@@ -382,8 +383,8 @@ public class ParquetReaderUtility {
         }
       }
     } else if (parquetTableMetadata instanceof ParquetTableMetadata_v3) {
-      for (ColumnTypeMetadata_v3 columnTypeMetadata :
-        ((ParquetTableMetadata_v3) parquetTableMetadata).columnTypeInfo.values()) {
+      List<ColumnTypeMetadata_v3> columnTypeMetadataList =  new ArrayList<ColumnTypeMetadata_v3>(((ParquetTableMetadata_v3) parquetTableMetadata).getColumnTypeInfoMap().values());
+      for (ColumnTypeMetadata_v3 columnTypeMetadata : columnTypeMetadataList) {
         if (columnTypeMetadata.primitiveType == PrimitiveTypeName.BINARY
             || columnTypeMetadata.primitiveType == PrimitiveTypeName.FIXED_LEN_BYTE_ARRAY) {
           names.add(Arrays.asList(columnTypeMetadata.name));

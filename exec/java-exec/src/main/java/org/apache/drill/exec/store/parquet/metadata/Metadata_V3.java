@@ -149,12 +149,12 @@ public class Metadata_V3 {
       return getColumnTypeInfo(columnName).definitionLevel;
     }
 
-    @Override
+    @JsonIgnore @Override
     public Integer getScale(String[] columnName) {
       return getColumnTypeInfo(columnName).scale;
     }
 
-    @Override
+    @JsonIgnore @Override
     public Integer getPrecision(String[] columnName) {
       return getColumnTypeInfo(columnName).precision;
     }
@@ -171,6 +171,11 @@ public class Metadata_V3 {
     @JsonIgnore @Override
     public String getDrillVersion() {
       return drillVersion;
+    }
+
+    @JsonIgnore
+    public ConcurrentHashMap<Metadata_V3.ColumnTypeMetadata_v3.Key, Metadata_V3.ColumnTypeMetadata_v3> getColumnTypeInfoMap() {
+      return this.columnTypeInfo;
     }
 
   }

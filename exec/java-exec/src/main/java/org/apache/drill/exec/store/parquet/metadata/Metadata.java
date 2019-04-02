@@ -96,11 +96,11 @@ public class Metadata {
   private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(Metadata.class);
 
   public static final String[] OLD_METADATA_FILENAMES = {".drill.parquet_metadata", ".drill.parquet_metadata.v2"};
-  public static final String METADATA_FILENAME = ".drill.parquet_metadata";
+  public static final String OLD_METADATA_FILENAME = ".drill.parquet_metadata";
   public static final String METADATA_DIRECTORIES_FILENAME = ".drill.parquet_metadata_directories";
-  public static final String FILE_METADATA_FILENAME = ".drill.parquet_file_metadata.v4";
+  public static final String METADATA_FILENAME = ".drill.parquet_file_metadata.v4";
   public static final String METADATA_SUMMARY_FILENAME = ".drill.parquet_summary_metadata.v4";
-  public static final String[] CURRENT_METADATA_FILENAMES = {METADATA_SUMMARY_FILENAME, FILE_METADATA_FILENAME};
+  public static final String[] CURRENT_METADATA_FILENAMES = {METADATA_SUMMARY_FILENAME, METADATA_FILENAME};
   public static final Long DEFAULT_NULL_COUNT = (long) 0;
   public static final Long NULL_COUNT_NOT_EXISTS = (long) -1;
 
@@ -108,7 +108,6 @@ public class Metadata {
 
   private ParquetTableMetadataBase parquetTableMetadata;
   private ParquetTableMetadataDirs parquetTableMetadataDirs;
-
 
   private Metadata(ParquetReaderConfig readerConfig) {
     this.readerConfig = readerConfig;
@@ -344,7 +343,7 @@ public class Metadata {
     //  relative paths in the metadata are only necessary for meta cache files.
     ParquetTableMetadata_v4 metadataTableWithRelativePaths =
         MetadataPathUtils.createMetadataWithRelativePaths(parquetTableMetadata, path);
-    writeFile(metadataTableWithRelativePaths.fileMetadata, new Path(path, FILE_METADATA_FILENAME), fs);
+    writeFile(metadataTableWithRelativePaths.fileMetadata, new Path(path, METADATA_FILENAME), fs);
     writeFile(metadataTableWithRelativePaths.getSummary(), new Path(path, METADATA_SUMMARY_FILENAME), fs);
     Metadata_V4.MetadataSummary metadataSummaryWithRelativePaths = metadataTableWithRelativePaths.getSummary();
 
@@ -676,7 +675,7 @@ public class Metadata {
    *
    * @param path to metadata file
    * @param dirsOnly true for {@link Metadata#METADATA_DIRECTORIES_FILENAME}
-   *                 or false for {@link Metadata#METADATA_FILENAME} files reading
+   *                 or false for {@link Metadata#OLD_METADATA_FILENAME} files reading
    * @param metaContext current metadata context
    */
   private void readBlockMeta(Path path, boolean dirsOnly, MetadataContext metaContext, FileSystem fs) {
@@ -694,7 +693,7 @@ public class Metadata {
     AfterburnerModule module = new AfterburnerModule();
     module.setUseOptimizedBeanDeserializer(true);
 
-    boolean isFileMetadata = path.toString().endsWith(FILE_METADATA_FILENAME);
+    boolean isFileMetadata = path.toString().endsWith(METADATA_FILENAME);
     boolean isSummaryFile = path.toString().endsWith(METADATA_SUMMARY_FILENAME);
     mapper.registerModule(serialModule);
     mapper.registerModule(module);
@@ -791,12 +790,23 @@ public class Metadata {
     return metadataSummary.isAllColumnsInteresting();
   }
 
-  public static Metadata_V4.MetadataSummary getSummary(FileSystem fs, Path metadataParentDir, boolean autoRefreshTriggered, ParquetReaderConfig readerConfig) {
+  private static Path getSummaryFileName(Path metadataParentDir) {
     Path summaryFile = new Path(metadataParentDir, METADATA_SUMMARY_FILENAME);
+    return summaryFile;
+  }
+
+  private static Path getDirFileName(Path metadataParentDir) {
     Path metadataDirFile = new Path(metadataParentDir, METADATA_DIRECTORIES_FILENAME);
+    return metadataDirFile;
+  }
+
+  public static Metadata_V4.MetadataSummary getSummary(FileSystem fs, Path metadataParentDir, boolean autoRefreshTriggered, ParquetReaderConfig readerConfig) {
+    Path summaryFile = getSummaryFileName(metadataParentDir);
+    Path metadataDirFile = getDirFileName(metadataParentDir);
     MetadataContext metaContext = new MetadataContext();
     try {
-      if (!fs.exists(summaryFile)) {
+      if (!fs.exists(summaryFile) || !fs.exists(metadataDirFile)) {
+        logger.debug("Either Summary file {} or Directory metadata file {} donot exist", summaryFile, metadataDirFile);
         return null;
       } else {
         // If the autorefresh is not triggered, check if the cache file is stale and trigger auto-refresh
@@ -823,6 +833,7 @@ public class Metadata {
         return metadataSummary;
         }
     } catch (IOException e) {
+      logger.debug("Failed to read '{}' summary metadata file", summaryFile, e);
       return null;
     }
   }
@@ -868,5 +879,4 @@ public class Metadata {
     }
     return isModified;
   }
-
 }
