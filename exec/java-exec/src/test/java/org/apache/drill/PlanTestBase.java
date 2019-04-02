@@ -481,11 +481,12 @@ public class PlanTestBase extends BaseTestQuery {
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
-    File metadataDir = dirTestWatcher.makeRootSubDir(Paths.get(tmpDir+"/"+table+"/metadataDir"));
+    File metadataDir = dirTestWatcher.makeRootSubDir(Paths.get(tmpDir, table, "metadataDir"));
     File metaFile, newFile;
     metaFile = table.startsWith(tmpDir) ? FileUtils.getFile(table, Metadata.METADATA_SUMMARY_FILENAME)
             : FileUtils.getFile(tmpDir, table, Metadata.METADATA_SUMMARY_FILENAME);
-    newFile = new File(tmpDir+"/"+table+"/summary_meta.json");
+    File tablefile = new File(tmpDir, table);
+    newFile = new File(tablefile, "summary_meta.json");
     FileUtils.copyFile(metaFile, newFile);
     FileUtils.copyFileToDirectory(newFile, metadataDir);
   }
