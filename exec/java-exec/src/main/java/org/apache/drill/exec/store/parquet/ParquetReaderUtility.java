@@ -17,7 +17,6 @@
  */
 package org.apache.drill.exec.store.parquet;
 
-import java.util.ArrayList;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.drill.common.exceptions.UserException;
 import org.apache.drill.common.expression.SchemaPath;
@@ -25,6 +24,7 @@ import org.apache.drill.common.types.TypeProtos;
 import org.apache.drill.common.types.Types;
 import org.apache.drill.exec.planner.physical.PlannerSettings;
 import org.apache.drill.exec.server.options.OptionManager;
+import org.apache.drill.exec.store.parquet.metadata.MetadataBase;
 import org.apache.drill.exec.store.parquet.metadata.MetadataVersion;
 import org.apache.drill.exec.util.Utilities;
 import org.apache.drill.exec.work.ExecErrorConstants;
@@ -63,10 +63,6 @@ import java.util.concurrent.TimeUnit;
 
 import static org.apache.drill.exec.store.parquet.metadata.Metadata_V2.ColumnTypeMetadata_v2;
 import static org.apache.drill.exec.store.parquet.metadata.Metadata_V2.ParquetTableMetadata_v2;
-import static org.apache.drill.exec.store.parquet.metadata.Metadata_V3.ColumnTypeMetadata_v3;
-import static org.apache.drill.exec.store.parquet.metadata.Metadata_V3.ParquetTableMetadata_v3;
-import static org.apache.drill.exec.store.parquet.metadata.Metadata_V4.ColumnTypeMetadata_v4;
-import static org.apache.drill.exec.store.parquet.metadata.Metadata_V4.ParquetTableMetadata_v4;
 import static org.apache.drill.exec.store.parquet.metadata.MetadataBase.ColumnMetadata;
 import static org.apache.drill.exec.store.parquet.metadata.MetadataBase.ParquetTableMetadataBase;
 import static org.apache.drill.exec.store.parquet.metadata.MetadataBase.ParquetFileMetadata;
@@ -374,29 +370,11 @@ public class ParquetReaderUtility {
    */
   private static Set<List<String>> getBinaryColumnsNames(ParquetTableMetadataBase parquetTableMetadata) {
     Set<List<String>> names = new HashSet<>();
-    if (parquetTableMetadata instanceof ParquetTableMetadata_v2) {
-      for (ColumnTypeMetadata_v2 columnTypeMetadata :
-        ((ParquetTableMetadata_v2) parquetTableMetadata).columnTypeInfo.values()) {
-        if (columnTypeMetadata.primitiveType == PrimitiveTypeName.BINARY
-            || columnTypeMetadata.primitiveType == PrimitiveTypeName.FIXED_LEN_BYTE_ARRAY) {
-          names.add(Arrays.asList(columnTypeMetadata.name));
-        }
-      }
-    } else if (parquetTableMetadata instanceof ParquetTableMetadata_v3) {
-      List<ColumnTypeMetadata_v3> columnTypeMetadataList =  new ArrayList<ColumnTypeMetadata_v3>(((ParquetTableMetadata_v3) parquetTableMetadata).getColumnTypeInfoMap().values());
-      for (ColumnTypeMetadata_v3 columnTypeMetadata : columnTypeMetadataList) {
-        if (columnTypeMetadata.primitiveType == PrimitiveTypeName.BINARY
-            || columnTypeMetadata.primitiveType == PrimitiveTypeName.FIXED_LEN_BYTE_ARRAY) {
-          names.add(Arrays.asList(columnTypeMetadata.name));
-        }
-      }
-    } else if (parquetTableMetadata instanceof ParquetTableMetadata_v4) {
-      for (ColumnTypeMetadata_v4 columnTypeMetadata :
-              ((ParquetTableMetadata_v4) parquetTableMetadata).getColumnTypeInfoMap().values()) {
-        if (columnTypeMetadata.primitiveType == PrimitiveTypeName.BINARY
-            || columnTypeMetadata.primitiveType == PrimitiveTypeName.FIXED_LEN_BYTE_ARRAY) {
-          names.add(Arrays.asList(columnTypeMetadata.name));
-        }
+    List<? extends MetadataBase.ColumnTypeMetadata> columnTypeMetadataList = parquetTableMetadata.getColumnTypeInfoList();
+    for (MetadataBase.ColumnTypeMetadata columnTypeMetadata : columnTypeMetadataList) {
+      if (columnTypeMetadata.getPrimitiveType() == PrimitiveTypeName.BINARY
+              || columnTypeMetadata.getPrimitiveType() == PrimitiveTypeName.FIXED_LEN_BYTE_ARRAY) {
+        names.add(Arrays.asList(columnTypeMetadata.getName()));
       }
     }
     return names;

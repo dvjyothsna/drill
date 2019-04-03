@@ -153,10 +153,10 @@ public class TestParquetFilterPushDown extends PlanTestBase {
 
     //"nonExistCol" does not exist in the table. "OR" with a filter on exist column
    //Ignored till run-time row group pruning is added.
-    /*
+
     testParquetRowGroupFilterEval(footer, "intCol > 100 or nonExistCol = 100", RowsMatch.NONE); // nonExistCol = 100 -> could drop.
     testParquetRowGroupFilterEval(footer, "nonExistCol = 100 or intCol > 100", RowsMatch.NONE); // nonExistCol = 100 -> could drop.
-    */
+
     testParquetRowGroupFilterEval(footer, "intCol > 50 or nonExistCol < 100", RowsMatch.SOME);
     testParquetRowGroupFilterEval(footer, "nonExistCol < 100 or intCol > 50", RowsMatch.SOME);
 

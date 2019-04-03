@@ -225,7 +225,7 @@ public abstract class BaseParquetMetadataProvider implements ParquetMetadataProv
 
         for (SchemaPath logicalExpressions : colValFile.rowKeySet()) {
           for (List<FileMetadata> partValues : colValFile.row(logicalExpressions).values()) {
-            partitions.add(ParquetTableMetadataUtils.getPartitionMetadata(logicalExpressions, partValues, tableName, parquetTableMetadata));
+            partitions.add(ParquetTableMetadataUtils.getPartitionMetadata(logicalExpressions, partValues, tableName));
           }
         }
       } else {

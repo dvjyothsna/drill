@@ -25,6 +25,7 @@ import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.KeyDeserializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -35,6 +36,7 @@ import static org.apache.drill.exec.store.parquet.metadata.MetadataBase.ColumnMe
 import static org.apache.drill.exec.store.parquet.metadata.MetadataBase.ParquetFileMetadata;
 import static org.apache.drill.exec.store.parquet.metadata.MetadataBase.ParquetTableMetadataBase;
 import static org.apache.drill.exec.store.parquet.metadata.MetadataBase.RowGroupMetadata;
+import static org.apache.drill.exec.store.parquet.metadata.MetadataBase.ColumnTypeMetadata;
 import static org.apache.drill.exec.store.parquet.metadata.MetadataVersion.Constants.V4;
 import org.apache.hadoop.fs.Path;
 import org.apache.parquet.io.api.Binary;
@@ -180,6 +182,11 @@ public class Metadata_V4 {
       return metadataSummary.columnTypeInfo;
     }
 
+    @Override
+    public List<? extends MetadataBase.ColumnTypeMetadata> getColumnTypeInfoList() {
+      return new ArrayList<>(metadataSummary.columnTypeInfo.values());
+    }
+
     public void setTotalRowCount(long totalRowCount) {
       metadataSummary.setTotalRowCount(totalRowCount);
     }
@@ -290,7 +297,7 @@ public class Metadata_V4 {
   }
 
 
-  public static class ColumnTypeMetadata_v4 {
+  public static class ColumnTypeMetadata_v4  extends ColumnTypeMetadata {
     @JsonProperty
     public String[] name;
     @JsonProperty
@@ -386,6 +393,17 @@ public class Metadata_V4 {
           return new Key(key.split("\\."));
         }
       }
+    }
+
+
+    @Override
+    public PrimitiveType.PrimitiveTypeName getPrimitiveType() {
+      return primitiveType;
+    }
+
+    @Override
+    public String[] getName() {
+      return name;
     }
   }
 

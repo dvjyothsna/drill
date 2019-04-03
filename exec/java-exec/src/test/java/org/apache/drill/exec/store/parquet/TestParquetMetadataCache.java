@@ -970,11 +970,11 @@ public class TestParquetMetadataCache extends PlanTestBase {
     checkForMetadataFile(tableName);
     createMetadataDir(tableName);
     testBuilder()
-            .sqlQuery("select t.totalRowCount as rowCount from `%s/metadataDir/summary_meta.json` as t", tableName)
-            .unOrdered()
-            .baselineColumns("rowCount")
-            .baselineValues(rowCount)
-            .go();
+        .sqlQuery("select t.totalRowCount as rowCount from `%s/metadataDir/summary_meta.json` as t", tableName)
+        .unOrdered()
+        .baselineColumns("rowCount")
+        .baselineValues(rowCount)
+        .go();
   }
 
   @Test
@@ -991,11 +991,11 @@ public class TestParquetMetadataCache extends PlanTestBase {
     checkForMetadataFile(tableName);
     createMetadataDir(tableName);
     testBuilder()
-            .sqlQuery("select t.totalRowCount as rowCount from `%s/metadataDir/summary_meta.json` as t", tableName)
-            .unOrdered()
-            .baselineColumns("rowCount")
-            .baselineValues(rowCount)
-            .go();
+        .sqlQuery("select t.totalRowCount as rowCount from `%s/metadataDir/summary_meta.json` as t", tableName)
+        .unOrdered()
+        .baselineColumns("rowCount")
+        .baselineValues(rowCount)
+        .go();
   }
 
 
@@ -1017,19 +1017,19 @@ public class TestParquetMetadataCache extends PlanTestBase {
     String rowCountQuery = String.format("select t.totalRowCount as rowCount from `%s/metadataDir/summary_meta.json` as t", tableName);
 
     testBuilder()
-            .sqlQuery(query)
-            .unOrdered()
-            .baselineColumns("count")
-            .baselineValues(125L)
-            .go();
+        .sqlQuery(query)
+        .unOrdered()
+        .baselineColumns("count")
+        .baselineValues(125L)
+        .go();
     checkForMetadataFile(tableName);
     createMetadataDir(tableName);
     testBuilder()
-            .sqlQuery(rowCountQuery)
-            .unOrdered()
-            .baselineColumns("rowCount")
-            .baselineValues(125L)
-            .go();
+        .sqlQuery(rowCountQuery)
+        .unOrdered()
+        .baselineColumns("rowCount")
+        .baselineValues(125L)
+        .go();
   }
 
 
@@ -1050,19 +1050,19 @@ public class TestParquetMetadataCache extends PlanTestBase {
     String query = String.format("select count(*) as count from `%s`", tableName);
     String rowCountQuery = String.format("select t.totalRowCount as rowCount from `%s/metadataDir/summary_meta.json` as t", tableName);
     testBuilder()
-            .sqlQuery(query)
-            .unOrdered()
-            .baselineColumns("count")
-            .baselineValues(50L)
-            .go();
+        .sqlQuery(query)
+        .unOrdered()
+        .baselineColumns("count")
+        .baselineValues(50L)
+        .go();
     checkForMetadataFile(tableName);
     createMetadataDir(tableName);
     testBuilder()
-            .sqlQuery(rowCountQuery)
-            .unOrdered()
-            .baselineColumns("rowCount")
-            .baselineValues(50L)
-            .go();
+        .sqlQuery(rowCountQuery)
+        .unOrdered()
+        .baselineColumns("rowCount")
+        .baselineValues(50L)
+        .go();
   }
 
   @Test
@@ -1084,19 +1084,19 @@ public class TestParquetMetadataCache extends PlanTestBase {
     String query = String.format("select count(*) as count from `%s`", tableName);
     String rowCountQuery = String.format("select t.totalRowCount as rowCount from `%s/metadataDir/summary_meta.json` as t", tableName);
     testBuilder()
-            .sqlQuery(query)
-            .unOrdered()
-            .baselineColumns("count")
-            .baselineValues(50L)
-            .go();
+        .sqlQuery(query)
+        .unOrdered()
+        .baselineColumns("count")
+        .baselineValues(50L)
+        .go();
     checkForMetadataFile(tableName);
     createMetadataDir(tableName);
     testBuilder()
-            .sqlQuery(rowCountQuery)
-            .unOrdered()
-            .baselineColumns("rowCount")
-            .baselineValues(50L)
-            .go();
+        .sqlQuery(rowCountQuery)
+        .unOrdered()
+        .baselineColumns("rowCount")
+        .baselineValues(50L)
+        .go();
   }
 
   @Test
@@ -1117,21 +1117,21 @@ public class TestParquetMetadataCache extends PlanTestBase {
     String rowCountQuery = String.format("select t.totalRowCount as rowCount from `%s/metadataDir/summary_meta.json` as t", tableName);
 
     testBuilder()
-            .sqlQuery(query)
-            .unOrdered()
-            .baselineColumns("count")
-            .baselineValues(15010L)
-            .go();
+        .sqlQuery(query)
+        .unOrdered()
+        .baselineColumns("count")
+        .baselineValues(15010L)
+        .go();
 
     checkForMetadataFile(tableName);
     createMetadataDir(tableName);
 
     testBuilder()
-            .sqlQuery(rowCountQuery)
-            .unOrdered()
-            .baselineColumns("rowCount")
-            .baselineValues(15010L)
-            .go();
+        .sqlQuery(rowCountQuery)
+        .unOrdered()
+        .baselineColumns("rowCount")
+        .baselineValues(15010L)
+        .go();
   }
 
   @Test
@@ -1151,11 +1151,11 @@ public class TestParquetMetadataCache extends PlanTestBase {
     checkForMetadataFile(tableName);
     createMetadataDir(tableName);
     testBuilder()
-            .sqlQuery(rowCountQuery)
-            .unOrdered()
-            .baselineColumns("allColumnsInteresting")
-            .baselineValues(false)
-            .go();
+        .sqlQuery(rowCountQuery)
+        .unOrdered()
+        .baselineColumns("allColumnsInteresting")
+        .baselineValues(false)
+        .go();
   }
 
   @Test
@@ -1175,11 +1175,11 @@ public class TestParquetMetadataCache extends PlanTestBase {
     checkForMetadataFile(tableName);
     createMetadataDir(tableName);
     testBuilder()
-            .sqlQuery(rowCountQuery)
-            .unOrdered()
-            .baselineColumns("allColumnsInteresting")
-            .baselineValues(true)
-            .go();
+        .sqlQuery(rowCountQuery)
+        .unOrdered()
+        .baselineColumns("allColumnsInteresting")
+        .baselineValues(true)
+        .go();
   }
 
   @Test
@@ -1200,11 +1200,11 @@ public class TestParquetMetadataCache extends PlanTestBase {
     createMetadataDir(tableName);
     String rowCountQuery = String.format("select t.allColumnsInteresting as allColumnsInteresting from `%s/metadataDir/summary_meta.json` as t", tableName);
     testBuilder()
-            .sqlQuery(rowCountQuery)
-            .unOrdered()
-            .baselineColumns("allColumnsInteresting")
-            .baselineValues(false)
-            .go();
+        .sqlQuery(rowCountQuery)
+        .unOrdered()
+        .baselineColumns("allColumnsInteresting")
+        .baselineValues(false)
+        .go();
   }
 
 
@@ -1227,12 +1227,12 @@ public class TestParquetMetadataCache extends PlanTestBase {
     dirTestWatcher.copyResourceToRoot(Paths.get("multilevel/parquet/1994/Q1/orders_94_q1.parquet"), Paths.get("orders_ctas_refresh3/t5/q1.parquet"));
     String rowCountQuery = String.format("select t.allColumnsInteresting as allColumnsInteresting from `%s/metadataDir/summary_meta.json` as t", tableName);
     testBuilder()
-            .sqlQuery(rowCountQuery)
-            .unOrdered()
-            .baselineColumns("allColumnsInteresting")
-            .baselineValues(false)
-            .go();
-  }
+        .sqlQuery(rowCountQuery)
+        .unOrdered()
+        .baselineColumns("allColumnsInteresting")
+        .baselineValues(false)
+        .go();
+}
 
 
   @Test
@@ -1244,13 +1244,12 @@ public class TestParquetMetadataCache extends PlanTestBase {
     String query = String.format("Select count(*) as cnt from `%s` where o_orderpriority is not null", tableName);
 
     checkForMetadataFile(tableName);
-
     testBuilder()
-            .sqlQuery(query)
-            .unOrdered()
-            .baselineColumns("cnt")
-            .baselineValues(15000L)
-            .go();
+        .sqlQuery(query)
+        .unOrdered()
+        .baselineColumns("cnt")
+        .baselineValues(15000L)
+        .go();
   }
 
 

@@ -117,6 +117,11 @@ public class Metadata_V1 {
     @JsonIgnore @Override public String getMetadataVersion() {
       return metadataVersion;
     }
+
+    @JsonIgnore @Override
+    public List<? extends MetadataBase.ColumnTypeMetadata> getColumnTypeInfoList() {
+      return null;
+    }
   }
 
 

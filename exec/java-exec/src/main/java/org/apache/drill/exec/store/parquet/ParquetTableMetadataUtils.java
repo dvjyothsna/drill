@@ -229,7 +229,7 @@ public class ParquetTableMetadataUtils {
    * @param tableName       name of the table
    * @return {@link PartitionMetadata} instance
    */
-  public static PartitionMetadata getPartitionMetadata(SchemaPath partitionColumn, List<FileMetadata> files, String tableName, MetadataBase.ParquetTableMetadataBase parquetTableMetadata) {
+  public static PartitionMetadata getPartitionMetadata(SchemaPath partitionColumn, List<FileMetadata> files, String tableName) {
     Set<Path> locations = new HashSet<>();
     Set<SchemaPath> columns = new HashSet<>();
 

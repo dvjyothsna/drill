@@ -28,6 +28,7 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.KeyDeserializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
+import java.util.ArrayList;
 import org.apache.hadoop.fs.Path;
 import org.apache.parquet.io.api.Binary;
 import org.apache.parquet.schema.OriginalType;
@@ -156,6 +157,16 @@ public class Metadata_V2 {
       return metadataVersion;
     }
 
+    @JsonIgnore
+    public ConcurrentHashMap<ColumnTypeMetadata_v2.Key, ColumnTypeMetadata_v2> getColumnTypeInfoMap() {
+      return this.columnTypeInfo;
+    }
+
+    @Override
+    public List<? extends MetadataBase.ColumnTypeMetadata> getColumnTypeInfoList() {
+      return new ArrayList(this.columnTypeInfo.values());
+    }
+
   }
 
 
@@ -238,7 +249,7 @@ public class Metadata_V2 {
   }
 
 
-  public static class ColumnTypeMetadata_v2 {
+  public static class ColumnTypeMetadata_v2 extends MetadataBase.ColumnTypeMetadata {
     @JsonProperty public String[] name;
     @JsonProperty public PrimitiveType.PrimitiveTypeName primitiveType;
     @JsonProperty public OriginalType originalType;
@@ -310,6 +321,15 @@ public class Metadata_V2 {
           return new Key(key.split("\\."));
         }
       }
+    }
+
+    @Override public PrimitiveType.PrimitiveTypeName getPrimitiveType() {
+      return primitiveType;
+    }
+
+    @Override
+    public String[] getName() {
+      return name;
     }
   }
 

@@ -806,7 +806,7 @@ public class Metadata {
     MetadataContext metaContext = new MetadataContext();
     try {
       if (!fs.exists(summaryFile) || !fs.exists(metadataDirFile)) {
-        logger.debug("Either Summary file {} or Directory metadata file {} donot exist", summaryFile, metadataDirFile);
+        logger.debug("Either Summary file {} or Directory metadata file {} do not exist", summaryFile, metadataDirFile);
         return null;
       } else {
         // If the autorefresh is not triggered, check if the cache file is stale and trigger auto-refresh

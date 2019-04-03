@@ -24,6 +24,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.KeyDeserializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
+import java.util.ArrayList;
 import org.apache.drill.common.expression.SchemaPath;
 import org.apache.hadoop.fs.Path;
 import org.apache.parquet.io.api.Binary;
@@ -178,6 +179,10 @@ public class Metadata_V3 {
       return this.columnTypeInfo;
     }
 
+    @Override
+    public List<? extends MetadataBase.ColumnTypeMetadata> getColumnTypeInfoList() {
+      return new ArrayList(this.columnTypeInfo.values());
+    }
   }
 
 
@@ -259,8 +264,7 @@ public class Metadata_V3 {
     }
   }
 
-
-  public static class ColumnTypeMetadata_v3 {
+  public static class ColumnTypeMetadata_v3 extends MetadataBase.ColumnTypeMetadata {
     @JsonProperty public String[] name;
     @JsonProperty public PrimitiveType.PrimitiveTypeName primitiveType;
     @JsonProperty public OriginalType originalType;
@@ -338,6 +342,16 @@ public class Metadata_V3 {
           return new Key(key.split("\\."));
         }
       }
+    }
+
+    @Override
+    public PrimitiveType.PrimitiveTypeName getPrimitiveType() {
+      return primitiveType;
+    }
+
+    @Override
+    public String[] getName() {
+      return name;
     }
   }
 

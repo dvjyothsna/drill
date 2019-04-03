@@ -88,6 +88,8 @@ public class MetadataBase {
     @JsonIgnore public abstract String getDrillVersion();
 
     @JsonIgnore public abstract String getMetadataVersion();
+
+    @JsonIgnore  public abstract List<? extends ColumnTypeMetadata> getColumnTypeInfoList();
   }
 
   public static abstract class ParquetFileMetadata {
@@ -153,6 +155,14 @@ public class MetadataBase {
     public abstract PrimitiveType.PrimitiveTypeName getPrimitiveType();
 
     public abstract OriginalType getOriginalType();
+
   }
 
+  public static abstract class ColumnTypeMetadata {
+
+    public abstract PrimitiveType.PrimitiveTypeName getPrimitiveType();
+
+    public abstract String[] getName();
+
+  }
 }
