@@ -371,10 +371,12 @@ public class ParquetReaderUtility {
   private static Set<List<String>> getBinaryColumnsNames(ParquetTableMetadataBase parquetTableMetadata) {
     Set<List<String>> names = new HashSet<>();
     List<? extends MetadataBase.ColumnTypeMetadata> columnTypeMetadataList = parquetTableMetadata.getColumnTypeInfoList();
-    for (MetadataBase.ColumnTypeMetadata columnTypeMetadata : columnTypeMetadataList) {
-      if (columnTypeMetadata.getPrimitiveType() == PrimitiveTypeName.BINARY
-              || columnTypeMetadata.getPrimitiveType() == PrimitiveTypeName.FIXED_LEN_BYTE_ARRAY) {
-        names.add(Arrays.asList(columnTypeMetadata.getName()));
+    if (columnTypeMetadataList != null) {
+      for (MetadataBase.ColumnTypeMetadata columnTypeMetadata : columnTypeMetadataList) {
+        if (columnTypeMetadata.getPrimitiveType() == PrimitiveTypeName.BINARY
+                || columnTypeMetadata.getPrimitiveType() == PrimitiveTypeName.FIXED_LEN_BYTE_ARRAY) {
+          names.add(Arrays.asList(columnTypeMetadata.getName()));
+        }
       }
     }
     return names;
