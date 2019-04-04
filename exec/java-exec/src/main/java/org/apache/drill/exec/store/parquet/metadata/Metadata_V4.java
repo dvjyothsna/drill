@@ -74,7 +74,6 @@ public class Metadata_V4 {
       return metadataSummary.getColumnTypeInfo(name);
     }
 
-    @JsonIgnore
     @Override
     public List<Path> getDirectories() {
       return metadataSummary.getDirectories();
@@ -100,7 +99,7 @@ public class Metadata_V4 {
       this.metadataSummary.directories = MetadataPathUtils.convertToAbsolutePaths(metadataSummary.directories, baseDir);
 
       // update files paths to absolute ones
-      this.fileMetadata.files = MetadataPathUtils.convertToFilesWithAbsolutePathsForV4(fileMetadata.files, baseDir);
+      this.fileMetadata.files = (List<ParquetFileMetadata_v4>) MetadataPathUtils.convertToFilesWithAbsolutePaths(fileMetadata.files, baseDir);
     }
 
     @Override
@@ -396,12 +395,12 @@ public class Metadata_V4 {
     }
 
 
-    @Override
+    @JsonIgnore @Override
     public PrimitiveType.PrimitiveTypeName getPrimitiveType() {
       return primitiveType;
     }
 
-    @Override
+    @JsonIgnore @Override
     public String[] getName() {
       return name;
     }
@@ -582,14 +581,17 @@ public class Metadata_V4 {
       this.directories = directories;
     }
 
+    @JsonIgnore
     public ColumnTypeMetadata_v4 getColumnTypeInfo(String[] name) {
       return columnTypeInfo.get(new ColumnTypeMetadata_v4.Key(name));
     }
 
+    @JsonIgnore
     public ColumnTypeMetadata_v4 getColumnTypeInfo(ColumnTypeMetadata_v4.Key key) {
       return columnTypeInfo.get(key);
     }
 
+    @JsonIgnore
     public List<Path> getDirectories() {
       return directories;
     }
@@ -599,18 +601,22 @@ public class Metadata_V4 {
       return metadataVersion;
     }
 
+    @JsonIgnore
     public boolean isAllColumnsInteresting() {
       return allColumnsInteresting;
     }
 
+    @JsonIgnore
     public void setAllColumnsInteresting(boolean allColumnsInteresting) {
       this.allColumnsInteresting = allColumnsInteresting;
     }
 
+    @JsonIgnore
     public void setTotalRowCount(Long totalRowCount) {
       this.totalRowCount = totalRowCount;
     }
 
+    @JsonIgnore
     public Long getTotalRowCount() {
       return this.totalRowCount;
     }

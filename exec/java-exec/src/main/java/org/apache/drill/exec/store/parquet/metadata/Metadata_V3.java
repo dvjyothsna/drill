@@ -117,7 +117,7 @@ public class Metadata_V3 {
       this.directories = MetadataPathUtils.convertToAbsolutePaths(directories, baseDir);
 
       // update files paths to absolute ones
-      this.files = MetadataPathUtils.convertToFilesWithAbsolutePaths(files, baseDir);
+      this.files = (List<ParquetFileMetadata_v3>) MetadataPathUtils.convertToFilesWithAbsolutePaths(files, baseDir);
     }
 
     @JsonIgnore @Override public List<? extends ParquetFileMetadata> getFiles() {
