@@ -30,8 +30,6 @@ import static org.apache.drill.exec.store.parquet.metadata.Metadata_V4.ParquetTa
 import static org.apache.drill.exec.store.parquet.metadata.Metadata_V3.ParquetFileMetadata_v3;
 import static org.apache.drill.exec.store.parquet.metadata.MetadataBase.ParquetFileMetadata;
 
-
-
 /**
  * Util class that contains helper methods for converting paths in the table and directory metadata structures
  */

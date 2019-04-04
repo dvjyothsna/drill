@@ -1256,11 +1256,11 @@ public class TestParquetMetadataCache extends PlanTestBase {
     testPlanMatchingPatterns(query, new String[]{numFilesPattern, numRowGroupsPattern, usedMetaPattern}, new String[]{"Filter"});
 
     testBuilder()
-            .sqlQuery(query)
-            .unOrdered()
-            .baselineColumns("cnt")
-            .baselineValues(60000L)
-            .go();
+        .sqlQuery(query)
+        .unOrdered()
+        .baselineColumns("cnt")
+        .baselineValues(60000L)
+        .go();
   }
 
 
@@ -1287,11 +1287,11 @@ public class TestParquetMetadataCache extends PlanTestBase {
     testPlanMatchingPatterns(query, new String[]{numFilesPattern, numRowGroupsPattern, usedMetaPattern});
 
     testBuilder()
-            .sqlQuery(query)
-            .unOrdered()
-            .baselineColumns("cnt")
-            .baselineValues(0L)
-            .go();
+        .sqlQuery(query)
+        .unOrdered()
+        .baselineColumns("cnt")
+        .baselineValues(0L)
+        .go();
   }
 
   @Test
@@ -1317,11 +1317,11 @@ public class TestParquetMetadataCache extends PlanTestBase {
     testPlanMatchingPatterns(query, new String[]{numFilesPattern, numRowGroupsPattern, usedMetaPattern});
 
     testBuilder()
-            .sqlQuery(query)
-            .unOrdered()
-            .baselineColumns("cnt")
-            .baselineValues(0L)
-            .go();
+        .sqlQuery(query)
+        .unOrdered()
+        .baselineColumns("cnt")
+        .baselineValues(0L)
+        .go();
   }
 
   @Test
@@ -1347,11 +1347,11 @@ public class TestParquetMetadataCache extends PlanTestBase {
     testPlanMatchingPatterns(query, new String[]{numFilesPattern, numRowGroupsPattern, usedMetaPattern});
 
     testBuilder()
-            .sqlQuery(query)
-            .unOrdered()
-            .baselineColumns("cnt")
-            .baselineValues(0L)
-            .go();
+        .sqlQuery(query)
+        .unOrdered()
+        .baselineColumns("cnt")
+        .baselineValues(0L)
+        .go();
   }
 
 
@@ -1378,11 +1378,11 @@ public class TestParquetMetadataCache extends PlanTestBase {
     testPlanMatchingPatterns(query, new String[]{numFilesPattern, numRowGroupsPattern, usedMetaPattern});
 
     testBuilder()
-            .sqlQuery(query)
-            .unOrdered()
-            .baselineColumns("cnt")
-            .baselineValues(60000L)
-            .go();
+        .sqlQuery(query)
+        .unOrdered()
+        .baselineColumns("cnt")
+        .baselineValues(60000L)
+        .go();
   }
 
 }
