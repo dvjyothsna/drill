@@ -18,7 +18,6 @@
 package org.apache.drill.exec.physical.base;
 
 import org.apache.drill.exec.store.dfs.ReadEntryWithPath;
-import org.apache.drill.exec.store.parquet.metadata.Metadata_V4;
 import org.apache.drill.metastore.FileMetadata;
 import org.apache.drill.metastore.RowGroupMetadata;
 import org.apache.drill.shaded.guava.com.google.common.collect.Multimap;
@@ -67,12 +66,4 @@ public interface ParquetMetadataProvider extends TableMetadataProvider {
    * @return list of file locations for table
    */
   Set<Path> getFileSet();
-
-
-  /**
-   * Returns metadata summary(Metadata_V4.MetadataSummary) if present.
-   *
-   * @return metadata summary
-   */
-  Metadata_V4.MetadataSummary getSummary();
 }

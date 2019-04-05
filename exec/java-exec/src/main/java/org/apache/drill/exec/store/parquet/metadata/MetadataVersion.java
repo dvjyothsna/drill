@@ -148,7 +148,7 @@ public class MetadataVersion implements Comparable<MetadataVersion> {
   /**
    *  Version 4: Split the metadata cache file into summary and file metadata
    */
-  public static final String V4 = "4";
+  public static final String V4 = "4.0";
 
     /**
      * All historical versions of the Drill metadata cache files. In case of introducing a new parquet metadata version

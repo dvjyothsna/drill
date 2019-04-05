@@ -94,7 +94,6 @@ public class ParquetTableMetadataProviderImpl extends BaseParquetMetadataProvide
           entries.add(new ReadEntryWithPath(fileName));
         }
       }
-
       init();
     }
   }
@@ -120,20 +119,17 @@ public class ParquetTableMetadataProviderImpl extends BaseParquetMetadataProvide
     for (String filename : Metadata.CURRENT_METADATA_FILENAMES) {
       metaFilepaths.add(new Path(p, filename));
     }
-
-    //Read the older version of metadata file if the current version of metadata cache files donot exist.
     for (String filename : Metadata.OLD_METADATA_FILENAMES) {
+      //Read the older version of metadata file if the current version of metadata cache files donot exist.
       if (fileExists(fs, metaFilepaths)) {
         return metaFilepaths;
       }
       metaFilepaths.clear();
       metaFilepaths.add(new Path(p, filename));
     }
-
     if (fileExists(fs, metaFilepaths)) {
       return metaFilepaths;
     }
-
     return new ArrayList<>();
   }
 
@@ -152,6 +148,7 @@ public class ParquetTableMetadataProviderImpl extends BaseParquetMetadataProvide
   @Override
   protected void initInternal() throws IOException {
     try (FileSystem processUserFileSystem = ImpersonationUtil.createFileSystem(ImpersonationUtil.getProcessUserName(), fs.getConf())) {
+      // Depending on the version of metadata this may represent more than 1 metadata file paths.
       List<Path> metaPaths = new ArrayList<>();
       if (entries.size() == 1 && parquetTableMetadata == null) {
         Path p = Path.getPathWithoutSchemeAndAuthority(entries.get(0).getPath());
@@ -219,6 +216,7 @@ public class ParquetTableMetadataProviderImpl extends BaseParquetMetadataProvide
 
     // use the cacheFileRoot if provided (e.g after partition pruning)
     Path path = cacheFileRoot != null ? cacheFileRoot : selectionRoot;
+    // Depending on the version of metadata this may represent more than 1 metadata file paths.
     List<Path> metaPaths = populateMetaPaths(path, fs);
     if (metaPaths.isEmpty()) { // no metadata cache
       if (selection.isExpandedPartial()) {
@@ -304,7 +302,8 @@ public class ParquetTableMetadataProviderImpl extends BaseParquetMetadataProvide
       for (FileStatus status : fileStatuses) {
         Path currentCacheFileRoot = status.getPath();
         if (status.isDirectory()) {
-          //TODO [DRILL-4496] read the metadata cache files in parallel
+          // TODO [DRILL-4496] read the metadata cache files in parallel
+          // Depending on the version of metadata this may represent more than 1 metadata file paths.
           List<Path> metaPaths = populateMetaPaths(currentCacheFileRoot, fs);
           MetadataBase.ParquetTableMetadataBase metadata = Metadata.readBlockMeta(processUserFileSystem, metaPaths, metaContext, readerConfig);
           if (ignoreExpandingSelection(metadata)) {

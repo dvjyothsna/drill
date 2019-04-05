@@ -280,7 +280,6 @@ public class Metadata {
         metaDataList.addAll((List<ParquetFileMetadata_v4>) subTableMetadata.getFiles());
         directoryList.addAll(subTableMetadata.getDirectories());
         directoryList.add(file.getPath());
-        // Merge the schema from the child level into the current level
         //TODO: We need a merge method that merges two columns with the same name but different types
         if (columnTypeInfoSet.isEmpty()) {
           columnTypeInfoSet.putAll(subTableColumnTypeInfo);
@@ -290,6 +289,8 @@ public class Metadata {
             if (columnTypeMetadata_v4 == null) {
               columnTypeMetadata_v4 = subTableColumnTypeInfo.get(key);
             } else {
+              // If the existing total null count or the null count of the child file is unknown(-1), update the total null count
+              // as unknown
               if (subTableColumnTypeInfo.get(key).totalNullCount < 0 || columnTypeMetadata_v4.totalNullCount < 0) {
                 columnTypeMetadata_v4.totalNullCount = NULL_COUNT_NOT_EXISTS;
               } else {
@@ -307,22 +308,25 @@ public class Metadata {
     Metadata_V4.MetadataSummary metadataSummary = new Metadata_V4.MetadataSummary(SUPPORTED_VERSIONS.last().toString(), DrillVersionInfo.getVersion());
     ParquetTableMetadata_v4 parquetTableMetadata = new ParquetTableMetadata_v4(metadataSummary);
     if (childFiles.size() > 0) {
-      List<ParquetFileAndRowCountMetadata> ChildFileAndRowCountMetadata = getParquetFileMetadata_v4(parquetTableMetadata, childFiles, allColumnsInteresting, columnSet);
-      for (ParquetFileAndRowCountMetadata parquetFileAndRowCountMetadata : ChildFileAndRowCountMetadata) {
+      List<ParquetFileAndRowCountMetadata> childFileAndRowCountMetadata = getParquetFileMetadata_v4(parquetTableMetadata, childFiles, allColumnsInteresting, columnSet);
+      // If the columnTypeInfoSet is empty, add the columnTypeInfo from the parquetTableMetadata
+      if (columnTypeInfoSet.isEmpty()) {
+        columnTypeInfoSet.putAll(parquetTableMetadata.getColumnTypeInfoMap());
+      }
+      for (ParquetFileAndRowCountMetadata parquetFileAndRowCountMetadata : childFileAndRowCountMetadata) {
         metaDataList.add(parquetFileAndRowCountMetadata.getFileMetadata());
         dirTotalRowCount = dirTotalRowCount + parquetFileAndRowCountMetadata.getFileRowCount();
         Map<ColumnTypeMetadata_v4.Key, Long> totalNullCountMap = parquetFileAndRowCountMetadata.getTotalNullCountMap();
-        if (columnTypeInfoSet.isEmpty()) {
-          columnTypeInfoSet.putAll(parquetTableMetadata.getColumnTypeInfoMap());
-        }
-        for (ColumnTypeMetadata_v4.Key columnName: totalNullCountMap.keySet()) {
-          ColumnTypeMetadata_v4 columnTypeMetadata_v4 = columnTypeInfoSet.get(columnName);
-          if ( columnTypeMetadata_v4.totalNullCount < 0 || totalNullCountMap.get(columnName) < 0) {
+        for (ColumnTypeMetadata_v4.Key column: totalNullCountMap.keySet()) {
+          ColumnTypeMetadata_v4 columnTypeMetadata_v4 = columnTypeInfoSet.get(column);
+          // If the existing total null count or the null count of the child file is unknown(-1), update the total null count
+          // as unknown
+          if ( columnTypeMetadata_v4.totalNullCount < 0 || totalNullCountMap.get(column) < 0) {
             columnTypeMetadata_v4.totalNullCount = NULL_COUNT_NOT_EXISTS;
           } else {
-            columnTypeMetadata_v4.totalNullCount = columnTypeMetadata_v4.totalNullCount + totalNullCountMap.get(columnName);
+            columnTypeMetadata_v4.totalNullCount += totalNullCountMap.get(column);
           }
-          columnTypeInfoSet.put(columnName, columnTypeMetadata_v4);
+          columnTypeInfoSet.put(column, columnTypeMetadata_v4);
         }
       }
     }
@@ -800,6 +804,14 @@ public class Metadata {
     return metadataDirFile;
   }
 
+  /**
+   * Reads the summary from the metadata cache file, if the cache file is stale recreates the metadata
+   * @param fs
+   * @param metadataParentDir
+   * @param autoRefreshTriggered true if the auto-refresh is already triggered
+   * @param readerConfig
+   * @return returns metadata summary
+   */
   public static Metadata_V4.MetadataSummary getSummary(FileSystem fs, Path metadataParentDir, boolean autoRefreshTriggered, ParquetReaderConfig readerConfig) {
     Path summaryFile = getSummaryFileName(metadataParentDir);
     Path metadataDirFile = getDirFileName(metadataParentDir);

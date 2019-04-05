@@ -20,15 +20,10 @@ package org.apache.drill.exec.store.parquet.metadata;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.KeyDeserializer;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import org.apache.drill.common.expression.SchemaPath;
 
@@ -39,7 +34,6 @@ import static org.apache.drill.exec.store.parquet.metadata.MetadataBase.RowGroup
 import static org.apache.drill.exec.store.parquet.metadata.MetadataBase.ColumnTypeMetadata;
 import static org.apache.drill.exec.store.parquet.metadata.MetadataVersion.Constants.V4;
 import org.apache.hadoop.fs.Path;
-import org.apache.parquet.io.api.Binary;
 import org.apache.parquet.schema.OriginalType;
 import org.apache.parquet.schema.PrimitiveType;
 
@@ -157,21 +151,17 @@ public class Metadata_V4 {
       return metadataSummary.drillVersion;
     }
 
-
     public MetadataSummary getSummary() {
       return metadataSummary;
     }
-
 
     public long getTotalRowCount() {
       return metadataSummary.getTotalRowCount();
     }
 
-
     public long getTotalNullCount(String[] columnName) {
       return getColumnTypeInfo(columnName).totalNullCount;
     }
-
 
     public boolean isAllColumnsInteresting() {
       return metadataSummary.isAllColumnsInteresting();
@@ -193,7 +183,6 @@ public class Metadata_V4 {
     public void setAllColumnsInteresting(boolean allColumnsInteresting) {
       metadataSummary.allColumnsInteresting = allColumnsInteresting;
     }
-
   }
 
   /**
@@ -296,7 +285,7 @@ public class Metadata_V4 {
   }
 
 
-  public static class ColumnTypeMetadata_v4  extends ColumnTypeMetadata {
+  public static class ColumnTypeMetadata_v4 extends ColumnTypeMetadata {
     @JsonProperty
     public String[] name;
     @JsonProperty
@@ -394,154 +383,29 @@ public class Metadata_V4 {
       }
     }
 
-
-    @JsonIgnore @Override
+    @JsonIgnore
+    @Override
     public PrimitiveType.PrimitiveTypeName getPrimitiveType() {
       return primitiveType;
     }
 
-    @JsonIgnore @Override
+    @JsonIgnore
+    @Override
     public String[] getName() {
       return name;
     }
   }
 
-
   /**
-   * A struct that contains the metadata for a column in a parquet file
+   * A struct that contains the metadata for a column in a parquet file.
+   * Note: Since the structure of column metadata hasn't changes from v3, ColumnMetadata_v4 extends ColumnMetadata_v3
    */
-  public static class ColumnMetadata_v4 extends ColumnMetadata {
-    // Use a string array for name instead of Schema Path to make serialization easier
-    @JsonProperty
-    public String[] name;
-    @JsonProperty
-    public Long nulls;
-
-    public Object minValue;
-    public Object maxValue;
-
-    @JsonIgnore
-    private PrimitiveType.PrimitiveTypeName primitiveType;
-
+  public static class ColumnMetadata_v4 extends Metadata_V3.ColumnMetadata_v3 {
     public ColumnMetadata_v4() {
     }
 
     public ColumnMetadata_v4(String[] name, PrimitiveType.PrimitiveTypeName primitiveType, Object minValue, Object maxValue, Long nulls) {
-      this.name = name;
-      this.minValue = minValue;
-      this.maxValue = maxValue;
-      this.nulls = nulls;
-      this.primitiveType = primitiveType;
-    }
-
-    @JsonProperty(value = "minValue")
-    public void setMin(Object minValue) {
-      this.minValue = minValue;
-    }
-
-    @JsonProperty(value = "maxValue")
-    public void setMax(Object maxValue) {
-      this.maxValue = maxValue;
-    }
-
-    @Override
-    public String[] getName() {
-      return name;
-    }
-
-    @Override
-    public Long getNulls() {
-      return nulls;
-    }
-
-    /**
-     * Checks that the column chunk has a single value.
-     * Returns {@code true} if {@code minValue} and {@code maxValue} are the same but not null
-     * and nulls count is 0 or equal to the rows count.
-     * <p>
-     * Returns {@code true} if {@code minValue} and {@code maxValue} are null and the number of null values
-     * in the column chunk is equal to the rows count.
-     * <p>
-     * Comparison of nulls and rows count is needed for the cases:
-     * <ul>
-     * <li>column with primitive type has single value and null values</li>
-     *
-     * <li>column <b>with primitive type</b> has only null values, min/max couldn't be null,
-     * but column has single value</li>
-     * </ul>
-     *
-     * @param rowCount rows count in column chunk
-     * @return true if column has single value
-     */
-    @Override
-    public boolean hasSingleValue(long rowCount) {
-      if (isNumNullsSet()) {
-        if (minValue != null) {
-          // Objects.deepEquals() is used here, since min and max may be byte arrays
-          return (nulls == 0 || nulls == rowCount) && Objects.deepEquals(minValue, maxValue);
-        } else {
-          return nulls == rowCount && maxValue == null;
-        }
-      }
-      return false;
-    }
-
-    @Override
-    public Object getMinValue() {
-      return minValue;
-    }
-
-    @Override
-    public Object getMaxValue() {
-      return maxValue;
-    }
-
-    @Override
-    public PrimitiveType.PrimitiveTypeName getPrimitiveType() {
-      return null;
-    }
-
-    @Override
-    public OriginalType getOriginalType() {
-      return null;
-    }
-
-    // We use a custom serializer and write only non null values.
-    public static class Serializer extends JsonSerializer<ColumnMetadata_v4> {
-      @Override
-      public void serialize(ColumnMetadata_v4 value, JsonGenerator jgen, SerializerProvider provider) throws IOException {
-        jgen.writeStartObject();
-        jgen.writeArrayFieldStart("name");
-        for (String n : value.name) {
-          jgen.writeString(n);
-        }
-        jgen.writeEndArray();
-        if (value.minValue != null) {
-          Object val;
-          if (value.primitiveType == PrimitiveType.PrimitiveTypeName.BINARY
-                  || value.primitiveType == PrimitiveType.PrimitiveTypeName.FIXED_LEN_BYTE_ARRAY) {
-            val = ((Binary) value.minValue).getBytes();
-          } else {
-            val = value.minValue;
-          }
-          jgen.writeObjectField("minValue", val);
-        }
-        if (value.maxValue != null) {
-          Object val;
-          if (value.primitiveType == PrimitiveType.PrimitiveTypeName.BINARY
-                  || value.primitiveType == PrimitiveType.PrimitiveTypeName.FIXED_LEN_BYTE_ARRAY) {
-            val = ((Binary) value.maxValue).getBytes();
-          } else {
-            val = value.maxValue;
-          }
-          jgen.writeObjectField("maxValue", val);
-        }
-
-        if (value.nulls != null) {
-          jgen.writeObjectField("nulls", value.nulls);
-        }
-        jgen.writeEndObject();
-      }
+      super(name, primitiveType, minValue, maxValue, nulls);
     }
   }
 
@@ -648,7 +512,6 @@ public class Metadata_V4 {
    * A struct that holds file metadata and row count and null count of a single file
    */
   public static class ParquetFileAndRowCountMetadata {
-
     ParquetFileMetadata_v4 fileMetadata;
     Map<ColumnTypeMetadata_v4.Key, Long> totalNullCountMap;
     long fileRowCount;
@@ -673,6 +536,5 @@ public class Metadata_V4 {
     public Map<ColumnTypeMetadata_v4.Key, Long> getTotalNullCountMap() {
       return totalNullCountMap;
     }
-
   }
 }
