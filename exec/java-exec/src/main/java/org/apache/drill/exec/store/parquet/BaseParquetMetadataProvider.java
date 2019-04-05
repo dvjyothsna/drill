@@ -165,8 +165,8 @@ public abstract class BaseParquetMetadataProvider implements ParquetMetadataProv
               TableStatisticsKind.ROW_COUNT.getName(), columnValueCount,
               ColumnStatisticsKind.NULLS_COUNT.getName(), getParquetGroupScanStatistics().getRowCount() - columnValueCount);
           columnsStatistics.put(partitionColumn, new ColumnStatisticsImpl(stats, ParquetTableMetadataUtils.getNaturalNullsFirstComparator()));
-          columnsStatistics = ParquetTableMetadataUtils.populateNonInterestingColumnsStats(columnsStatistics, parquetTableMetadata);
         }
+        columnsStatistics.putAll(ParquetTableMetadataUtils.populateNonInterestingColumnsStats(columnsStatistics.keySet(), parquetTableMetadata));
       }
       tableMetadata = new FileTableMetadata(tableName, tableLocation, schema, columnsStatistics, tableStatistics,
           -1, "root", partitionKeys);

@@ -111,7 +111,7 @@ public class ParquetTableMetadataProviderImpl extends BaseParquetMetadataProvide
   /**
    * Returns list of metadata cache files
    * @param p directory path of the cache file
-   * @param fs
+   * @param fs filesystem object
    * @return list of cache files found in the given directory path
    */
   public List<Path> populateMetaPaths(Path p, DrillFileSystem fs) throws IOException {
@@ -120,7 +120,7 @@ public class ParquetTableMetadataProviderImpl extends BaseParquetMetadataProvide
       metaFilepaths.add(new Path(p, filename));
     }
     for (String filename : Metadata.OLD_METADATA_FILENAMES) {
-      //Read the older version of metadata file if the current version of metadata cache files donot exist.
+      // Read the older version of metadata file if the current version of metadata cache files donot exist.
       if (fileExists(fs, metaFilepaths)) {
         return metaFilepaths;
       }
@@ -135,7 +135,7 @@ public class ParquetTableMetadataProviderImpl extends BaseParquetMetadataProvide
 
   public boolean fileExists(DrillFileSystem fs, List<Path> paths) throws IOException {
     if (paths.isEmpty()) {
-      return false;
+      return true;
     }
     for (Path path : paths) {
       if (!fs.exists(path)) {

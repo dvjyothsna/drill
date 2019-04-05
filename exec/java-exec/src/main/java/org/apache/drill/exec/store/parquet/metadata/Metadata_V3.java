@@ -181,7 +181,7 @@ public class Metadata_V3 {
 
     @Override
     public List<? extends MetadataBase.ColumnTypeMetadata> getColumnTypeInfoList() {
-      return new ArrayList(this.columnTypeInfo.values());
+      return new ArrayList<>(this.columnTypeInfo.values());
     }
   }
 

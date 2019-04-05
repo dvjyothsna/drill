@@ -167,7 +167,7 @@ public class ParquetTableMetadataUtils {
    * @param metadataList        list of metadata to be merged
    * @param columns             set of columns whose statistics should be merged
    * @param statisticsToCollect kinds of statistics that should be collected
-   * @param parquetTableMetadata
+   * @param parquetTableMetadata ParquetTableMetadata object to fetch the non-interesting columns
    * @return list of merged metadata
    */
   @SuppressWarnings("unchecked")
@@ -194,8 +194,7 @@ public class ParquetTableMetadataUtils {
       }
       columnsStatistics.put(column, new ColumnStatisticsImpl(statisticsMap, statisticsList.iterator().next().getValueComparator()));
     }
-
-    columnsStatistics = populateNonInterestingColumnsStats(columnsStatistics, parquetTableMetadata);
+    columnsStatistics.putAll(populateNonInterestingColumnsStats(columnsStatistics.keySet(), parquetTableMetadata));
     return columnsStatistics;
   }
 
@@ -286,23 +285,24 @@ public class ParquetTableMetadataUtils {
       statistics.put(ColumnStatisticsKind.NULLS_COUNT.getName(), nulls);
       columnsStatistics.put(colPath, new ColumnStatisticsImpl(statistics, comparator));
     }
-    columnsStatistics = populateNonInterestingColumnsStats(columnsStatistics, tableMetadata);
+    columnsStatistics.putAll(populateNonInterestingColumnsStats(columnsStatistics.keySet(), tableMetadata));
     return columnsStatistics;
   }
 
   /**
    * Populates the non-interesting column's statistics
-   * @param columnsStatistics
+   * @param schemaPaths
    * @param parquetTableMetadata
-   * @return returns new column statistics map
+   * @return returns non-interesting column statistics map
    */
   public static Map<SchemaPath, ColumnStatistics> populateNonInterestingColumnsStats(
-      Map<SchemaPath, ColumnStatistics> columnsStatistics, MetadataBase.ParquetTableMetadataBase parquetTableMetadata) {
+          Set<SchemaPath> schemaPaths, MetadataBase.ParquetTableMetadataBase parquetTableMetadata) {
+    Map<SchemaPath, ColumnStatistics> columnsStatistics = new HashMap<>();
     if (parquetTableMetadata instanceof Metadata_V4.ParquetTableMetadata_v4) {
       for (Metadata_V4.ColumnTypeMetadata_v4 columnTypeMetadata :
           ((Metadata_V4.ParquetTableMetadata_v4) parquetTableMetadata).getColumnTypeInfoMap().values()) {
         SchemaPath schemaPath = SchemaPath.getCompoundPath(columnTypeMetadata.name);
-        if (!columnsStatistics.containsKey(schemaPath)) {
+        if (!schemaPaths.contains(schemaPath)) {
           Map<String, Object> statistics = new HashMap<>();
           statistics.put(ColumnStatisticsKind.NULLS_COUNT.getName(), GroupScan.NO_COLUMN_STATS);
           PrimitiveType.PrimitiveTypeName primitiveType = columnTypeMetadata.primitiveType;
