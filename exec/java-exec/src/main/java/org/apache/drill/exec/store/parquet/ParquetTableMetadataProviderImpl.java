@@ -134,9 +134,6 @@ public class ParquetTableMetadataProviderImpl extends BaseParquetMetadataProvide
   }
 
   public boolean fileExists(DrillFileSystem fs, List<Path> paths) throws IOException {
-    if (paths.isEmpty()) {
-      return true;
-    }
     for (Path path : paths) {
       if (!fs.exists(path)) {
         return false;

@@ -841,7 +841,7 @@ public class Metadata {
     try {
       // If autoRefresh is not triggered and none of the metadata files exist
       if (!autoRefreshTriggered && metadataExists(fs, metadataParentDir)) {
-        logger.debug("Metadata doesn't exist in {}", metadataDirFile);
+        logger.debug("Metadata doesn't exist in {}", metadataParentDir);
         return null;
       } else if (autoRefreshTriggered && !fs.exists(summaryFile)) {
         logger.debug("Metadata Summary file {} does not exist", summaryFile);
