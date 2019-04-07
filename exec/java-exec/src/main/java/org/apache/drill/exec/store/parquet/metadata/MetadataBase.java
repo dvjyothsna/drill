@@ -55,7 +55,7 @@ public class MetadataBase {
       @JsonSubTypes.Type(value = Metadata_V3.ParquetTableMetadata_v3.class, name = V3_1),
       @JsonSubTypes.Type(value = Metadata_V3.ParquetTableMetadata_v3.class, name = V3_2),
       @JsonSubTypes.Type(value = Metadata_V3.ParquetTableMetadata_v3.class, name = V3_3),
-      @JsonSubTypes.Type(value = Metadata_V3.ParquetTableMetadata_v3.class, name = V4),
+      @JsonSubTypes.Type(value = Metadata_V4.ParquetTableMetadata_v4.class, name = V4),
 
   })
   public static abstract class ParquetTableMetadataBase {

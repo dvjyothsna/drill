@@ -804,6 +804,28 @@ public class Metadata {
     return metadataDirFile;
   }
 
+  private static Path getFileMetadataFileName(Path metadataParentDir) {
+    Path fileMetadataFile = new Path(metadataParentDir, METADATA_FILENAME);
+    return fileMetadataFile;
+  }
+
+  /**
+   * Returns if metadata exists or not in that directory
+   * @param fs filesystem
+   * @param metadataParentDir parent directory that holds metadata files.
+   * @return true if metadata exists in that directory
+   * @throws IOException
+   */
+  private static boolean metadataExists(FileSystem fs, Path metadataParentDir) throws IOException {
+    Path summaryFile = new Path(metadataParentDir, METADATA_SUMMARY_FILENAME);
+    Path metadataDirFile = new Path(metadataParentDir, METADATA_DIRECTORIES_FILENAME);
+    Path fileMetadataFile = new Path(metadataParentDir, METADATA_FILENAME);
+    if (!fs.exists(summaryFile) && !fs.exists(metadataDirFile) && !fs.exists(fileMetadataFile)) {
+      return false;
+    }
+    return true;
+  }
+
   /**
    * Reads the summary from the metadata cache file, if the cache file is stale recreates the metadata
    * @param fs
@@ -817,13 +839,20 @@ public class Metadata {
     Path metadataDirFile = getDirFileName(metadataParentDir);
     MetadataContext metaContext = new MetadataContext();
     try {
-      if (!fs.exists(summaryFile) || !fs.exists(metadataDirFile)) {
-        logger.debug("Either Summary file {} or Directory metadata file {} do not exist", summaryFile, metadataDirFile);
+      // If autoRefresh is not triggered and none of the metadata files exist
+      if (!autoRefreshTriggered && metadataExists(fs, metadataParentDir)) {
+        logger.debug("Metadata doesn't exist in {}", metadataDirFile);
+        return null;
+      } else if (autoRefreshTriggered && !fs.exists(summaryFile)) {
+        logger.debug("Metadata Summary file {} does not exist", summaryFile);
         return null;
       } else {
         // If the autorefresh is not triggered, check if the cache file is stale and trigger auto-refresh
         if (!autoRefreshTriggered) {
           Metadata metadata = new Metadata(readerConfig);
+          if (!fs.exists(metadataDirFile)) {
+            return null;
+          }
           ParquetTableMetadataDirs metadataDirs  = readMetadataDirs(fs, metadataDirFile, metaContext, readerConfig);
           if (metadata.tableModified(metadataDirs.getDirectories(), summaryFile, metadataParentDir, metaContext, fs) && true) {
             ParquetTableMetadata_v4 parquetTableMetadata = (metadata.createMetaFilesRecursivelyAsProcessUser(Path.getPathWithoutSchemeAndAuthority(summaryFile.getParent()), fs, true, null, true)).getLeft();

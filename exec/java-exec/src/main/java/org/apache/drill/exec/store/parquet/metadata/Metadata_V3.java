@@ -104,7 +104,8 @@ public class Metadata_V3 {
       return directories;
     }
 
-    @JsonIgnore @Override public String getMetadataVersion() {
+    @JsonIgnore
+    @Override public String getMetadataVersion() {
       return metadataVersion;
     }
 
@@ -120,11 +121,13 @@ public class Metadata_V3 {
       this.files = (List<ParquetFileMetadata_v3>) MetadataPathUtils.convertToFilesWithAbsolutePaths(files, baseDir);
     }
 
-    @JsonIgnore @Override public List<? extends ParquetFileMetadata> getFiles() {
+    @JsonIgnore
+    @Override public List<? extends ParquetFileMetadata> getFiles() {
       return files;
     }
 
-    @JsonIgnore @Override public void assignFiles(List<? extends ParquetFileMetadata> newFiles) {
+    @JsonIgnore
+    @Override public void assignFiles(List<? extends ParquetFileMetadata> newFiles) {
       this.files = (List<ParquetFileMetadata_v3>) newFiles;
     }
 
@@ -132,44 +135,53 @@ public class Metadata_V3 {
       return true;
     }
 
-    @JsonIgnore @Override public PrimitiveType.PrimitiveTypeName getPrimitiveType(String[] columnName) {
+    @JsonIgnore
+    @Override public PrimitiveType.PrimitiveTypeName getPrimitiveType(String[] columnName) {
       return getColumnTypeInfo(columnName).primitiveType;
     }
 
-    @JsonIgnore @Override public OriginalType getOriginalType(String[] columnName) {
+    @JsonIgnore
+    @Override public OriginalType getOriginalType(String[] columnName) {
       return getColumnTypeInfo(columnName).originalType;
     }
 
-    @JsonIgnore @Override
+    @JsonIgnore
+    @Override
     public Integer getRepetitionLevel(String[] columnName) {
       return getColumnTypeInfo(columnName).repetitionLevel;
     }
 
-    @JsonIgnore @Override
+    @JsonIgnore
+    @Override
     public Integer getDefinitionLevel(String[] columnName) {
       return getColumnTypeInfo(columnName).definitionLevel;
     }
 
-    @JsonIgnore @Override
+    @JsonIgnore
+    @Override
     public Integer getScale(String[] columnName) {
       return getColumnTypeInfo(columnName).scale;
     }
 
-    @JsonIgnore @Override
+    @JsonIgnore
+    @Override
     public Integer getPrecision(String[] columnName) {
       return getColumnTypeInfo(columnName).precision;
     }
 
-    @JsonIgnore @Override
+    @JsonIgnore
+    @Override
     public boolean isRowGroupPrunable() {
       return true;
     }
 
-    @JsonIgnore @Override public ParquetTableMetadataBase clone() {
+    @JsonIgnore
+    @Override public ParquetTableMetadataBase clone() {
       return new ParquetTableMetadata_v3(metadataVersion, files, directories, columnTypeInfo, drillVersion);
     }
 
-    @JsonIgnore @Override
+    @JsonIgnore
+    @Override
     public String getDrillVersion() {
       return drillVersion;
     }
@@ -207,15 +219,18 @@ public class Metadata_V3 {
       return String.format("path: %s rowGroups: %s", path, rowGroups);
     }
 
-    @JsonIgnore @Override public Path getPath() {
+    @JsonIgnore
+    @Override public Path getPath() {
       return path;
     }
 
-    @JsonIgnore @Override public Long getLength() {
+    @JsonIgnore
+    @Override public Long getLength() {
       return length;
     }
 
-    @JsonIgnore @Override public List<? extends RowGroupMetadata> getRowGroups() {
+    @JsonIgnore
+    @Override public List<? extends RowGroupMetadata> getRowGroups() {
       return rowGroups;
     }
   }

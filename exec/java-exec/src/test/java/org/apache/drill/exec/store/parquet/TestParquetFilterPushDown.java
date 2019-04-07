@@ -146,7 +146,7 @@ public class TestParquetFilterPushDown extends PlanTestBase {
     testParquetRowGroupFilterEval(footer, "nonExistCol < 'abc' and intCol > 100", RowsMatch.NONE); // nonExistCol < 'abc' hit NumberException and is ignored, but intCol >100 will
 
     // say "drop".
-//    testParquetRowGroupFilterEval(footer, "intCol > 50 and nonExistCol < 'abc'", RowsMatch.SOME); // because nonExistCol < 'abc' hit NumberException and
+    testParquetRowGroupFilterEval(footer, "intCol > 50 and nonExistCol < 'abc'", RowsMatch.SOME); // because nonExistCol < 'abc' hit NumberException and
     // is ignored.
 
     //"nonExistCol" does not exist in the table. "OR" with a filter on exist column
