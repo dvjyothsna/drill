@@ -17,16 +17,10 @@
  */
 package org.apache.drill.metastore;
 
-import java.util.List;
 import org.apache.drill.common.expression.SchemaPath;
 import org.apache.drill.exec.record.metadata.ColumnMetadata;
-import org.apache.drill.exec.record.metadata.SchemaPathUtils;
 import org.apache.drill.exec.record.metadata.TupleMetadata;
-import org.apache.hadoop.fs.Path;
-
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Represents a metadata for the non-interesting columns.

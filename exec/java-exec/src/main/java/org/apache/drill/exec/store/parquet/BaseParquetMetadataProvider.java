@@ -17,15 +17,12 @@
  */
 package org.apache.drill.exec.store.parquet;
 
-import java.util.Comparator;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import org.apache.drill.exec.physical.base.GroupScan;
 import org.apache.drill.exec.physical.base.ParquetMetadataProvider;
 import org.apache.drill.exec.planner.common.DrillStatsTable;
 import org.apache.drill.exec.record.metadata.TupleMetadata;
 import static org.apache.drill.exec.store.parquet.ParquetTableMetadataUtils.getComparator;
-import org.apache.drill.exec.store.parquet.metadata.Metadata_V4;
 import org.apache.drill.metastore.BaseMetadata;
 import org.apache.drill.metastore.ColumnStatisticsImpl;
 import org.apache.drill.metastore.NonInterestingColumnsMetadata;
@@ -64,8 +61,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
-import org.apache.parquet.schema.OriginalType;
-import org.apache.parquet.schema.PrimitiveType;
 
 /**
  * Implementation of {@link ParquetMetadataProvider} which contains base methods for obtaining metadata from

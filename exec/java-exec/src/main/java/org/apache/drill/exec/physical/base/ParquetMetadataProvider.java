@@ -19,7 +19,6 @@ package org.apache.drill.exec.physical.base;
 
 import org.apache.drill.exec.store.dfs.ReadEntryWithPath;
 import org.apache.drill.metastore.FileMetadata;
-import org.apache.drill.metastore.NonInterestingColumnsMetadata;
 import org.apache.drill.metastore.RowGroupMetadata;
 import org.apache.drill.shaded.guava.com.google.common.collect.Multimap;
 import org.apache.hadoop.fs.Path;
