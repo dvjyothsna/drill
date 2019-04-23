@@ -17,6 +17,7 @@
  */
 package org.apache.drill.exec.store.parquet;
 
+import java.util.concurrent.TimeUnit;
 import org.apache.drill.exec.physical.base.MetadataProviderManager;
 import org.apache.drill.exec.physical.base.ParquetMetadataProvider;
 import org.apache.drill.exec.physical.base.ParquetTableMetadataProvider;
@@ -31,6 +32,7 @@ import org.apache.drill.exec.store.parquet.metadata.Metadata;
 import org.apache.drill.exec.store.parquet.metadata.MetadataBase;
 import org.apache.drill.exec.util.DrillFileSystemUtil;
 import org.apache.drill.exec.util.ImpersonationUtil;
+import org.apache.drill.shaded.guava.com.google.common.base.Stopwatch;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -270,6 +272,7 @@ public class ParquetTableMetadataProviderImpl extends BaseParquetMetadataProvide
     // we only select the files that are part of selection (by setting fileSet appropriately)
 
     // get (and set internal field) the metadata for the directory by reading the metadata file
+    Stopwatch timer = logger.isDebugEnabled() ? Stopwatch.createStarted() : null;
     FileSystem processUserFileSystem = ImpersonationUtil.createFileSystem(ImpersonationUtil.getProcessUserName(), fs.getConf());
     parquetTableMetadata = Metadata.readBlockMeta(processUserFileSystem, metaFilePaths, metaContext, readerConfig);
     if (ignoreExpandingSelection(parquetTableMetadata)) {
@@ -314,6 +317,10 @@ public class ParquetTableMetadataProviderImpl extends BaseParquetMetadataProvide
           // Depending on the version of metadata this may represent more than 1 metadata file paths.
           List<Path> metaPaths = populateMetaPaths(currentCacheFileRoot, fs);
           MetadataBase.ParquetTableMetadataBase metadata = Metadata.readBlockMeta(processUserFileSystem, metaPaths, metaContext, readerConfig);
+          if(timer != null) {
+            logger.debug("Took {} ms before ignoring expansion", timer.elapsed(TimeUnit.MILLISECONDS));
+            timer.stop();
+          }
           if (ignoreExpandingSelection(metadata)) {
             return selection;
           }
@@ -330,6 +337,10 @@ public class ParquetTableMetadataProviderImpl extends BaseParquetMetadataProvide
     if (fileSet.isEmpty()) {
       // no files were found, most likely we tried to query some empty sub folders
       logger.warn("The table is empty but with outdated invalid metadata cache files. Please, delete them.");
+      if(timer != null) {
+        logger.debug("Took {} ms if fileSet is empty", timer.elapsed(TimeUnit.MILLISECONDS));
+        timer.stop();
+      }
       return null;
     }
 
@@ -351,6 +362,10 @@ public class ParquetTableMetadataProviderImpl extends BaseParquetMetadataProvide
 
     newSelection.setExpandedFully();
     newSelection.setMetaContext(metaContext);
+    if(timer != null) {
+      logger.debug("Took {} ms before returning new selection", timer.elapsed(TimeUnit.MILLISECONDS));
+      timer.stop();
+    }
     return newSelection;
   }
 
@@ -473,9 +488,15 @@ public class ParquetTableMetadataProviderImpl extends BaseParquetMetadataProvide
         provider = new ParquetTableMetadataProviderImpl(selection, readerConfig, fs, autoCorrectCorruptedDates,
           source, schema, statsProvider);
       }
+      Stopwatch timer = logger.isDebugEnabled() ? Stopwatch.createStarted() : null;
       // store results into FileSystemMetadataProviderManager to be able to use them when creating new instances
       if (source == null || source.getRowGroupsMeta().size() < provider.getRowGroupsMeta().size()) {
         metadataProviderManager.setTableMetadataProvider(provider);
+      }
+
+      if (timer != null) {
+        logger.debug("Took {} ms in ParquetTableMetadataProvider build", timer.elapsed(TimeUnit.MILLISECONDS));
+        timer.stop();
       }
       return provider;
     }

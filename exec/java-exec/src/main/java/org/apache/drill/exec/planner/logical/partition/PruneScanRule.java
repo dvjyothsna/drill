@@ -235,7 +235,7 @@ public abstract class PruneScanRule extends StoragePluginOptimizerRule {
         logger.debug("No conditions were found eligible for partition pruning. Total pruning elapsed time: {} ms",
             totalPruningTime.elapsed(TimeUnit.MILLISECONDS));
       }
-      setPruneStatus(metaContext, PruneStatus.NOT_PRUNED);
+          setPruneStatus(metaContext, PruneStatus.NOT_PRUNED);
       return;
     }
 

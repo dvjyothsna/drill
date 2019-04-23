@@ -17,15 +17,22 @@
  */
 package org.apache.drill.exec.store.parquet;
 
+import java.util.Comparator;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import org.apache.drill.exec.physical.base.GroupScan;
 import org.apache.drill.exec.physical.base.ParquetMetadataProvider;
 import org.apache.drill.exec.planner.common.DrillStatsTable;
 import org.apache.drill.exec.record.metadata.TupleMetadata;
+import static org.apache.drill.exec.store.parquet.ParquetTableMetadataUtils.getComparator;
+import org.apache.drill.exec.store.parquet.metadata.Metadata_V4;
 import org.apache.drill.metastore.BaseMetadata;
 import org.apache.drill.metastore.ColumnStatisticsImpl;
+import org.apache.drill.metastore.NonInterestingColumnsMetadata;
 import org.apache.drill.metastore.StatisticsKind;
 import org.apache.drill.metastore.TableMetadata;
 import org.apache.drill.metastore.TableStatisticsKind;
+import org.apache.drill.shaded.guava.com.google.common.base.Stopwatch;
 import org.apache.drill.shaded.guava.com.google.common.collect.HashBasedTable;
 import org.apache.drill.shaded.guava.com.google.common.collect.HashMultimap;
 import org.apache.drill.shaded.guava.com.google.common.collect.LinkedListMultimap;
@@ -57,6 +64,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.apache.parquet.schema.OriginalType;
+import org.apache.parquet.schema.PrimitiveType;
 
 /**
  * Implementation of {@link ParquetMetadataProvider} which contains base methods for obtaining metadata from
@@ -87,6 +96,9 @@ public abstract class BaseParquetMetadataProvider implements ParquetMetadataProv
   private TableMetadata tableMetadata;
   private List<PartitionMetadata> partitions;
   private Map<Path, FileMetadata> files;
+  private NonInterestingColumnsMetadata nonInterestingColumnsMetadata;
+
+  private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(BaseParquetMetadataProvider.class);
 
   // whether metadata for row groups should be collected to create files, partitions and table metadata
   private final boolean collectMetadata = false;
@@ -124,7 +136,13 @@ public abstract class BaseParquetMetadataProvider implements ParquetMetadataProv
   protected void init(BaseParquetMetadataProvider metadataProvider) throws IOException {
     // Once deserialization for metadata is provided, initInternal() call should be removed
     // and only files list is deserialized based on specified locations
+    Stopwatch timer = logger.isDebugEnabled() ? Stopwatch.createStarted() : null;
+
     initInternal();
+
+    if (timer != null) {
+      logger.debug("Took {} ms in initInternal base metadata", timer.elapsed(TimeUnit.MILLISECONDS));
+    }
 
     assert parquetTableMetadata != null;
 
@@ -137,12 +155,19 @@ public abstract class BaseParquetMetadataProvider implements ParquetMetadataProv
 
     List<Path> fileLocations = getLocations();
 
+    if (timer != null) {
+      logger.debug("Took {} ms till getLocations()", timer.elapsed(TimeUnit.MILLISECONDS));
+    }
+
     // if metadata provider wasn't specified, or required metadata is absent,
     // obtains metadata from cache files or table footers
     if (metadataProvider == null
         || (metadataProvider.rowGroups != null && !metadataProvider.rowGroups.keySet().containsAll(fileLocations))
         || (metadataProvider.files != null && !metadataProvider.files.keySet().containsAll(fileLocations))) {
       initializeMetadata();
+      if (timer != null) {
+        logger.debug("Took {} ms in initializeMetadata ", timer.elapsed(TimeUnit.MILLISECONDS));
+      }
     } else {
       // reuse metadata from existing TableMetadataProvider
       if (metadataProvider.files != null && metadataProvider.files.size() != files.size()) {
@@ -156,11 +181,23 @@ public abstract class BaseParquetMetadataProvider implements ParquetMetadataProv
             .filter(entry -> fileLocations.contains(entry.getKey()))
             .forEach(entry -> rowGroups.put(entry.getKey(), entry.getValue()));
       }
+      if (timer != null) {
+        logger.debug("Took {} ms before setting metadata", timer.elapsed(TimeUnit.MILLISECONDS));
+      }
       TableMetadata tableMetadata = getTableMetadata();
       getPartitionsMetadata();
       getRowGroupsMeta();
+      getNonInterestingColumnsMeta();
+      this.nonInterestingColumnsMetadata = getNonInterestingColumnsMeta();
       this.tableMetadata = ParquetTableMetadataUtils.updateRowCount(tableMetadata, getRowGroupsMeta());
       parquetTableMetadata = null;
+      if (timer != null) {
+        logger.debug("Took {} ms after setting metadata ", timer.elapsed(TimeUnit.MILLISECONDS));
+      }
+    }
+    if (timer != null) {
+      logger.debug("Took {} ms in init base metadata", timer.elapsed(TimeUnit.MILLISECONDS));
+      timer.stop();
     }
   }
 
@@ -173,16 +210,34 @@ public abstract class BaseParquetMetadataProvider implements ParquetMetadataProv
     if (statsTable != null && !statsTable.isMaterialized()) {
       statsTable.materialize();
     }
+    Stopwatch timer = logger.isDebugEnabled() ? Stopwatch.createStarted() : null;
+
     getTableMetadata();
+//    logger.debug("Took {} ms to set TableMetadata", timer.elapsed(TimeUnit.MILLISECONDS));
     getFilesMetadata();
+//    logger.debug("Took {} ms to set File Metadata", timer.elapsed(TimeUnit.MILLISECONDS));
     getPartitionsMetadata();
+//    logger.debug("Took {} ms to set Partition Metadata", timer.elapsed(TimeUnit.MILLISECONDS));
     getRowGroupsMeta();
+//    logger.debug("Took {} ms to set rowgroup Metadata", timer.elapsed(TimeUnit.MILLISECONDS));
+    getNonInterestingColumnsMeta();
     parquetTableMetadata = null;
   }
 
   @Override
+  public NonInterestingColumnsMetadata getNonInterestingColumnsMeta() {
+    if (nonInterestingColumnsMetadata == null) {
+      nonInterestingColumnsMetadata = ParquetTableMetadataUtils.getNonInterestingColumnsMeta(parquetTableMetadata);
+    }
+    return nonInterestingColumnsMetadata;
+  }
+
+
+  @Override
   @SuppressWarnings("unchecked")
   public TableMetadata getTableMetadata() {
+
+    Stopwatch timer = logger.isDebugEnabled() ? Stopwatch.createStarted() : null;
     if (tableMetadata == null) {
       Map<StatisticsKind, Object> tableStatistics = new HashMap<>(DrillStatsTable.getEstimatedTableStats(statsTable));
       Set<String> partitionKeys = new HashSet<>();
@@ -199,7 +254,7 @@ public abstract class BaseParquetMetadataProvider implements ParquetMetadataProv
           }
         });
       }
-
+//      logger.debug("Took {} ms till 1", timer.elapsed(TimeUnit.MILLISECONDS));
       Map<SchemaPath, ColumnStatistics> columnsStatistics;
       if (collectMetadata) {
         List<? extends BaseMetadata> metadata = getFilesMetadata();
@@ -211,12 +266,10 @@ public abstract class BaseParquetMetadataProvider implements ParquetMetadataProv
       } else {
         columnsStatistics = new HashMap<>();
         tableStatistics.put(TableStatisticsKind.ROW_COUNT, getParquetGroupScanStatistics().getRowCount());
-
         Set<SchemaPath> unhandledColumns = new HashSet<>();
         if (statsTable != null && statsTable.isMaterialized()) {
           unhandledColumns.addAll(statsTable.getColumns());
         }
-
         for (SchemaPath partitionColumn : fields.keySet()) {
           long columnValueCount = getParquetGroupScanStatistics().getColumnValueCount(partitionColumn);
           // Adds statistics values itself if statistics is available
@@ -228,27 +281,38 @@ public abstract class BaseParquetMetadataProvider implements ParquetMetadataProv
           stats.put(ColumnStatisticsKind.NULLS_COUNT, getParquetGroupScanStatistics().getRowCount() - columnValueCount);
           columnsStatistics.put(partitionColumn, new ColumnStatisticsImpl(stats, ParquetTableMetadataUtils.getNaturalNullsFirstComparator()));
         }
+//        logger.debug("Took {} ms till 3", timer.elapsed(TimeUnit.MILLISECONDS));
 
         for (SchemaPath column : unhandledColumns) {
           columnsStatistics.put(column,
               new ColumnStatisticsImpl(DrillStatsTable.getEstimatedColumnStats(statsTable, column),
                   ParquetTableMetadataUtils.getNaturalNullsFirstComparator()));
         }
-        columnsStatistics.putAll(ParquetTableMetadataUtils.populateNonInterestingColumnsStats(columnsStatistics.keySet(), parquetTableMetadata));
+//        logger.debug("Took {} ms till 4", timer.elapsed(TimeUnit.MILLISECONDS));
+
+//        columnsStatistics.putAll(ParquetTableMetadataUtils.populateNonInterestingColumnsStats(columnsStatistics.keySet(), parquetTableMetadata));
+//        logger.debug("Took {} ms till 5", timer.elapsed(TimeUnit.MILLISECONDS));
+
       }
       tableMetadata = new FileTableMetadata(tableName, tableLocation, schema, columnsStatistics, tableStatistics,
           -1L, "", partitionKeys);
     }
+//    logger.debug("Took {} ms till 6", timer.elapsed(TimeUnit.MILLISECONDS));
+
 
     return tableMetadata;
   }
 
   private ParquetGroupScanStatistics<? extends BaseMetadata> getParquetGroupScanStatistics() {
+    Stopwatch timer = logger.isDebugEnabled() ? Stopwatch.createStarted() : null;
     if (parquetGroupScanStatistics == null) {
+//      logger.debug("Took {} ms in getParquetGroupScanStatistics 1", timer.elapsed(TimeUnit.MILLISECONDS));
       if (collectMetadata) {
         parquetGroupScanStatistics = new ParquetGroupScanStatistics<>(getFilesMetadata());
+//        logger.debug("Took {} ms in getParquetGroupScanStatistics 2", timer.elapsed(TimeUnit.MILLISECONDS));
       } else {
         parquetGroupScanStatistics = new ParquetGroupScanStatistics<>(getRowGroupsMeta());
+//        logger.debug("Took {} ms in getParquetGroupScanStatistics 3", timer.elapsed(TimeUnit.MILLISECONDS));
       }
     }
     return parquetGroupScanStatistics;
@@ -310,7 +374,7 @@ public abstract class BaseParquetMetadataProvider implements ParquetMetadataProv
             statistics.put(TableStatisticsKind.ROW_COUNT, GroupScan.NO_COLUMN_STATS);
             columnsStatistics.put(partitionColumn,
                 new ColumnStatisticsImpl<>(statistics,
-                        ParquetTableMetadataUtils.getComparator(getParquetGroupScanStatistics().getTypeForColumn(partitionColumn).getMinorType())));
+                        getComparator(getParquetGroupScanStatistics().getTypeForColumn(partitionColumn).getMinorType())));
             partitions.add(new PartitionMetadata(partitionColumn, getTableMetadata().getSchema(),
                 columnsStatistics, statistics, (Set<Path>) value, tableName, -1));
           });
@@ -404,8 +468,12 @@ public abstract class BaseParquetMetadataProvider implements ParquetMetadataProv
 
   @Override
   public Multimap<Path, RowGroupMetadata> getRowGroupsMetadataMap() {
+    Stopwatch timer = logger.isDebugEnabled() ? Stopwatch.createStarted() : null;
     if (rowGroups == null) {
       rowGroups = ParquetTableMetadataUtils.getRowGroupsMetadata(parquetTableMetadata);
+    }
+    if (timer != null) {
+      logger.debug("Took {} ms in getRowGroupsMetadataMap", timer.elapsed(TimeUnit.MILLISECONDS));
     }
     return rowGroups;
   }
