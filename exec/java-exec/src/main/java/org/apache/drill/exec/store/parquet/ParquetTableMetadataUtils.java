@@ -585,7 +585,7 @@ public class ParquetTableMetadataUtils {
     for (MetadataBase.ColumnMetadata column : rowGroup.getColumns()) {
       PrimitiveType.PrimitiveTypeName primitiveType = getPrimitiveTypeName(parquetTableMetadata, column);
       OriginalType originalType = getOriginalType(parquetTableMetadata, column);
-      populateSchema(parquetTableMetadata, primitiveType, originalType, column.getName());
+      populateSchema(parquetTableMetadata, primitiveType, originalType, column.getName(), columns);
     }
     return columns;
   }
@@ -676,16 +676,17 @@ public class ParquetTableMetadataUtils {
    */
   static Map<SchemaPath, TypeProtos.MajorType> getNonInterestingColumnSchema(MetadataBase.ParquetTableMetadataBase parquetTableMetadata) {
     LinkedHashMap<SchemaPath, TypeProtos.MajorType> columns = new LinkedHashMap<>();
-    for (Metadata_V4.ColumnTypeMetadata_v4 columnTypeMetadata_v4: (List<Metadata_V4.ColumnTypeMetadata_v4>)parquetTableMetadata.getColumnTypeInfoList()) {
+    if (parquetTableMetadata instanceof Metadata_V4.ParquetTableMetadata_v4) {
+      for (Metadata_V4.ColumnTypeMetadata_v4 columnTypeMetadata_v4 : (List<Metadata_V4.ColumnTypeMetadata_v4>) parquetTableMetadata.getColumnTypeInfoList()) {
         PrimitiveType.PrimitiveTypeName primitiveType = columnTypeMetadata_v4.getPrimitiveType();
         OriginalType originalType = columnTypeMetadata_v4.originalType;
-        columns.putAll(populateSchema(parquetTableMetadata, primitiveType, originalType, columnTypeMetadata_v4.getName()));
+        columns.putAll(populateSchema(parquetTableMetadata, primitiveType, originalType, columnTypeMetadata_v4.getName(), columns));
       }
+    }
     return columns;
     }
 
-  static Map<SchemaPath, TypeProtos.MajorType> populateSchema(MetadataBase.ParquetTableMetadataBase parquetTableMetadata, PrimitiveType.PrimitiveTypeName primitiveType, OriginalType originalType, String[] column) {
-    LinkedHashMap<SchemaPath, TypeProtos.MajorType> columns = new LinkedHashMap<>();
+  static Map<SchemaPath, TypeProtos.MajorType> populateSchema(MetadataBase.ParquetTableMetadataBase parquetTableMetadata, PrimitiveType.PrimitiveTypeName primitiveType, OriginalType originalType, String[] column, Map<SchemaPath, TypeProtos.MajorType> columns ) {
     int precision = 0;
     int scale = 0;
     int definitionLevel = 1;
