@@ -200,7 +200,7 @@ public abstract class BaseParquetMetadataProvider implements ParquetMetadataProv
       Map<StatisticsKind, Object> tableStatistics = new HashMap<>(DrillStatsTable.getEstimatedTableStats(statsTable));
       Set<String> partitionKeys = new HashSet<>();
       Map<SchemaPath, TypeProtos.MajorType> fields = ParquetTableMetadataUtils.resolveFields(parquetTableMetadata);
-
+//      fields.putAll(ParquetTableMetadataUtils.getNonInterestingColumnSchema(parquetTableMetadata));
       if (this.schema == null) {
         schema = new TupleSchema();
         fields.forEach((schemaPath, majorType) -> MetadataUtils.addColumnMetadata(schema, schemaPath, majorType));
@@ -248,6 +248,13 @@ public abstract class BaseParquetMetadataProvider implements ParquetMetadataProv
                   ParquetTableMetadataUtils.getNaturalNullsFirstComparator()));
         }
       }
+
+      Map<SchemaPath, TypeProtos.MajorType> columns = ParquetTableMetadataUtils.getNonInterestingColumnSchema(parquetTableMetadata);
+      columns.forEach((schemaPath, majorType) -> {
+        if (SchemaPathUtils.getColumnMetadata(schemaPath, schema) == null) {
+          MetadataUtils.addColumnMetadata(schema, schemaPath, majorType);
+        }
+      });
       tableMetadata = new FileTableMetadata(tableName, tableLocation, schema, columnsStatistics, tableStatistics,
           -1L, "", partitionKeys);
     }

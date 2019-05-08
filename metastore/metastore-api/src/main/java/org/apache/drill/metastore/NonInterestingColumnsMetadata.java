@@ -31,10 +31,17 @@ import java.util.Map;
  */
 public class NonInterestingColumnsMetadata implements BaseMetadata {
   private final Map<SchemaPath, ColumnStatistics> columnsStatistics;
+  private TupleMetadata schema;
 
   public NonInterestingColumnsMetadata(
                            Map<SchemaPath, ColumnStatistics> columnsStatistics) {
     this.columnsStatistics = columnsStatistics;
+  }
+
+  public NonInterestingColumnsMetadata(
+          Map<SchemaPath, ColumnStatistics> columnsStatistics, TupleMetadata schema) {
+    this.columnsStatistics = columnsStatistics;
+    this.schema = schema;
   }
 
   @Override
